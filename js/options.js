@@ -6,7 +6,7 @@ function save_options()
     var mngtOverride = document.getElementById( 'mngtoverride' ).checked;
     //var websocketServer = document.getElementById('websocketserver').value;
 
-    var pass1 = "boldlygo!";    //TODO Encode or encrypt this somehow
+    var pass1 = "password-goes-here";    //TODO Encode or encrypt this somehow
     if( mngtOverride )
     {
 
