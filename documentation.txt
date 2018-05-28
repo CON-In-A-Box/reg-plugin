@@ -1,0 +1,13 @@
+Connor Baltutis - 5/26/2018
+
+Troubleshooting Badge Increment Process:
+
+function incrementBadge, which is called immediately after sending the file to the printer,
+is located in js/attendeeContact.js, currently starting at line 100
+
+This function references custom fields in the attendee data form, which are hardcoded.
+If Neon changes the order of these fields, the indexes in the function will need to be updated.
+Currently, the # of active badges field is 7, Time and Date fields are 9-16.
+I refactored the field definitions to be in a single place for easier maintenance.  Current location is lines 101-103.
+
+Other fields are references as they are used throughout the code, search for "attendee.customDataList" to find references.

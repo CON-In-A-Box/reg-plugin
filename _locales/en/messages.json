@@ -1,0 +1,22 @@
+{
+    "appName": {
+        "message": "CONvergence Badge Utility 2018",
+        "description": "The name of the extension"
+    },
+    "appDescription": {
+        "message": "Provides omnibox search keyword 'con' for badge and account lookup with ability to print badges.",
+        "description": "The description of the extension"
+    },
+    "appInstallMsg" : {
+        "message": "IMPORTANT:  A new tab has been opened to your chrome settings.\n\nYou must change your default download location in Chrome to the network share connected to the printer for this workstation. Failure to do this step will result in this extension not doing anything!\n\nIn the settings window click 'Show advanced settings...', scroll down to 'Downloads' and click the 'Change...' button. Select the correct network share to save files to and click 'OK'\n\nEnsure the 'Ask where to save each file before downloading' is unchecked",
+        "description" : "Shown during install and upgrade after the settings dialog is opened to tell the user to change settings as required"
+    },
+    "dbValueNotSetErrorMsg" : {
+        "message": "ERROR: No Value",
+        "description": "When a piece or data cannot be retrieved to display to the user, this is displayed instead"
+    },
+    "badgePickupButton" : {
+        "message" : "Badge Pick Up",
+        "description": "Displays on the button to click to print a badge"
+    }
+}
