@@ -99,14 +99,9 @@ function getParameterByName(name, callback)
 // Increment the badge number and set the date/time stamp fields
 // Return true or false (Depending upon success.
 function incrementBadge() {
-    var numActiveBadgesFieldId = 8;
-    var pickupDateFieldIds = [ 10, 12, 14, 16 ];
-    var pickupTimeFieldIds = [ 11, 13, 15, 17 ];
 
     console.log("incrementBadge Received a request and is processing it now");
 
-
-    //var checkFieldValue = $("label:contains('Number of Active Badges')").siblings('.div').children(".input").val();
     var checkFieldValue = $("label:contains('Number of Active Badges'):first").next().find("input").val();
     var numActive = parseInt(checkFieldValue);
     var elNumberActiveBadges = $("label:contains('Number of Active Badges'):first").next().find("input");
