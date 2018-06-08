@@ -24,7 +24,13 @@ chrome.runtime.onMessage.addListener (
 function getAttendeeInfo() {
     console.log("getAttendeeInfo Received a request to load up the attendee data");
     //var badgeNumber = getParameterByName("id");      //This was the old way, before an extra window broke it
-    var badgeNumber = $("label:contains('Attendee ID')").siblings().text().trim();
+
+    // Old version of badge number with attendee ID
+    //var badgeNumber = $("label:contains('Attendee ID')").siblings().text().trim();
+
+    // New version of badge number with account ID
+    var badgeNumber = document.getElementById('usHidden').value;
+
     //var badgeNumber = "1234";     //For testing
 
     var attendeeName = "".concat(document.getElementsByName('attendee.firstName')[0].value," ",document.getElementsByName('attendee.lastName')[0].value);
@@ -35,7 +41,7 @@ function getAttendeeInfo() {
     }
 
     var numActBadgesFromElement = $("label:contains('Number of Active Badges'):first").next().find("input").val();
-    var numberActiveBadges = numActBadgesFromElement === "" ? 0 : parseInt($("label:contains('Number of Active Badges'):first").next().find("input").val());
+    var numberActiveBadges = numActBadgesFromElement === '' ? 0 : parseInt(numActBadgesFromElement);
     var ticketType = document.getElementById('ticketPackageId').options[document.getElementById('ticketPackageId').selectedIndex].text;
     var arrChecks = $("label:contains('Art Show Hold - Do Not Release'):first").next().find("input");
     var opsHoldCheck = $("label:contains('Operations Hold - Do Not Release'):first").next().find("input");
@@ -102,9 +108,9 @@ function incrementBadge() {
 
     console.log("incrementBadge Received a request and is processing it now");
 
-    var checkFieldValue = $("label:contains('Number of Active Badges'):first").next().find("input").val();
-    var numActive = parseInt(checkFieldValue);
     var elNumberActiveBadges = $("label:contains('Number of Active Badges'):first").next().find("input");
+    var numActive = elNumberActiveBadges.val() === '' ? 0 : parseInt(elNumberActiveBadges.val());
+
     var saveButton = document.getElementsByName('save')[0];
 
     var pickupDates = new Array();
@@ -133,7 +139,7 @@ function incrementBadge() {
 
 
     // Increment the active number
-    if (checkFieldValue=='') {
+    if (numActive === 0) {
         elNumberActiveBadges.val( 1 );
     } else {
         elNumberActiveBadges.val( numActive + 1 );

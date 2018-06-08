@@ -75,10 +75,12 @@ function buildAttendeeDataPage(attendeeData) {
                                                         if (el.addEventListener)
                                                             el.addEventListener("click", function() {
                                                                 doBadgePrintDownload(attendeeData);
+                                                                window.close();
                                                             }, false );
                                                         else if (el.attachEvent)
                                                             el.attachEvent('onclick', function() {
                                                                 doBadgePrintDownload(attendeeData);
+                                                                window.close();
                                                             });
 
                                                     }
