@@ -26,7 +26,7 @@ function setRegistrantNameSearch() {
     //var badgeNumber = getParameterByName("id");
     var badgeNumber = document.getElementById("attendee_id").text;
     var attendeeName = "".concat(document.getElementsByName('attendee.firstName')[0].value," ",document.getElementsByName('attendee.lastName')[0].value);
-    var attendeeBadgeName = document.getElementsByName('attendee.customDataList[2].value')[0].value;
-    var numberActiveBadges = parseInt(document.getElementsByName('attendee.customDataList[3].value')[0].value);
+    var attendeeBadgeName = $("label:contains('Badge Name'):first").next().find("input").val();
+    var numberActiveBadges = parseInt($("label:contains('Number of Active Badges'):first").next().find("input").val());
     var ticketType = document.getElementById('ticketPackageId').options[document.getElementById('ticketPackageId').selectedIndex].text;
 }
