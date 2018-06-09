@@ -26,10 +26,10 @@ function getAttendeeInfo() {
     //var badgeNumber = getParameterByName("id");      //This was the old way, before an extra window broke it
 
     // Old version of badge number with attendee ID
-    //var badgeNumber = $("label:contains('Attendee ID')").siblings().text().trim();
+    var attendeeId = $("label:contains('Attendee ID')").siblings().text().trim();
 
     // New version of badge number with account ID
-    var badgeNumber = document.getElementById('usHidden').value;
+    var accountId = document.getElementById('usHidden').value;
 
     //var badgeNumber = "1234";     //For testing
 
@@ -82,10 +82,11 @@ function getAttendeeInfo() {
     console.log("Is there an art show hold? "+artShowHold);
     console.log("Is there an operations department hold? "+opsHold);
     console.log("Ticket: "+ticketType);
-    console.log("Badge Number: "+badgeNumber);
+    console.log("Attendee ID: "+attendeeId);
+    console.log("Account ID: "+accountId);
     console.log("Name: "+attendeeName+" NonTransfer Name: "+nonTransferName);
 
-    var dataObject=new attendee(badgeNumber, attendeeName, ticketType, numberActiveBadges, attendeeBadgeName, regStatus, artShowHold, opsHold, nonTransferName );
+    var dataObject=new attendee(accountId, attendeeId, attendeeName, ticketType, numberActiveBadges, attendeeBadgeName, regStatus, artShowHold, opsHold, nonTransferName );
 
     return dataObject;
 }
@@ -163,9 +164,10 @@ function incrementBadge() {
 
 
 //Builds the data object
-function attendee(id,name, ticket, activeBadges, badgeName, regStatus, artShowHold, opsHold, nonTransferName)
+function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, regStatus, artShowHold, opsHold, nonTransferName)
 {
-    this.id=id;
+    this.accountId=accountId;
+    this.attendeeId=attendeeId;
     this.name=name;
     this.ticket=ticket;
     this.activeBadges=activeBadges;
@@ -188,22 +190,22 @@ function attendee(id,name, ticket, activeBadges, badgeName, regStatus, artShowHo
             this.state = 'yellow';
             this.reason = "ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 1998)";
             this.ticketText ="ADULT";
-            this.badgeNumber = "A"+this.id;
+            this.attendeeId = "A"+this.attendeeId;
             this.badgeImage = 'ADULT.tif';
             break;
         case "Young":
             this.ticketText ="KID";
-            this.badgeNumber = "K"+this.id;
+            this.attendeeId = "K"+this.attendeeId;
             this.badgeImage = 'KID.tif';
             break;
         case "Child":
             this.ticketText ="CHILD";
-            this.badgeNumber = "C"+this.id;
+            this.attendeeId = "C"+this.attendeeId;
             this.badgeImage = 'CHILD.tif';
             break;
         case "Teen":
             this.ticketText ="TEEN";
-            this.badgeNumber = "T"+this.id;
+            this.attendeeId = "T"+this.attendeeId;
             this.badgeImage = 'TEEN.tif';
             break;
         /*
@@ -224,7 +226,7 @@ function attendee(id,name, ticket, activeBadges, badgeName, regStatus, artShowHo
             this.state = 'yellow';
             this.reason = "ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 1998)";
             this.ticketText ="ADULT";
-            this.badgeNumber = "A"+this.id;
+            this.attendeeId = "A"+this.attendeeId;
             this.badgeImage = 'ADULT.tif';
             break;
         /*

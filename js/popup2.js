@@ -75,12 +75,10 @@ function buildAttendeeDataPage(attendeeData) {
                                                         if (el.addEventListener)
                                                             el.addEventListener("click", function() {
                                                                 doBadgePrintDownload(attendeeData);
-                                                                window.close();
                                                             }, false );
                                                         else if (el.attachEvent)
                                                             el.attachEvent('onclick', function() {
                                                                 doBadgePrintDownload(attendeeData);
-                                                                window.close();
                                                             });
 
                                                     }
@@ -152,7 +150,7 @@ function buildNotFoundDataPage() {
 
 function doBadgePrintDownload(attendeeData) {
 
-    saveTextAsFile(attendeeData.badgeNumber, attendeeData.badgeName, attendeeData.badgeImage, attendeeData.ticket, attendeeData.activeBadges );
+    saveTextAsFile(attendeeData.accountId, attendeeData.attendeeId, attendeeData.badgeName, attendeeData.badgeImage, attendeeData.ticket, attendeeData.activeBadges );
 
     //This will update the information we have about the attendee and save the form for us.
     //Saving the form automatically makes our Connie wink disappear, which makes us done!
@@ -161,38 +159,41 @@ function doBadgePrintDownload(attendeeData) {
         //console.log(tabs[0].id);
         chrome.tabs.sendMessage(tabs[0].id, {action: "Increment Badge Count"}, function() {
             console.log("Should have saved now");
+            window.close();
+            // Window close seems to work more consistently here
         } );
     });
     //window.confirm("Printing Completed");
     //window.close();
 }
 
-function saveTextAsFile(badgeNumText, badgeNameText, background, tix, printNumber)
+function saveTextAsFile(accountId, attendeeId, badgeNameText, background, tix, printNumber)
 {
     // This is from
     // http://thiscouldbebetter.wordpress.com/2012/12/18/loading-editing-and-saving-a-text-file-in-html5-using-javascrip/
 
     //var textToWrite = "THIS IS SAMPLE TEXT TO WRITE TO A FILE";
     //var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
-    var textHeader = '"Badge Type","Badge File BackGround","Badge Number","Badge Name","Workstation ID","Print Number"';
+    var textHeader = '"Badge Type","Badge File BackGround","Account ID","Attendee ID","Badge Name","Workstation ID","Print Number"';
     var text = new Array();
     text[0] = tix;
     text[1] = background;
-    text[2] = badgeNumText;
-    text[3] = badgeNameText;
+    text[2] = accountId;
+    text[3] = attendeeId;
+    text[4] = badgeNameText;
 
     chrome.storage.local.get( "workstationId", function ( items )
                                     {
                                         console.log(items.workstationId);
-                                        text[4] = items.workstationId;
-                                        text[5] = printNumber;
+                                        text[5] = items.workstationId;
+                                        text[6] = printNumber;
 
 
     var textToWrite = convertArrayToCSVBlob(text, textHeader);
     var textFileAsBlob = new Blob([textToWrite], {type:'text/csv'});
     //This makes sure bogus characters will not screw up the filename
     var desiredNameText = badgeNameText.replace(/[^\w\s]/gi, '');
-    var fileNameToSaveAs = badgeNumText +" - "+ desiredNameText +".csv";
+    var fileNameToSaveAs = accountId +" - "+ desiredNameText +".csv";
 
     //This is the magic that actually downloads the file generated
     var downloadLink = document.createElement("a");
