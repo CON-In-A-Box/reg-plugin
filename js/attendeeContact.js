@@ -24,21 +24,28 @@ chrome.runtime.onMessage.addListener (
 function getAttendeeInfo() {
     console.log("getAttendeeInfo Received a request to load up the attendee data");
     //var badgeNumber = getParameterByName("id");      //This was the old way, before an extra window broke it
-    var badgeNumber = $("label:contains('Attendee ID')").siblings().text().trim();
+
+    // Old version of badge number with attendee ID
+    //var badgeNumber = $("label:contains('Attendee ID')").siblings().text().trim();
+
+    // New version of badge number with account ID
+    var badgeNumber = document.getElementById('usHidden').value;
+
     //var badgeNumber = "1234";     //For testing
 
     var attendeeName = "".concat(document.getElementsByName('attendee.firstName')[0].value," ",document.getElementsByName('attendee.lastName')[0].value);
-    var attendeeBadgeName = document.getElementsByName('attendee.customDataList[4].value')[0].value;
+    var attendeeBadgeName = $("label:contains('Badge Name'):first").next().find("input").val();
 
     if (attendeeBadgeName == "" || attendeeBadgeName == null) {
         attendeeBadgeName = attendeeName;
     }
 
-    var numberActiveBadges = parseInt(document.getElementsByName('attendee.customDataList[7].value')[0].value);
+    var numActBadgesFromElement = $("label:contains('Number of Active Badges'):first").next().find("input").val();
+    var numberActiveBadges = numActBadgesFromElement === '' ? 0 : parseInt(numActBadgesFromElement);
     var ticketType = document.getElementById('ticketPackageId').options[document.getElementById('ticketPackageId').selectedIndex].text;
-    var arrChecks = document.getElementsByName('attendee.customDataList[0].optionIds');
-    var opsHoldCheck = document.getElementsByName('attendee.customDataList[1].optionIds');
-    var nonTransferName = document.getElementsByName('attendee.customDataList[3].value')[0].value;
+    var arrChecks = $("label:contains('Art Show Hold - Do Not Release'):first").next().find("input");
+    var opsHoldCheck = $("label:contains('Operations Hold - Do Not Release'):first").next().find("input");
+    var nonTransferName = $("label:contains('Non-Transferable First and Last Name'):first").next().find("input").val();
     /*
     if (window.jQuery) {
         console.log("jQuery Is Loaded");
@@ -98,29 +105,29 @@ function getParameterByName(name, callback)
 // Increment the badge number and set the date/time stamp fields
 // Return true or false (Depending upon success.
 function incrementBadge() {
-    var numActiveBadgesFieldId = 7;
-    var pickupDateFieldIds = [ 9, 11, 13, 15 ];
-    var pickupTimeFieldIds = [ 10, 12, 14, 16 ];
 
     console.log("incrementBadge Received a request and is processing it now");
-    var checkFieldValue = document.getElementsByName('attendee.customDataList[' + numActiveBadgesFieldId + '].value')[0].value;
-    var numActive = parseInt(document.getElementsByName('attendee.customDataList[' + numActiveBadgesFieldId + '].value')[0].value);
-    var elNumberActiveBadges = document.getElementsByName('attendee.customDataList[' + numActiveBadgesFieldId + '].value')[0];
+
+    var elNumberActiveBadges = $("label:contains('Number of Active Badges'):first").next().find("input");
+    var numActive = elNumberActiveBadges.val() === '' ? 0 : parseInt(elNumberActiveBadges.val());
+
     var saveButton = document.getElementsByName('save')[0];
 
     var pickupDates = new Array();
     var elpickupDates = new Array();
-    pickupDateFieldIds.forEach(function(index){
-        pickupDates.push(document.getElementsByName('attendee.customDataList[' + index + '].value')[0].value);
-        elpickupDates.push(document.getElementsByName('attendee.customDataList[' + index + '].value')[0]);
-    });
+    for( var i = 1; i < 5; i++ )
+    {
+      pickupDates.push($("label:contains('Pickup Date " + i + "'):first").next().find("input").val());
+      elpickupDates.push($("label:contains('Pickup Date " + i + "'):first").next().find("input"));
+    }
 
     var pickupTimes = new Array();
     var elpickupTimes = new Array();
-    pickupTimeFieldIds.forEach(function(index){
-        pickupTimes.push(document.getElementsByName('attendee.customDataList[' + index + '].value')[0].value);
-        elpickupTimes.push(document.getElementsByName('attendee.customDataList[' + index + '].value')[0]);
-    });
+    for( var i = 1; i < 5; i++ )
+    {
+        pickupTimes.push($("label:contains('Pickup Time " + i + "'):first").next().find("input").val());
+        elpickupTimes.push($("label:contains('Pickup Time " + i + "'):first").next().find("input"));
+    }
 
     var timestamp = new Date();
     console.log("The timestamp is set to the following time: "+timestamp.toLocaleTimeString());
@@ -132,18 +139,18 @@ function incrementBadge() {
 
 
     // Increment the active number
-    if (checkFieldValue=='') {
-        elNumberActiveBadges.value=1;
+    if (numActive === 0) {
+        elNumberActiveBadges.val( 1 );
     } else {
-        elNumberActiveBadges.value = (numActive + 1);
+        elNumberActiveBadges.val( numActive + 1 );
     }
 
     //Set the date/time stamp
     for (var i = 0; i < pickupTimes.length; i ++) {
         if (pickupTimes[i]=='') {
             console.log("Time empty, assuming available slot at index: "+i);
-            elpickupTimes[i].value = timestamp.toLocaleTimeString();
-            elpickupDates[i].value = timestampformatteddate;
+            elpickupTimes[i].val(timestamp.toLocaleTimeString());
+            elpickupDates[i].val(timestampformatteddate);
             //Its temporarily commented out to allow testing everything else
             break;
         } else {
@@ -167,13 +174,13 @@ function attendee(id,name, ticket, activeBadges, badgeName, regStatus, artShowHo
     this.artShowHold=artShowHold;
     this.opsHold=opsHold;
     this.nonTransferName=nonTransferName;
-    
+
     this.state = 'green';
     this.reason = 'OK to proceed';
     this.ticket = this.ticket.substr(0,this.ticket.indexOf(' '));
 
     this.workstation
-    
+
     console.log("Ticket we are processing: "+this.ticket);
 
     switch (this.ticket) {
@@ -229,42 +236,42 @@ function attendee(id,name, ticket, activeBadges, badgeName, regStatus, artShowHo
             */
         default:
             this.state = 'red';
-            this.reason ="UNKNOWN \nPLEASE REVIEW AND SEE A SUB OR CO HEAD FOR ASSISTANCE!";
+            this.reason = "UNKNOWN \nPLEASE REVIEW AND SEE A SUB OR CO HEAD FOR ASSISTANCE!";
             this.badgeNumber = "ERROR";
             this.badgeImage = 'NONE.tif';
     }
 
-    if (this.regStatus!="SUCCEED") {
+    if (this.regStatus != "SUCCEED") {
         console.log("This is not paid for yet!");
         this.state = 'red';
         this.reason = 'NOT PAID\nThis badge has not been paid for. Please direct member to cashier for assistance!';
     }
 
-    if (this.activeBadges!=null && this.activeBadges>0) {
+    if (this.activeBadges != null && this.activeBadges>0) {
         console.log("There are already active badges");
         this.state = 'red';
         this.reason = 'PRINTED\nThis badge was already printed and cannot be printed again. Please direct member to cashier for assistance!';
     }
 
-    if (this.artShowHold=="Yes") {
+    if (this.artShowHold == "Yes") {
         console.log("There is an art show hold");
         this.state = 'red';
         this.reason = 'HOLD\nThis badge has an art show hold. Please direct member to art show to pay and then to help desk to log.';
     }
 
-    if (this.opsHold=="Yes") {
+    if (this.opsHold == "Yes") {
             console.log("There is an operations department hold");
             this.state = 'red';
             this.reason = 'HOLD\nThis badge has an operations department hold. Please direct the member to operations.';
         }
 
-    if (this.id<42214) {    //Update each year to lowest numbered attendee to assist reduction of human error
+    if (this.id < 42214) {    //Update each year to lowest numbered attendee to assist reduction of human error
         this.state = 'red';
         this.reason = 'THIS IS NOT AN ACTUAL CONVERGENCE REGISTRATION FOR THIS YEAR!\nCLICKED WRONG EVENT !!';
 
     }
 
-    if (this.nonTransferName==this.name) {
+    if (this.nonTransferName !== "" && this.nonTransferName !== this.name) {
             this.state = 'red';
             this.reason = 'THIS IS A NON-TRANSFERABLE MEMBERSHIP!\nSEND MEMBER TO HELPDESK OR REQUEST ASSISTANCE !!';
 

@@ -33,7 +33,19 @@ chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     console.log("The appropriate page has finished loading, moving on");
     // setup the valid tab, get the data and display the icon
     updateAttendeeInfo(tabId.tabId);
+}, {url: [{urlContains: 'trial.z2systems.com/np/admin/event/attendeeEdit.do'}] });
+
+chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
+    console.log("The appropriate page has finished loading, moving on");
+    // setup the valid tab, get the data and display the icon
+    updateAttendeeInfo(tabId.tabId);
 }, {url: [{urlContains: 'www.z2systems.com/np/admin/event/contactSelect.do'}] });
+
+chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
+    console.log("The appropriate page has finished loading, moving on");
+    // setup the valid tab, get the data and display the icon
+    updateAttendeeInfo(tabId.tabId);
+}, {url: [{urlContains: 'trial.z2systems.com/np/admin/event/contactSelect.do'}] });
 
 //This will update the information we have about the attendee and make the icon appear and disappear as needed
 function updateAttendeeInfo(tabId){
