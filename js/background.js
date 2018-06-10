@@ -6,7 +6,8 @@
  * VARIABLES
  */
 // Global accessor that the popup uses.
-var attendeeInfo = [];
+var attendeeInfo = null;
+var registrationsInfo = null;
 //var attendeeData = {};
 
 
@@ -47,6 +48,18 @@ chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     updateAttendeeInfo(tabId.tabId);
 }, {url: [{urlContains: 'trial.z2systems.com/np/admin/event/contactSelect.do'}] });
 
+chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
+    console.log("The appropriate page has finished loading, moving on");
+    // setup the valid tab, get the data and display the icon
+    updateRegistrationsInfo(tabId.tabId);
+}, {url: [{urlContains: 'www.z2systems.com/np/admin/event/eventRegDetails.do'}] });
+
+chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
+    console.log("The appropriate page has finished loading, moving on");
+    // setup the valid tab, get the data and display the icon
+    updateRegistrationsInfo(tabId.tabId);
+}, {url: [{urlContains: 'trial.z2systems.com/np/admin/event/eventRegDetails.do'}] });
+
 //This will update the information we have about the attendee and make the icon appear and disappear as needed
 function updateAttendeeInfo(tabId){
     chrome.tabs.sendMessage(tabId, {action: "Get Attendee Data"}, function(attendee) {
@@ -58,6 +71,24 @@ function updateAttendeeInfo(tabId){
         } else {
             //var ico = 'assets/wink-'+attendeeInfo[0].valueOf()+'-19.png';;
             var ico = 'assets/wink-'+attendeeInfo.state+'-19.png';
+            console.log("The icon path to set is: "+ico);
+            chrome.pageAction.setIcon({tabId: tabId, path:ico}, function() {
+                chrome.pageAction.show(tabId);
+            });
+        }
+    });
+}
+
+function updateRegistrationsInfo(tabId){
+    chrome.tabs.sendMessage(tabId, {action: "Get Registrations Data"}, function(registrations) {
+        console.log("The registrations data returned was:"+registrations);
+        registrationsInfo = registrations;
+        if (!registrations) {
+            console.log('This page does not have the required registrations data and therefore no icon will display');
+            chrome.pageAction.hide(tabId);
+        } else {
+            //var ico = 'assets/wink-'+attendeeInfo[0].valueOf()+'-19.png';;
+            var ico = 'assets/wink-green-19.png';
             console.log("The icon path to set is: "+ico);
             chrome.pageAction.setIcon({tabId: tabId, path:ico}, function() {
                 chrome.pageAction.show(tabId);

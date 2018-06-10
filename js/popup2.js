@@ -7,12 +7,17 @@
 //When the window loads create the page data to display
 window.onload = displayAttendeeInfo;
 function displayAttendeeInfo() {
-    var attendeeData = chrome.extension.getBackgroundPage().attendeeInfo;
-    console.log("Popup attempted to receive data and it received: "+attendeeData);
-    if (attendeeData)
-        buildAttendeeDataPage(attendeeData);
-    else
-        buildNotFoundDataPage();
+    chrome.tabs.getSelected(null, function(tab) {
+        var attendeeData = chrome.extension.getBackgroundPage().attendeeInfo;
+        var registrationsData = chrome.extension.getBackgroundPage().registrationsInfo;
+        console.log("Popup attempted to receive data and it received: "+attendeeData);
+        if (attendeeData && tab.url.includes('attendeeEdit'))
+            buildAttendeeDataPage(attendeeData);
+        else if (registrationsData && tab.url.includes('eventRegDetails'))
+            buildRegistrationsDataPage(registrationsData);
+        else
+            buildNotFoundDataPage();
+    });
 }
 
 
@@ -36,7 +41,7 @@ function buildAttendeeDataPage(attendeeData) {
 
     tr=document.createElement('tr');
     td=document.createElement('td');
-    td.appendChild(document.createTextNode("ID Name to Match: "+attendeeData.name))
+    td.appendChild(document.createTextNode("ID Name to Match: " + attendeeData.name))
     //add the cell
     tr.appendChild(td)
     //add the row
@@ -115,6 +120,63 @@ function buildAttendeeDataPage(attendeeData) {
 
 
 
+}
+
+function buildRegistrationsDataPage(registrationData) {
+    console.log("Building table with registrations data");
+    //Build a table
+    var body=document.getElementsByTagName('body')[0];
+    var tbl=document.createElement('table');
+    tbl.style.width='100%';
+    tbl.setAttribute('border','1');
+    var tbdy=document.createElement('tbody');
+    var tr=document.createElement('tr');
+    var td=document.createElement('td');
+    td.appendChild(document.createTextNode('Select the Attendee'));
+    tr.appendChild(td);
+    //add the row
+    tbdy.appendChild(tr);
+
+    registrationData.data.forEach( function(reg)
+    {
+      var r = document.createElement('tr');
+      var d = document.createElement('td');
+      d.appendChild(document.createTextNode(reg.name));
+      r.appendChild(d);
+
+      var elname = "printButton";
+      var element = document.createElement("input");
+      element.setAttribute("type", "button");
+      element.setAttribute("value", chrome.i18n.getMessage("editAttendeeButton"));
+      element.setAttribute("class", "button");
+      element.onclick = function () {
+        chrome.tabs.getSelected(null, function(tab) {
+            if (tab.url.includes('trial.z2stems.com'))
+            {
+              chrome.tabs.update({
+                   url: "https://trial.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+              });
+            }
+            else if (tab.url.includes('www.z2systems.com'))
+            {
+              chrome.tabs.update({
+                   url: "https://www.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+              });
+            }
+            window.close();
+        });
+      };
+      body.appendChild(element);
+
+      var d2 = document.createElement('td');
+      d2.appendChild(element);
+      r.appendChild(d2);
+      tbdy.appendChild(r);
+    });
+
+    tbl.appendChild(tbdy);
+
+    body.appendChild(tbl);
 }
 
 // This builds the page body when NO attendee info is involved
