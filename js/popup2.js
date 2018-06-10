@@ -151,7 +151,7 @@ function buildRegistrationsDataPage(registrationData) {
       element.setAttribute("class", "button");
       element.onclick = function () {
         chrome.tabs.getSelected(null, function(tab) {
-            if (tab.url.includes('trial.z2stems.com'))
+            if (tab.url.includes('trial.z2systems.com'))
             {
               chrome.tabs.update({
                    url: "https://trial.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
