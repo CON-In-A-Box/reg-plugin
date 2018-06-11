@@ -29,7 +29,8 @@ function getAttendeeInfo() {
     var attendeeId = $("label:contains('Attendee ID')").siblings().text().trim();
 
     // New version of badge number with account ID
-    var accountId = document.getElementById('usHidden').value;
+    //var accountId = document.getElementById('usHidden').value;
+    var accountId = new URL(window.location.toString()).searchParams.get('acct');
 
     //var badgeNumber = "1234";     //For testing
 
@@ -180,8 +181,6 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
     this.state = 'green';
     this.reason = 'OK to proceed';
     this.ticket = this.ticket.substr(0,this.ticket.indexOf(' '));
-
-    this.workstation
 
     console.log("Ticket we are processing: "+this.ticket);
 

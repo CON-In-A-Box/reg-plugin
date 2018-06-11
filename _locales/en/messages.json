@@ -18,5 +18,9 @@
     "badgePickupButton" : {
         "message" : "Badge Pick Up",
         "description": "Displays on the button to click to print a badge"
+    },
+    "editAttendeeButton" : {
+        "message" : "Edit Attendee",
+        "description": "Displays on the button to click to edit attendee"
     }
 }
