@@ -57,7 +57,7 @@ function buildAttendeeDataPage(attendeeData) {
             chrome.storage.local.get( ['managementOverride'], function ( items )
                                             {
                                                 mngtOverride = items.managementOverride;
-                                                console.log("Mgmt Overrride: " + mngtOverride);
+
                                                 if ((attendeeData.state !== "red" || mngtOverride == true) && attendeeData.reason !== 'NO ACCOUNT NUMBER\nClick "Cancel", then use the Connie head icon on the previous page.') {
 
                                                     var elname = "badgebutton1";
