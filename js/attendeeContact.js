@@ -278,6 +278,12 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
 
         }
 
+    if (this.accountId === null) {
+        console.log("No account number!");
+        this.state = 'red';
+        this.reason = 'NO ACCOUNT NUMBER\nClick "Cancel", then use the Connie head icon on the previous page.';
+    }
+
     console.log("the reason is: "+this.reason);
 
 

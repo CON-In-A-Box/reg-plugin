@@ -54,17 +54,11 @@ function buildAttendeeDataPage(attendeeData) {
 
     var mngtOverride = "";
 
-            chrome.storage.local.get( "mngtoverride", function ( items )
+            chrome.storage.local.get( ['managementOverride'], function ( items )
                                             {
                                                 mngtOverride = items.managementOverride;
 
-
-
-
-
-
-
-                                                if (attendeeData.state!="Red" || mngtOverride.checked) {
+                                                if ((attendeeData.state !== "red" || mngtOverride == true) && attendeeData.reason !== 'NO ACCOUNT NUMBER\nClick "Cancel", then use the Connie head icon on the previous page.') {
 
                                                     var elname = "badgebutton1";
                                                     var element = document.createElement("input");
@@ -87,13 +81,6 @@ function buildAttendeeDataPage(attendeeData) {
                                                             });
 
                                                     }
-
-
-
-
-
-
-
                                             } );
 
     console.log("Management Override is: "+mngtOverride.checked);
