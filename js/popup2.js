@@ -144,10 +144,10 @@ function buildRegistrationsDataPage(registrationData) {
                    url: "https://trial.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
               });
             }
-            else if (tab.url.includes('www.z2systems.com'))
+            else if (tab.url.includes('ce.z2systems.com'))
             {
               chrome.tabs.update({
-                   url: "https://www.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+                   url: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
               });
             }
             window.close();
