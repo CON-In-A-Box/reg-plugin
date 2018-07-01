@@ -28,7 +28,7 @@ chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     console.log("The appropriate page has finished loading, moving on");
     // setup the valid tab, get the data and display the icon
     updateAttendeeInfo(tabId.tabId);
-}, {url: [{urlContains: 'www.z2systems.com/np/admin/event/attendeeEdit.do'}] });
+}, {url: [{urlContains: 'ce.z2systems.com/np/admin/event/attendeeEdit.do'}] });
 
 chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     console.log("The appropriate page has finished loading, moving on");
@@ -40,7 +40,7 @@ chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     console.log("The appropriate page has finished loading, moving on");
     // setup the valid tab, get the data and display the icon
     updateAttendeeInfo(tabId.tabId);
-}, {url: [{urlContains: 'www.z2systems.com/np/admin/event/contactSelect.do'}] });
+}, {url: [{urlContains: 'ce.z2systems.com/np/admin/event/contactSelect.do'}] });
 
 chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     console.log("The appropriate page has finished loading, moving on");
@@ -52,7 +52,7 @@ chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     console.log("The appropriate page has finished loading, moving on");
     // setup the valid tab, get the data and display the icon
     updateRegistrationsInfo(tabId.tabId);
-}, {url: [{urlContains: 'www.z2systems.com/np/admin/event/eventRegDetails.do'}] });
+}, {url: [{urlContains: 'ce.z2systems.com/np/admin/event/eventRegDetails.do'}] });
 
 chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
     console.log("The appropriate page has finished loading, moving on");
@@ -138,15 +138,15 @@ chrome.omnibox.onInputChanged.addListener(
             badgeNumId = text.substring(1);
             //console.log(badgeNumId);
             suggest([
-                {content: "https://www.z2systems.com/np/admin/event/attendeeEdit.do?id="+badgeNumId, description: "Navigate to this Badge Number"},
-                {content: "https://www.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1", description: "Search For This Account Keyword"},
-                {content: "https://www.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162", description: "Open a general search for registrants/attendees"}
+                {content: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id="+badgeNumId, description: "Navigate to this Badge Number"},
+                {content: "https://ce.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1", description: "Search For This Account Keyword"},
+                {content: "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162", description: "Open a general search for registrants/attendees"}
             ]);
         } else {
             suggest([
-                {content: "https://www.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1", description: "Search For This Account Keyword"},
-                {content: "https://www.z2systems.com/np/admin/event/attendeeEdit.do?id="+text, description: "Navigate to this Badge Number"},
-                {content: "https://www.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162", description: "Open a general search for registrants/attendees"}
+                {content: "https://ce.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1", description: "Search For This Account Keyword"},
+                {content: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id="+text, description: "Navigate to this Badge Number"},
+                {content: "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162", description: "Open a general search for registrants/attendees"}
             ]);
         }
     });
@@ -167,14 +167,14 @@ chrome.omnibox.onInputEntered.addListener(
                 if (text.match(/^[a,A,k,K,c,C,t,T][1-9]+/)) {
                     badgeNumId = text.substring(1);
                     console.log("We think this is a badge identifier so that's what we will look for. User entered: "+text+" we are seraching for: "+badgeNumId);
-                    url = "https://www.z2systems.com/np/admin/event/attendeeEdit.do?id="+badgeNumId;
+                    url = "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id="+badgeNumId;
                 } else {
                     if (text.trim()=="") {
                         console.log("User did not enter anything, so we will take them to a generic search");
-                        url = "https://www.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162";
+                        url = "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162";
                     } else {
                         console.log("It doesn't look like a badge number so lets just search neon accounts. User entered: "+text);
-                        url = "https://www.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1";
+                        url = "https://ce.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1";
                     }
                 }
             }
