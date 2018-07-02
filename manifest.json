@@ -5,7 +5,7 @@
     "name": "__MSG_appName__",
     "description": "__MSG_appDescription__",
     "author": "CONvergence IT, Matt Resong, Connor Baltutis, Sean Berry",
-    "version": "2018.8.0",
+    "version": "2018.8.1",
     "default_locale": "en",
     "icons": {
 
