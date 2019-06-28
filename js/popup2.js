@@ -14,7 +14,7 @@ function displayAttendeeInfo() {
         if (attendeeData && tab.url.includes('attendeeEdit'))
             buildAttendeeDataPage(attendeeData);
         else if (registrationsData && tab.url.includes('eventRegDetails'))
-            buildRegistrationsDataPage(registrationsData);
+            buildRegistrationsDataPage(registrationsData, tab);
         else
             buildNotFoundDataPage();
     });
@@ -109,7 +109,7 @@ function buildAttendeeDataPage(attendeeData) {
 
 }
 
-function buildRegistrationsDataPage(registrationData) {
+function buildRegistrationsDataPage(registrationData, tab) {
     console.log("Building table with registrations data");
     //Build a table
     var body=document.getElementsByTagName('body')[0];
@@ -128,36 +128,49 @@ function buildRegistrationsDataPage(registrationData) {
     {
       var r = document.createElement('tr');
       var d = document.createElement('td');
-      d.appendChild(document.createTextNode(reg.name));
-      r.appendChild(d);
-
-      var elname = "printButton";
-      var element = document.createElement("input");
-      element.setAttribute("type", "button");
-      element.setAttribute("value", chrome.i18n.getMessage("editAttendeeButton"));
-      element.setAttribute("class", "button");
-      element.onclick = function () {
-        chrome.tabs.getSelected(null, function(tab) {
-            if (tab.url.includes('trial.z2systems.com'))
-            {
-              chrome.tabs.update({
-                   url: "https://trial.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
-              });
-            }
-            else if (tab.url.includes('ce.z2systems.com'))
-            {
-              chrome.tabs.update({
-                   url: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
-              });
-            }
-            window.close();
+      if(reg.state == 'red')
+      {
+        var ico = 'assets/wink-red-19.png';
+        console.log("The icon path to set is: "+ico);
+        chrome.pageAction.setIcon({tabId: tab.id, path:ico}, function() {
+            chrome.pageAction.show(tab.id);
         });
-      };
-      body.appendChild(element);
+        d.appendChild(document.createTextNode(reg.reason));
+        r.appendChild(d);
+      }
+      else{
 
-      var d2 = document.createElement('td');
-      d2.appendChild(element);
-      r.appendChild(d2);
+        d.appendChild(document.createTextNode(reg.name));
+        r.appendChild(d);
+
+        var elname = "printButton";
+        var element = document.createElement("input");
+        element.setAttribute("type", "button");
+        element.setAttribute("value", chrome.i18n.getMessage("editAttendeeButton"));
+        element.setAttribute("class", "button");
+        element.onclick = function () {
+          chrome.tabs.getSelected(null, function(tab) {
+              if (tab.url.includes('trial.z2systems.com'))
+              {
+                chrome.tabs.update({
+                     url: "https://trial.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+                });
+              }
+              else if (tab.url.includes('ce.z2systems.com'))
+              {
+                chrome.tabs.update({
+                     url: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+                });
+              }
+              window.close();
+          });
+        };
+        body.appendChild(element);
+
+        var d2 = document.createElement('td');
+        d2.appendChild(element);
+        r.appendChild(d2);
+      }
       tbdy.appendChild(r);
     });
 
