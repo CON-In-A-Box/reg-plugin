@@ -88,7 +88,13 @@ function updateRegistrationsInfo(tabId){
             chrome.pageAction.hide(tabId);
         } else {
             //var ico = 'assets/wink-'+attendeeInfo[0].valueOf()+'-19.png';;
-            var ico = 'assets/wink-green-19.png';
+            var color = 'green';
+            /*registrations.forEach(function() {
+              if (this.state = 'red'){
+                color = 'red';
+              }
+            });*/
+            var ico = 'assets/wink-'+color+'-19.png';
             console.log("The icon path to set is: "+ico);
             chrome.pageAction.setIcon({tabId: tabId, path:ico}, function() {
                 chrome.pageAction.show(tabId);
@@ -140,13 +146,13 @@ chrome.omnibox.onInputChanged.addListener(
             suggest([
                 {content: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id="+badgeNumId, description: "Navigate to this Badge Number"},
                 {content: "https://ce.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1", description: "Search For This Account Keyword"},
-                {content: "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162", description: "Open a general search for registrants/attendees"}
+                {content: "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=172", description: "Open a general search for registrants/attendees"}
             ]);
         } else {
             suggest([
                 {content: "https://ce.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1", description: "Search For This Account Keyword"},
                 {content: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id="+text, description: "Navigate to this Badge Number"},
-                {content: "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162", description: "Open a general search for registrants/attendees"}
+                {content: "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=172", description: "Open a general search for registrants/attendees"}
             ]);
         }
     });
@@ -171,7 +177,7 @@ chrome.omnibox.onInputEntered.addListener(
                 } else {
                     if (text.trim()=="") {
                         console.log("User did not enter anything, so we will take them to a generic search");
-                        url = "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=162";
+                        url = "https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=172";
                     } else {
                         console.log("It doesn't look like a badge number so lets just search neon accounts. User entered: "+text);
                         url = "https://ce.z2systems.com/np/admin/searchResult.do?key="+text+"&search=Search&searchType=1";
