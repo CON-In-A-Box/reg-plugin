@@ -1,5 +1,5 @@
 /**
- * Created by Connor Baltutis on 6/10/18.
+ * Created by Colleen Baltutis on 6/10/18.
  */
 
 chrome.runtime.onMessage.addListener (
@@ -29,7 +29,10 @@ function getRegistrationsInfo() {
       // get td's child a, pull acct# from href, name from text
       var accountA = $(this).parent().next().find('td.viewField').first().find('a');
       var accountHref = accountA.attr('href');
-      var accountID = accountHref.substring(accountHref.indexOf('=') + 1);
+      var accountID = '';
+      if(accountHref != null){
+        accountID = accountHref.substring(accountHref.indexOf('=') + 1);
+      }
       var name = accountA.text().trim();
       dataArray.push(new registrant(accountID, attendeeID, name, eventId));
     });
@@ -50,10 +53,12 @@ function registrant(accountId, attendeeId, name, eventId)
 
     console.log("Registrant we are processing: " + this.name);
 
-    if (eventId !== "172") {
+    //Checks for the correct event number and that the attendee data exists for the person
+    //Change to current event ID. 142 is the CONvergence Example for Training Only event.
+    if (eventId !== "142" && eventId !== "232") {
       console.log("Wrong CONvergence year!");
       this.state = 'red';
-      this.reason = "This registration is not for 2019.  Please click back and select the attendee's 2019 Registration.";
+      this.reason = "This registration is not for this year or is for a Dealer/Artist.  If Dealer/Artist send to Help Desk, otherwise please click back and select the attendee's current Registration.";
     }
 
     if (this.accountId === '') {

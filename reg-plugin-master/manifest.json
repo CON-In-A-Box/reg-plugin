@@ -4,8 +4,8 @@
     "manifest_version": 2,
     "name": "__MSG_appName__",
     "description": "__MSG_appDescription__",
-    "author": "CONvergence IT, Matt Resong, Connor Baltutis, Sean Berry",
-    "version": "2019.1",
+    "author": "CONvergence IT, Matt Resong, Colleen Baltutis, Sean Berry, Mark Sauntry",
+    "version": "2024.1",
     "default_locale": "en",
     "icons": {
 
@@ -16,15 +16,20 @@
         { "matches": ["https://ce.z2systems.com/np/admin/event/attendeeEdit.do*"], "js": ["jquery-1.12.4.min.js", "js/attendeeContact.js"], "run_at": "document_end"  },
         { "matches": ["https://ce.z2systems.com/np/admin/event/contactSelect.do*"], "js": ["jquery-1.12.4.min.js", "js/attendeeContact.js"], "run_at": "document_end"  },
         { "matches": ["https://ce.z2systems.com/np/admin/event/eventRegDetails.do*"], "js": ["jquery-1.12.4.min.js", "js/registrations.js"], "run_at": "document_end"  },
-        { "matches": ["https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=172*"], "js": ["jquery-1.12.4.min.js", "js/regSearch.js"], "run_at": "document_end" },
+        { "matches": ["https://ce.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=202*"], "js": ["jquery-1.12.4.min.js", "js/regSearch.js"], "run_at": "document_end" },
         { "matches": ["https://trial.z2systems.com/np/admin/event/attendeeEdit.do*"], "js": ["jquery-1.12.4.min.js", "js/attendeeContact.js"], "run_at": "document_end"  },
         { "matches": ["https://trial.z2systems.com/np/admin/event/contactSelect.do*"], "js": ["jquery-1.12.4.min.js", "js/attendeeContact.js"], "run_at": "document_end"  },
         { "matches": ["https://trial.z2systems.com/np/admin/event/eventRegDetails.do*"], "js": ["jquery-1.12.4.min.js", "js/registrations.js"], "run_at": "document_end"  },
-        { "matches": ["https://trial.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=172*"], "js": ["jquery-1.12.4.min.js", "js/regSearch.js"], "run_at": "document_end" }
+        { "matches": ["https://trial.z2systems.com/np/admin/event/registrationSearch.do?query.eventId=202*"], "js": ["jquery-1.12.4.min.js", "js/regSearch.js"], "run_at": "document_end" },
+		{ "matches": ["https://ce.app.neoncrm.com/np/admin/event/attendeeEdit.do*"], "js": ["jquery-1.12.4.min.js", "js/attendeeContact.js"], "run_at": "document_end"  },
+        { "matches": ["https://ce.app.neoncrm.com/np/admin/event/contactSelect.do*"], "js": ["jquery-1.12.4.min.js", "js/attendeeContact.js"], "run_at": "document_end"  },
+        { "matches": ["https://ce.app.neoncrm.com/np/admin/event/eventRegDetails.do*"], "js": ["jquery-1.12.4.min.js", "js/registrations.js"], "run_at": "document_end"  },
+        { "matches": ["https://ce.app.neoncrm.com/np/admin/event/registrationSearch.do?query.eventId=202*"], "js": ["jquery-1.12.4.min.js", "js/regSearch.js"], "run_at": "document_end" }
     ],
     "permissions": ["storage",
         "tabs",
         "webNavigation",
+		"https://ce.app.neoncrm.com/np/admin/event/*",
         "https://ce.z2systems.com/np/admin/event/*",
         "https://trial.z2systems.com/np/admin/event/*"
     ],
