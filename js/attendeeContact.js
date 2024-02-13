@@ -46,7 +46,9 @@ function getAttendeeInfo() {
     var ticketType = document.getElementById('ticketPackageId').options[document.getElementById('ticketPackageId').selectedIndex].text;
     var arrChecks = $("label:contains('Art Show Hold - Do Not Release'):first").next().find("input");
     var opsHoldCheck = $("label:contains('Operations Hold - Do Not Release'):first").next().find("input");
+    var regHoldCheck = $("label:contains('Registration Hold - Do Not Release'):first").next().find("input");
     var nonTransferName = $("label:contains('Non-Transferable First and Last Name'):first").next().find("input").val();
+
     /*
     if (window.jQuery) {
         console.log("jQuery Is Loaded");
@@ -79,15 +81,26 @@ function getAttendeeInfo() {
         }
         }
 
+    var regHold="No";
+    for (i=0; regHoldCheck[i]; i++)
+        {
+            if(regHoldCheck[i].checked){
+            //checkedValue = arrChecks[i].value;
+                regHold="Yes";
+            break;
+        }
+        }
+
 
     console.log("Is there an art show hold? "+artShowHold);
     console.log("Is there an operations department hold? "+opsHold);
+    console.log("Is there a registration department hold? "+regHold);
     console.log("Ticket: "+ticketType);
     console.log("Attendee ID: "+attendeeId);
     console.log("Account ID: "+accountId);
     console.log("Name: "+attendeeName+" NonTransfer Name: "+nonTransferName);
 
-    var dataObject=new attendee(accountId, attendeeId, attendeeName, ticketType, numberActiveBadges, attendeeBadgeName, regStatus, artShowHold, opsHold, nonTransferName );
+    var dataObject=new attendee(accountId, attendeeId, attendeeName, ticketType, numberActiveBadges, attendeeBadgeName, regStatus, artShowHold, opsHold, regHold, nonTransferName );
 
     return dataObject;
 }
@@ -104,8 +117,12 @@ function getParameterByName(name, callback)
 }
 
 
-// Increment the badge number and set the date/time stamp fields
-// Return true or false (Depending upon success.
+/*
+    Populate data into the non-transferrable badge name and badge pickup fields to note badge picked up.
+    Works for duplicate badges as well (increments and fills in the proper data for the proper badge issuance)
+    Increment the badge number and set the date/time stamp fields and the non-transferrable name field
+    Return true or false (Depending upon success.
+*/
 function incrementBadge() {
 
     console.log("incrementBadge Received a request and is processing it now");
@@ -114,6 +131,13 @@ function incrementBadge() {
     var numActive = elNumberActiveBadges.val() === '' ? 0 : parseInt(elNumberActiveBadges.val());
 
     var saveButton = document.getElementsByName('save')[0];
+
+    //var elFirstName = $("label:contains('First Name'):first").next().find("input");
+    var elFirstName = $("#acInput");
+    var elLastName = $("label:contains('Last Name'):first").next().find("input");
+    var nonTransferableName = elFirstName.val().concat(" ", elLastName.val());
+    //console.log("FNAME:"+elFirstName.val());
+    //console.log("LNAME:"+elLastName.val());
 
     var pickupDates = new Array();
     var elpickupDates = new Array();
@@ -140,7 +164,7 @@ function incrementBadge() {
     console.log("The timestamp formatted date is: "+timestampformatteddate);
 
 
-    // Increment the active number
+    // Increment the active number of badges
     if (numActive === 0) {
         elNumberActiveBadges.val( 1 );
     } else {
@@ -160,12 +184,17 @@ function incrementBadge() {
         }
 
     }
+
+    //Populate the non-transferrable name field with the name of the person on the registration
+    var nonTransferableNameField = $("label:contains('Non-Transferable First and Last Name'):first").next().find("input");
+    nonTransferableNameField.val( nonTransferableName );
+
     saveButton.click();
 }
 
 
 //Builds the data object
-function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, regStatus, artShowHold, opsHold, nonTransferName)
+function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, regStatus, artShowHold, opsHold, regHold, nonTransferName)
 {
     this.accountId=accountId;
     this.attendeeId=attendeeId;
@@ -176,6 +205,7 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
     this.regStatus=regStatus;
     this.artShowHold=artShowHold;
     this.opsHold=opsHold;
+    this.regHold=regHold;
     this.nonTransferName=nonTransferName;
 
     this.state = 'green';
@@ -184,21 +214,29 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
 
     console.log("Ticket we are processing: "+this.ticket);
 
+// Neon has a ticket name for each ticket, this identifies the type of ticket and sets the status and message for the Connie Head and pop-up
     switch (this.ticket) {
-        case "Adult":
+        case "Day":
             this.state = 'yellow';
-            this.reason = "ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 1998)";
+            this.reason = "DAY PASS \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 2006)\nMAKE SURE DAY PASS IS ISSUED";   //UPDATE YEAR
             this.ticketText ="ADULT";
             this.attendeeId = "A"+this.attendeeId;
             this.badgeImage = 'ADULT.tif';
             break;
-        case "Young":
-            this.ticketText ="KID";
-            this.attendeeId = "K"+this.attendeeId;
-            this.badgeImage = 'KID.tif';
+        case "Adult":
+            this.state = 'yellow';
+            this.reason = "ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 2006)\nMAKE SURE WEEKEND BADGE IS ISSUED";   //UPDATE YEAR
+            this.ticketText ="ADULT";
+            this.attendeeId = "A"+this.attendeeId;
+            this.badgeImage = 'ADULT.tif';
             break;
         case "Child":
             this.ticketText ="CHILD";
+            this.attendeeId = "K"+this.attendeeId;
+            this.badgeImage = 'KID.tif';
+            break;
+        case "Youth":
+            this.ticketText ="YOUTH";
             this.attendeeId = "C"+this.attendeeId;
             this.badgeImage = 'CHILD.tif';
             break;
@@ -207,7 +245,7 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
             this.attendeeId = "T"+this.attendeeId;
             this.badgeImage = 'TEEN.tif';
             break;
-        /*
+        /* Currently do not have a ticket type for Guests of Honor/prior Guests of Honor
         case "Prior GOH":
             this.state = 'yellow';
             this.reason ="ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE JULY 4 1995)";
@@ -223,12 +261,12 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
             */
         case "Invited Participant":
             this.state = 'yellow';
-            this.reason = "ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 1998)";
+            this.reason = "ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 2004)";
             this.ticketText ="ADULT";
             this.attendeeId = "A"+this.attendeeId;
             this.badgeImage = 'ADULT.tif';
             break;
-        /*
+        /* Currently do not have a ticket type for Guests of Honor +1
         case "GOH +1 (guest of guest)":
             this.ticketText ="TEEN";
             this.badgeNumber = "T"+this.id;
@@ -242,42 +280,57 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
             this.badgeImage = 'NONE.tif';
     }
 
-    if (this.regStatus != "SUCCEED") {
+    //Check to make sure the registration is in a "SUCCEEDED" state meaning that it is fully processed and paid
+    if (this.regStatus != "SUCCEEDED") {
         console.log("This is not paid for yet!");
         this.state = 'red';
         this.reason = 'NOT PAID\nThis badge has not been paid for. Please direct member to cashier for assistance!';
     }
 
+    //Check to see if this badge has already been picked up, replacement badges need to go through Help Desk/Cashier
     if (this.activeBadges != null && this.activeBadges>0) {
         console.log("There are already active badges");
         this.state = 'red';
         this.reason = 'PRINTED\nThis badge was already printed and cannot be printed again. Please direct member to cashier for assistance!';
     }
 
+    //Check to see if the Art Show has identified this person as needing to see them before picking up their badge
     if (this.artShowHold == "Yes") {
         console.log("There is an art show hold");
         this.state = 'red';
-        this.reason = 'HOLD\nThis badge has an art show hold. Please direct member to art show to pay and then to help desk to log.';
+        this.reason = 'HOLD\nSend member to Help Desk.\nHelp Desk instructions: This badge has an art show hold. Please direct member to art show to pay and then to help desk to log.';
     }
 
+    //Check to see if the Operations has identified this person as needing to see them before picking up their badge
     if (this.opsHold == "Yes") {
             console.log("There is an operations department hold");
             this.state = 'red';
-            this.reason = 'HOLD\nThis badge has an operations department hold. Please direct the member to operations.';
+            this.reason = 'HOLD\nSend member to Help Desk.\nHelp Desk instructions: This badge has an operations department hold. Please direct the member to operations.';
         }
 
-    if (this.id < 42214) {    //Update each year to lowest numbered attendee to assist reduction of human error
+    //Check to see if the Registration has identified this person as needing to see the Help Desk before picking up their badge    
+    if (this.regHold == "Yes") {
+        console.log("There is a registration department hold");
+        this.state = 'red';
+        this.reason = 'HOLD\nSend member to Help Desk.\nHelp Desk instructions: This badge has an registration department hold. Please review notes on account or contact Head.';
+    }
+        
+   /* 
+    if (this.id < 65158) {    //Update each year to lowest numbered attendee to assist reduction of human error
         this.state = 'red';
         this.reason = 'THIS IS NOT AN ACTUAL CONVERGENCE REGISTRATION FOR THIS YEAR!\nCLICKED WRONG EVENT !!';
 
     }
+    */
 
+    //Some tickets (comps for example) are non-transferrable, if the names do not match they need to see the Help Desk
     if (this.nonTransferName !== "" && this.nonTransferName !== this.name) {
             this.state = 'red';
             this.reason = 'THIS IS A NON-TRANSFERABLE MEMBERSHIP!\nSEND MEMBER TO HELPDESK OR REQUEST ASSISTANCE !!';
 
         }
 
+    //If the account ID is missing then something did not go correctly in scraping the data or the person clicked the Edit button instead of using the Connie Head    
     if (this.accountId === null) {
         console.log("No account number!");
         this.state = 'red';

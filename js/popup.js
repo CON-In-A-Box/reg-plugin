@@ -7,7 +7,7 @@
 //When the window loads create the page data to display
 window.onload = displayAttendeeInfo;
 function displayAttendeeInfo() {
-    var attendeeData = chrome.extension.getBackgroundPage().attendeeInfo;
+    var attendeeData = chrome.extension.getBackgroundPage(); //removed to see if works: .attendeeInfo;
     console.log("Popup attempted to receive data and it received: "+attendeeData);
     if (attendeeData)
         buildAttendeeDataPage(attendeeData);

@@ -6,7 +6,8 @@ function save_options()
     var mngtOverride = document.getElementById( 'mngtoverride' ).checked;
     //var websocketServer = document.getElementById('websocketserver').value;
 
-    var pass1 = "password-goes-here";    //TODO Encode or encrypt this somehow
+    //This password is used to allow Help Desk to allow badge printing even if the status is Red
+    var pass1 = "Connie4Life";    //TODO Encode or encrypt this somehow
     if( mngtOverride )
     {
 

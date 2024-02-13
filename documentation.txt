@@ -1,4 +1,34 @@
-Connor Baltutis - 5/26/2018
+Mark Sauntry - 1/24/2024
+
+Annual Update Guide:
+
+registrations.js:
+Around Line 57:     if (eventId !== "142" && eventId !== "217")
+Update the second eventID number to the event number in Neon for this year.
+The first number is our test event and should stay the same.
+
+
+options.js:
+Around line 9:    var pass1 = "********"; 
+If needed update the Manager password for this year.
+
+
+attendeeContact.js:
+Around line 212:     switch (this.ticket)
+Make sure the ticket names start with the words listed in this section.
+If they do not, update this section to properly match the ticket names and action descriptions.
+
+Around line 222: this.reason = "ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 2005)"; 
+Update the year to match when someone would be 18.
+
+
+background.js:
+Around line 180: url = "https://ce.app.neoncrm.com/np/admin/event/registrationSearch.do?query.eventId=202";
+Update the eventID number to the event number in Neon for this year.
+
+
+
+Colleen Baltutis - 5/26/2018
 
 Troubleshooting Badge Increment Process:
 

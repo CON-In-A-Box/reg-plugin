@@ -47,11 +47,20 @@ function buildAttendeeDataPage(attendeeData) {
     //add the row
     tbdy.appendChild(tr);
 
+    tr=document.createElement('tr');
+    td=document.createElement('td');
+    td.appendChild(document.createTextNode("Badge Number: " + attendeeData.accountId))
+    //add the cell
+    tr.appendChild(td)
+    //add the row
+    tbdy.appendChild(tr);
+
 
     tbl.appendChild(tbdy);
     body.appendChild(tbl);
     // The table has finished being built
 
+    //Management Override allows someone who has entered  the Manager Password on the extension Options page to issue a badge even if the status is red
     var mngtOverride = "";
 
             chrome.storage.local.get( ['managementOverride'], function ( items )
@@ -150,16 +159,16 @@ function buildRegistrationsDataPage(registrationData, tab) {
         element.setAttribute("class", "button");
         element.onclick = function () {
           chrome.tabs.getSelected(null, function(tab) {
-              if (tab.url.includes('trial.z2systems.com'))
+              if (tab.url.includes('trial.ce.app.neoncrm.com'))
               {
                 chrome.tabs.update({
-                     url: "https://trial.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+                     url: "https://trial.ce.app.neoncrm.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
                 });
               }
-              else if (tab.url.includes('ce.z2systems.com'))
+              else if (tab.url.includes('ce.app.neoncrm.com'))
               {
                 chrome.tabs.update({
-                     url: "https://ce.z2systems.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+                     url: "https://ce.app.neoncrm.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
                 });
               }
               window.close();
