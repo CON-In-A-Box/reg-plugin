@@ -49,7 +49,7 @@ function buildAttendeeDataPage(attendeeData) {
 
     tr=document.createElement('tr');
     td=document.createElement('td');
-    td.appendChild(document.createTextNode("Badge Number: " + attendeeData.accountId))
+    td.appendChild(document.createTextNode("Badge Number: " + attendeeData.accountId + "\xa0\xa0\xa0\xa0\xa0\xa0\xa0 Ticket: " + attendeeData.ticketText))
     //add the cell
     tr.appendChild(td)
     //add the row
