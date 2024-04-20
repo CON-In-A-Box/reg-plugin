@@ -210,6 +210,7 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
 
     this.state = 'green';
     this.reason = 'OK to proceed';
+    this.ticketText = 'SEE TICKET ON SCREEN';
     this.ticket = this.ticket.substr(0,this.ticket.indexOf(' '));
 
     console.log("Ticket we are processing: "+this.ticket);
@@ -219,7 +220,7 @@ function attendee(accountId, attendeeId, name, ticket, activeBadges, badgeName, 
         case "Day":
             this.state = 'yellow';
             this.reason = "DAY PASS \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE THIS DAY IN 2006)\nMAKE SURE DAY PASS IS ISSUED";   //UPDATE YEAR
-            this.ticketText ="ADULT";
+            this.ticketText ="DAY PASS";
             this.attendeeId = "A"+this.attendeeId;
             this.badgeImage = 'ADULT.tif';
             break;
