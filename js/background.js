@@ -115,8 +115,7 @@ function updateRegistrationsInfo(tabId){
 
 chrome.runtime.onInstalled.addListener(function (details){
     if (details.reason=="install" || details.reason=="upgrade") {
-        chrome.tabs.create({url: "chrome://settings/"});
-        window.alert(chrome.i18n.getMessage("appInstallMsg"));
+        chrome.tabs.create({url: "installation/installed.html"});
     }
 
 });
