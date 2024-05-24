@@ -3,13 +3,6 @@
  */
 
 /****************************************************
- * VARIABLES
- */
-// Global accessor that the popup uses.
-var attendeeInfo = null;
-var registrationsInfo = null;
-//var attendeeData = {};
-
 
 /****************************************************
  * PRINTING
@@ -64,40 +57,31 @@ chrome.webNavigation.onCompleted.addListener(function checkForValidUrl2(tabId) {
 function updateAttendeeInfo(tabId){
     chrome.tabs.sendMessage(tabId, {action: "Get Attendee Data"}, function(attendee) {
         console.log("The attendee data returned was:"+attendee);
-        attendeeInfo = attendee;
+        chrome.storage.local.set({ "attendee": attendee });
         if (!attendee) {
             console.log('This page does not have the required attendee data and therefore no icon will display');
-            chrome.pageAction.hide(tabId);
+            chrome.action.disable(tabId);
         } else {
-            //var ico = 'assets/wink-'+attendeeInfo[0].valueOf()+'-19.png';;
-            var ico = 'assets/wink-'+attendeeInfo.state+'-19.png';
+            const ico = `../assets/wink-${attendee.state}-19.png`;
             console.log("The icon path to set is: "+ico);
-            chrome.pageAction.setIcon({tabId: tabId, path:ico}, function() {
-                chrome.pageAction.show(tabId);
+            chrome.action.setIcon({tabId: tabId, path:ico}, function() {
+                chrome.action.enable(tabId);
             });
         }
     });
 }
 
 function updateRegistrationsInfo(tabId){
-    chrome.tabs.sendMessage(tabId, {action: "Get Registrations Data"}, function(registrations) {
-        console.log("The registrations data returned was:"+registrations);
-        registrationsInfo = registrations;
+    chrome.tabs.sendMessage(tabId, {action: "Get Registrations Data"}, async function(registrations) {
+        chrome.storage.local.set({ "registrations": registrations });
         if (!registrations) {
             console.log('This page does not have the required registrations data and therefore no icon will display');
-            chrome.pageAction.hide(tabId);
+            chrome.action.disable(tabId);
         } else {
-            //var ico = 'assets/wink-'+attendeeInfo[0].valueOf()+'-19.png';;
-            var color = 'green';
-            /*registrations.forEach(function() {
-              if (this.state = 'red'){
-                color = 'red';
-              }
-            });*/
-            var ico = 'assets/wink-'+color+'-19.png';
+            var ico = '../assets/wink-green-19.png';
             console.log("The icon path to set is: "+ico);
-            chrome.pageAction.setIcon({tabId: tabId, path:ico}, function() {
-                chrome.pageAction.show(tabId);
+            chrome.action.setIcon({tabId: tabId, path:ico}, function() {
+                chrome.action.enable(tabId);
             });
         }
     });

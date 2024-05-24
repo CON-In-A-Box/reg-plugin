@@ -6,17 +6,36 @@
 
 //When the window loads create the page data to display
 window.onload = displayAttendeeInfo;
+
+function getActiveTab() {
+    return new Promise((resolve) => {
+        chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+            if (Array.isArray(tabs) && tabs?.length > 0) {
+                resolve(tabs[0]);
+            }
+    
+            resolve(undefined);
+        });
+    })
+
+}
+
+
 function displayAttendeeInfo() {
-    chrome.tabs.getSelected(null, function(tab) {
-        var attendeeData = chrome.extension.getBackgroundPage().attendeeInfo;
-        var registrationsData = chrome.extension.getBackgroundPage().registrationsInfo;
-        console.log("Popup attempted to receive data and it received: "+attendeeData);
-        if (attendeeData && tab.url.includes('attendeeEdit'))
-            buildAttendeeDataPage(attendeeData);
-        else if (registrationsData && tab.url.includes('eventRegDetails'))
-            buildRegistrationsDataPage(registrationsData, tab);
-        else
+    getActiveTab().then((activeTab) => {
+        if (activeTab?.url?.includes('attendeeEdit')) {
+            chrome.storage.local.get('attendee').then((result) => {
+                const attendee = result.attendee;
+                attendee ? buildAttendeeDataPage(attendee) : buildNotFoundDataPage();
+            });
+        } else if (activeTab?.url?.includes('eventRegDetails')) {
+            chrome.storage.local.get('registrations').then((result) => {
+                const registrations = result.registrations;
+                registrations ? buildRegistrationsDataPage(registrations, activeTab) : buildNotFoundDataPage();
+            });
+        } else {
             buildNotFoundDataPage();
+        }
     });
 }
 
@@ -139,7 +158,7 @@ function buildRegistrationsDataPage(registrationData, tab) {
       var d = document.createElement('td');
       if(reg.state == 'red')
       {
-        var ico = 'assets/wink-red-19.png';
+        var ico = '../assets/wink-red-19.png';
         console.log("The icon path to set is: "+ico);
         chrome.pageAction.setIcon({tabId: tab.id, path:ico}, function() {
             chrome.pageAction.show(tab.id);
@@ -158,21 +177,18 @@ function buildRegistrationsDataPage(registrationData, tab) {
         element.setAttribute("value", chrome.i18n.getMessage("editAttendeeButton"));
         element.setAttribute("class", "button");
         element.onclick = function () {
-          chrome.tabs.getSelected(null, function(tab) {
-              if (tab.url.includes('trial.ce.app.neoncrm.com'))
-              {
-                chrome.tabs.update({
-                     url: "https://trial.ce.app.neoncrm.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
-                });
-              }
-              else if (tab.url.includes('ce.app.neoncrm.com'))
-              {
-                chrome.tabs.update({
-                     url: "https://ce.app.neoncrm.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
-                });
-              }
-              window.close();
-          });
+            getActiveTab().then((activeTab) => {
+                if (activeTab?.url?.includes('trial.ce.app.neoncrm.com')) {
+                    chrome.tabs.update({
+                        url: "https://trial.ce.app.neoncrm.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+                    });
+                } else if (activeTab?.url?.includes('ce.app.neoncrm.com')) {
+                    chrome.tabs.update({
+                        url: "https://ce.app.neoncrm.com/np/admin/event/attendeeEdit.do?id=" + reg.attendeeId + "&acct=" + reg.accountId
+                    });
+                }
+                window.close();
+            });
         };
         body.appendChild(element);
 
