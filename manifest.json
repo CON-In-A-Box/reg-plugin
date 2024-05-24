@@ -1,14 +1,13 @@
 {
 "update_url": "https://clients2.google.com/service/update2/crx",
 
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "__MSG_appName__",
     "description": "__MSG_appDescription__",
     "author": "CONvergence IT, Matt Resong, Colleen Baltutis, Sean Berry, Mark Sauntry",
     "version": "2024.1",
     "default_locale": "en",
     "icons": {
-
         "48": "assets/wink-with-note-black-48.png",
         "16": "assets/wink-black-16.png"
     },
@@ -26,28 +25,30 @@
         { "matches": ["https://ce.app.neoncrm.com/np/admin/event/eventRegDetails.do*"], "js": ["jquery-1.12.4.min.js", "js/registrations.js"], "run_at": "document_end"  },
         { "matches": ["https://ce.app.neoncrm.com/np/admin/event/registrationSearch.do?query.eventId=202*"], "js": ["jquery-1.12.4.min.js", "js/regSearch.js"], "run_at": "document_end" }
     ],
-    "permissions": ["storage",
+    "permissions": [
+        "storage",
         "tabs",
-        "webNavigation",
-		"https://ce.app.neoncrm.com/np/admin/event/*",
+        "webNavigation"
+    ],
+    "host_permissions": [
+        "https://ce.app.neoncrm.com/np/admin/event/*",
         "https://ce.z2systems.com/np/admin/event/*",
         "https://trial.z2systems.com/np/admin/event/*"
     ],
-    "page_action": {
+    "action": {
         "default_icon": {
-        "19": "assets/wink-black-19.png"
+            "19": "assets/wink-black-19.png"
         },
         "default_title": "Print Badge",
         "default_popup": "popup.html"
     },
     "background": {
-        "scripts": ["js/background.js"],
-        "persistent": false
+        "service_worker": "js/background.js"
     },
     "omnibox" : { "keyword" : "con" },
     "options_ui": {
         "page": "extension_options_page.html",
-        "chrome_style": true
+        "open_in_tab": false
       },
     "options_page": "extension_options_page.html"
 }
