@@ -68,10 +68,15 @@ function buildAttendeeDataPage(attendeeData) {
 
     tr=document.createElement('tr');
     td=document.createElement('td');
-    td.appendChild(document.createTextNode("Badge Number: " + attendeeData.accountId + "\xa0\xa0\xa0\xa0\xa0\xa0\xa0 Ticket: " + attendeeData.ticketText))
+    td.appendChild(document.createTextNode("Badge Number: " + attendeeData.accountId));
     //add the cell
-    tr.appendChild(td)
+    tr.appendChild(td);
     //add the row
+    tbdy.appendChild(tr);
+
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.appendChild(document.createTextNode(`Ticket: ${attendeeData.ticket}`));
     tbdy.appendChild(tr);
 
 

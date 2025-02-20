@@ -76,21 +76,21 @@ function registrant(accountId, attendeeId, name, eventId) {
     console.log("No Account ID Found!");
     this.state = "red";
     this.reason =
-      "No account ID for this person. Please direct member to Help Desk for assistance!";
+      "No account ID for this person. Please direct attendee to Help Desk for assistance!";
   }
 
   if (this.attendeeId === "") {
     console.log("No Attendee ID Found!");
     this.state = "red";
     this.reason =
-      "No attendee ID for this person. Please direct member to Help Desk for assistance!";
+      "No attendee ID for this person. Please direct attendee to Help Desk for assistance!";
   }
 
   if (this.name == "") {
     console.log("No name for this badge!");
     this.state = "red";
     this.reason =
-      "No name associated with this badge. Please direct member to Help Desk for assistance!";
+      "No name associated with this badge. Please direct attendee to Help Desk for assistance!";
   }
 
   console.log("the reason is: " + this.reason);
