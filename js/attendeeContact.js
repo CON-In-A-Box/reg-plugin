@@ -329,7 +329,7 @@ function attendee(
   const adultDob = calculateAdultAfterDate();
   const todayDate = new Date();
 
-  const dayPassReason = `DAY PASS <br/>AGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDob})<br/>MAKE SURE DAY PASS IS ISSUED`;
+  const dayPassReason = `DAY PASS \nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDob})\nMAKE SURE DAY PASS IS ISSUED`;
 
   // Neon has a ticket name for each ticket, this identifies the type of ticket and sets the status and message for the Connie Head and pop-up
   switch (this.ticket) {
@@ -356,7 +356,7 @@ function attendee(
       break;
     case "Adult":
       this.state = "yellow";
-      this.reason = `ADULT <br/>AGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDob})<br/>MAKE SURE WEEKEND BADGE IS ISSUED`;
+      this.reason = `ADULT \nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDob})\nMAKE SURE WEEKEND BADGE IS ISSUED`;
       this.ticketText = "ADULT";
       this.attendeeId = "A" + this.attendeeId;
       this.badgeImage = "ADULT.tif";
@@ -393,7 +393,7 @@ function attendee(
     case "Invited Participant":
       this.state = "yellow";
       this.reason =
-        "ADULT <br/>AGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE THIS DAY IN 2004)";
+        "ADULT \nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE THIS DAY IN 2004)";
       this.ticketText = "ADULT";
       this.attendeeId = "A" + this.attendeeId;
       this.badgeImage = "ADULT.tif";
@@ -408,7 +408,7 @@ function attendee(
     default:
       this.state = "red";
       this.reason =
-        "UNKNOWN <br/>PLEASE REVIEW AND SEE A SUB OR CO HEAD FOR ASSISTANCE!";
+        "UNKNOWN \nPLEASE REVIEW AND SEE A SUB OR CO HEAD FOR ASSISTANCE!";
       this.badgeNumber = "ERROR";
       this.badgeImage = "NONE.tif";
   }
@@ -418,7 +418,7 @@ function attendee(
     console.log("This is not paid for yet!");
     this.state = "red";
     this.reason =
-      "NOT PAID<br/>This badge has not been paid for. Please direct attendee to cashier for assistance!";
+      "NOT PAID\nThis badge has not been paid for. Please direct attendee to cashier for assistance!";
   }
 
   //Check to see if this badge has already been picked up, replacement badges need to go through Help Desk/Cashier
@@ -426,7 +426,7 @@ function attendee(
     console.log("There are already active badges");
     this.state = "red";
     this.reason =
-      "ISSUED<br/>This badge was already issued. Please direct attendee to cashier for assistance!";
+      "ISSUED\nThis badge was already issued. Please direct attendee to cashier for assistance!";
   }
 
   //Check to see if the Art Show has identified this person as needing to see them before picking up their badge
@@ -434,7 +434,7 @@ function attendee(
     console.log("There is an art show hold");
     this.state = "red";
     this.reason =
-      "HOLD<br/>Send attendee to Help Desk.<br/>Help Desk instructions: This badge has an Art Show hold. Please direct attendee to art show to pay and then to help desk to log.";
+      "HOLD\nSend attendee to Help Desk.\nHelp Desk instructions: This badge has an Art Show hold. Please direct attendee to Art Show to pay and then to the Registration Help Desk.";
   }
 
   //Check to see if the Operations has identified this person as needing to see them before picking up their badge
@@ -442,7 +442,7 @@ function attendee(
     console.log("There is an operations department hold");
     this.state = "red";
     this.reason =
-      "HOLD<br/>Send attendee to Help Desk.<br/>Help Desk instructions: This badge has an Operations department hold. Please direct the attendee to Operations.";
+      "HOLD\nSend attendee to Help Desk.\nHelp Desk instructions: This badge has an Operations department hold. Please direct the attendee to Operations.";
   }
 
   //Check to see if the Registration has identified this person as needing to see the Help Desk before picking up their badge
@@ -450,7 +450,7 @@ function attendee(
     console.log("There is a registration department hold");
     this.state = "red";
     this.reason =
-      "HOLD<br/>Send attendee to Help Desk.<br/>Help Desk instructions: This badge has an Registration department hold. Please review notes on account or contact Head.";
+      "HOLD\nSend attendee to Help Desk.\nHelp Desk instructions: This badge has an Registration department hold. Please review notes on account or contact Head.";
   }
 
   /* 
@@ -465,7 +465,7 @@ function attendee(
   if (this.nonTransferName !== "" && this.nonTransferName !== this.name) {
     this.state = "red";
     this.reason =
-      "THIS IS A NON-TRANSFERABLE BADGE!<br/>SEND ATTENDEE TO THE HELP DESK !!";
+      "THIS IS A NON-TRANSFERABLE BADGE!\nSEND ATTENDEE TO THE HELP DESK !!";
   }
 
   //If the account ID is missing then something did not go correctly in scraping the data or the person clicked the Edit button instead of using the Connie Head
@@ -473,7 +473,7 @@ function attendee(
     console.log("No account number!");
     this.state = "red";
     this.reason =
-      'NO ACCOUNT NUMBER<br/>Click "Cancel", then use the Connie head icon on the previous page.';
+      'NO ACCOUNT NUMBER\nClick "Cancel", then use the Connie head icon on the previous page.';
   }
 
   console.log("the reason is: " + this.reason);
