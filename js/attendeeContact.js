@@ -337,11 +337,9 @@ function attendee(
     case "Friday":
     case "Saturday":
     case "Sunday":
-      this.state =
-        todayDate.getDay() !== getDayValueForDayName(this.ticket)
-          ? "red"
-          : "yellow";
-      this.reason = dayPassReason;
+      const isDayPassDayCorrect = todayDate.getDay() === getDayValueForDayName(this.ticket);
+      this.state = isDayPassDayCorrect ? 'yellow' : 'red';
+      this.reason = isDayPassDayCorrect ? dayPassReason : 'INCORRECT DAY\nDay Pass purchased for a different day than today. Please send attendee to Help Desk.';
       this.ticketText = `${this.ticket.toUpperCase()} DAY PASS`;
       this.attendeeId = `A${this.attendeeId}`;
       this.badgeImage = "ADULT.tif";
