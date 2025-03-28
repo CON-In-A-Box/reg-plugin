@@ -39,6 +39,29 @@ function displayAttendeeInfo() {
     });
 }
 
+function createRowEntry(text) {
+    const tableRow = document.createElement('tr');
+    const tableColumn = document.createElement('td');
+
+    if (Array.isArray(text)) {
+        console.log('Text Array', text);
+        for (let i = 0; i < text.length; i++) {
+            console.log(`Adding ${text[i]}`);
+            tableColumn.appendChild(document.createTextNode(text[i]));
+            if (i < text.length - 1) {
+                console.log('Adding <br/>');
+                tableColumn.appendChild(document.createElement("br"));
+            }
+        }
+    } else {
+        tableColumn.appendChild(document.createTextNode(text));
+    }
+
+    tableRow.appendChild(tableColumn);
+
+    return tableRow;
+}
+
 
 // This builds the page body when attendee info is involved
 // and calls whatever is needed to facilitate this
@@ -50,29 +73,18 @@ function buildAttendeeDataPage(attendeeData) {
     tbl.style.width='100%';
     tbl.setAttribute('border','1');
     var tbdy=document.createElement('tbody');
-    var tr=document.createElement('tr');
-    var td=document.createElement('td');
-    td.appendChild(document.createTextNode(attendeeData.reason))
-    //add the cell
-    tr.appendChild(td)
-    //add the row
-    tbdy.appendChild(tr);
 
-    tr=document.createElement('tr');
-    td=document.createElement('td');
-    td.appendChild(document.createTextNode("ID Name to Match: " + attendeeData.name))
-    //add the cell
-    tr.appendChild(td)
-    //add the row
-    tbdy.appendChild(tr);
+    const reasonEntry = createRowEntry(attendeeData.reason.split('\n'));
+    tbdy.appendChild(reasonEntry);
 
-    tr=document.createElement('tr');
-    td=document.createElement('td');
-    td.appendChild(document.createTextNode("Badge Number: " + attendeeData.accountId + "\xa0\xa0\xa0\xa0\xa0\xa0\xa0 Ticket: " + attendeeData.ticketText))
-    //add the cell
-    tr.appendChild(td)
-    //add the row
-    tbdy.appendChild(tr);
+    const idNameEntry = createRowEntry(`ID Name to Match: ${attendeeData.name}`);
+    tbdy.appendChild(idNameEntry);
+
+    const badgeEntry = createRowEntry(`Badge Number: ${attendeeData.accountId}`);
+    tbdy.appendChild(badgeEntry);
+
+    const ticketEntry = createRowEntry(`Ticket: ${attendeeData.ticket}`);
+    tbdy.appendChild(ticketEntry);
 
 
     tbl.appendChild(tbdy);
@@ -112,29 +124,6 @@ function buildAttendeeDataPage(attendeeData) {
                                             } );
 
     console.log("Management Override is: "+mngtOverride.checked);
-
-
-    //Add a button to download a file to print the badge
-    //This should really be seperate, but oh well
-
-
-    /** if (attendeeData.state!="Red" || mngtOverride.checked) {
-
-    var elname = "badgebutton1";
-    var element = document.createElement("input");
-    element.setAttribute("type", "button");
-    element.setAttribute("value", chrome.i18n.getMessage("badgePickupButton"));
-    element.setAttribute("name", elname);
-    element.setAttribute("id", elname);
-    element.setAttribute("class", "button");
-    body.appendChild(element);
-
-    }   **/
-
-
-
-
-
 }
 
 function buildRegistrationsDataPage(registrationData, tab) {

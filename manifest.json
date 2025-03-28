@@ -5,7 +5,7 @@
     "name": "__MSG_appName__",
     "description": "__MSG_appDescription__",
     "author": "CONvergence IT, Matt Resong, Colleen Baltutis, Sean Berry, Mark Sauntry",
-    "version": "2024.1",
+    "version": "2025.1",
     "default_locale": "en",
     "icons": {
         "48": "assets/wink-with-note-black-48.png",
@@ -43,7 +43,8 @@
         "default_popup": "popup.html"
     },
     "background": {
-        "service_worker": "js/background.js"
+        "service_worker": "js/background.js",
+        "type": "module"
     },
     "omnibox" : { "keyword" : "con" },
     "options_ui": {
