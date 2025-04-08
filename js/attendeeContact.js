@@ -1,18 +1,41 @@
+/**
+ *
+ * @param {HTMLInputElement[]} checkBoxElements an array of checkbox elements that may or may not be checked.
+ * @returns {boolean} true if any of the checkboxes are checked, false otherwise.
+ */
+function checkForHolds(checkBoxElements) {
+  for (let i = 0; i < checkBoxElements.length; i++) {
+    if (checkBoxElements[i].checked) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * This function takes a day name and returns the corresponding number value repsenting the day of the week.
+ * @param {string} dayName the name of the day (e.g., 'Thursday', 'Friday', etc.)
+ * @returns {number} the number value of the day of the week (0-6) or -1 if the day name is invalid.
+ */
 function getDayValueForDayName(dayName) {
-  switch(dayName) {
-    case 'Thursday':
+  switch (dayName) {
+    case "Thursday":
       return 4;
-    case 'Friday':
+    case "Friday":
       return 5;
-    case 'Saturday':
+    case "Saturday":
       return 6;
-    case 'Sunday':
+    case "Sunday":
       return 0;
     default:
       return -1;
   }
 }
 
+/**
+ *
+ * @returns {string} the date that is 18 years before today in MM/DD/YYYY format
+ */
 function calculateAdultAfterDate() {
   const todayDate = new Date();
   const adultYearsAgo = todayDate.getFullYear() - 18;
@@ -23,6 +46,123 @@ function calculateAdultAfterDate() {
   );
 
   return adultDate.toLocaleDateString();
+}
+
+/**
+ *
+ * @param {string} ticketType the name of a ticket, which will include whether it is for an adult, teen, youth, or child.
+ * @returns {{ ticketName: string, badgeImage: string, badgeNumberPrefix: string }} an object with ticket information for a given ticket type
+ */
+function extractTicketDetailsForType(ticketType) {
+  if (ticketType.includes("Adult")) {
+    return {
+      ticketName: "Adult",
+      badgeImage: "ADULT.tif",
+      badgeNumberPrefix: "A",
+    };
+  } else if (ticketType.includes("Teen")) {
+    return {
+      ticketName: "Teen",
+      badgeImage: "TEEN.tif",
+      badgeNumberPrefix: "T",
+    };
+  } else if (ticketType.includes("Youth")) {
+    return {
+      ticketName: "Youth",
+      badgeImage: "CHILD.tif",
+      badgeNumberPrefix: "C",
+    };
+  } else if (ticketType.includes("Child")) {
+    return {
+      ticketName: "Child",
+      badgeImage: "KID.tif",
+      badgeNumberPrefix: "K",
+    };
+  }
+
+  // Default case
+  return {
+    ticketName: "Unknown",
+    badgeImage: "NONE.tif",
+    badgeNumberPrefix: "U",
+  };
+}
+
+/**
+ *
+ * @param {string} ticketType the name of the ticket type, which will include whether it is for an adult, teen, youth, or child.
+ * @param {string} ticketName the current ticket name, such as "Adult", "Teen", "Youth", or "Child"
+ * @returns {string} the ticket name to use for this ticket.
+ */
+function extractTicketTextForTicketType(ticketType, ticketName) {
+  const isDayPass = ticketType.includes("Day Pass");
+
+  // Day pass is for a specific day
+  if (isDayPass) {
+    const isComplimentaryDayPass = ticketType.includes("Comp");
+    return isComplimentaryDayPass
+      ? "COMP DAY PASS"
+      : `${ticketName.toUpperCase()} DAY PASS`;
+  }
+
+  return ticketName.toUpperCase();
+}
+
+/**
+ *
+ * @param {string} ticketType the name of the ticket type, which will include whether it is for an adult, teen, youth, or child.
+ * @param {string} adultDobDate the date of birth threshold for adults
+ * @returns {{ status: string; reason: string; }} the ticket name to use for this ticket.
+ */
+function extractTicketStatus(ticketType, adultDobDate) {
+  const isDayPass = ticketType.includes("Day Pass");
+  const isComplimentaryDayPass = ticketType.includes("Comp");
+
+  const isAdultTicket = ticketType.includes("Adult");
+
+  if (isDayPass) {
+    const dayPassReason = isAdultTicket
+      ? `DAY PASS\nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})\nMAKE SURE DAY PASS IS ISSUED`
+      : "MAKE SURE DAY PASS IS ISSUED";
+    if (isComplimentaryDayPass) {
+      return {
+        status: "yellow",
+        reason: dayPassReason,
+      };
+    } else {
+      const todayDay = new Date();
+      const dayName = ticketType.match(/Thursday|Friday|Saturday|Sunday/)[0];
+      const isDayPassDayCorrect =
+        todayDay.getDay() === getDayValueForDayName(dayName);
+      return {
+        status: isDayPassDayCorrect ? "yellow" : "red",
+        reason: isDayPassDayCorrect
+          ? dayPassReason
+          : "INCORRECT DAY\nDay Pass purchased for a different day than today. Please send attendee to Help Desk.",
+      };
+    }
+  } else if (isAdultTicket) {
+    return {
+      status: "yellow",
+      reason: `ADULT\nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})\nMAKE SURE WEEKEND BADGE IS ISSUED`,
+    };
+  }
+
+  if (
+    ticketType.includes("Teen") ||
+    ticketType.includes("Youth") ||
+    ticketType.includes("Child")
+  ) {
+    return {
+      status: "green",
+      reason: "OK to proceed",
+    };
+  }
+
+  return {
+    status: "red",
+    reason: "UNKNOWN \nPLEASE REVIEW AND SEE A SUB OR CO HEAD FOR ASSISTANCE!",
+  };
 }
 
 /**
@@ -49,23 +189,23 @@ function getAttendeeInfo() {
   console.log(
     "getAttendeeInfo Received a request to load up the attendee data"
   );
-  //var badgeNumber = getParameterByName("id");      //This was the old way, before an extra window broke it
 
-  // Old version of badge number with attendee ID
-  var attendeeId = $("label:contains('Attendee ID')").siblings().text().trim();
+  const attendeeId = $("label:contains('Attendee ID')")
+    .siblings()
+    .text()
+    .trim();
 
   // New version of badge number with account ID
-  //var accountId = document.getElementById('usHidden').value;
-  var accountId = new URL(window.location.toString()).searchParams.get("acct");
+  const accountId = new URL(window.location.toString()).searchParams.get(
+    "acct"
+  );
 
-  //var badgeNumber = "1234";     //For testing
-
-  var attendeeName = "".concat(
+  let attendeeName = "".concat(
     document.getElementsByName("attendee.firstName")[0].value,
     " ",
     document.getElementsByName("attendee.lastName")[0].value
   );
-  var attendeeBadgeName = $("label:contains('Badge Name'):first")
+  let attendeeBadgeName = $("label:contains('Badge Name'):first")
     .next()
     .find("input")
     .val();
@@ -74,79 +214,47 @@ function getAttendeeInfo() {
     attendeeBadgeName = attendeeName;
   }
 
-  var numActBadgesFromElement = $(
+  const numActBadgesFromElement = $(
     "label:contains('Number of Active Badges'):first"
   )
     .next()
     .find("input")
     .val();
-  var numberActiveBadges =
+  const numberActiveBadges =
     numActBadgesFromElement === "" ? 0 : parseInt(numActBadgesFromElement);
-  var ticketType =
+  const ticketType =
     document.getElementById("ticketPackageId").options[
       document.getElementById("ticketPackageId").selectedIndex
     ].text;
-  var arrChecks = $("label:contains('Art Show Hold - Do Not Release'):first")
+  const arrChecks = $("label:contains('Art Show Hold - Do Not Release'):first")
     .next()
     .find("input");
-  var opsHoldCheck = $(
+  const opsHoldCheck = $(
     "label:contains('Operations Hold - Do Not Release'):first"
   )
     .next()
     .find("input");
-  var regHoldCheck = $(
+  const regHoldCheck = $(
     "label:contains('Registration Hold - Do Not Release'):first"
   )
     .next()
     .find("input");
-  var nonTransferName = $(
+  const nonTransferName = $(
     "label:contains('Non-Transferable First and Last Name'):first"
   )
     .next()
     .find("input")
     .val();
 
-  /*
-    if (window.jQuery) {
-        console.log("jQuery Is Loaded");
-        } else {
-            // jQuery is not loaded
-            console.log("jQuery Is NOT Loaded");
-        }
-     */
-  var regStatus = $("label:contains('Registration Status')")
+  const regStatus = $("label:contains('Registration Status')")
     .siblings()
     .text()
     .trim();
   console.log(regStatus);
 
-  //var regStatus = "SUCCEED";              //For Testing Only
-
-  var artShowHold = "No";
-  for (i = 0; arrChecks[i]; i++) {
-    if (arrChecks[i].checked) {
-      //checkedValue = arrChecks[i].value;
-      artShowHold = "Yes";
-      break;
-    }
-  }
-  var opsHold = "No";
-  for (i = 0; opsHoldCheck[i]; i++) {
-    if (opsHoldCheck[i].checked) {
-      //checkedValue = arrChecks[i].value;
-      opsHold = "Yes";
-      break;
-    }
-  }
-
-  var regHold = "No";
-  for (i = 0; regHoldCheck[i]; i++) {
-    if (regHoldCheck[i].checked) {
-      //checkedValue = arrChecks[i].value;
-      regHold = "Yes";
-      break;
-    }
-  }
+  const artShowHold = checkForHolds(arrChecks);
+  const opsHold = checkForHolds(opsHoldCheck);
+  const regHold = checkForHolds(regHoldCheck);
 
   console.log("Is there an art show hold? " + artShowHold);
   console.log("Is there an operations department hold? " + opsHold);
@@ -173,18 +281,6 @@ function getAttendeeInfo() {
   );
 
   return dataObject;
-}
-
-//We need to get the attendees id number from the URL parameters as it appears to be the only place it is held at this time
-//Therefore we will use this to strip back to only the parameter we need to get
-function getParameterByName(name, callback) {
-  name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-  var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-    results = regex.exec(location.search);
-
-  return results == null
-    ? ""
-    : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
 /*
@@ -320,96 +416,24 @@ function attendee(
   this.regHold = regHold;
   this.nonTransferName = nonTransferName;
 
-  this.state = "green";
-  this.reason = "OK to proceed";
-  this.ticketText = "SEE TICKET ON SCREEN";
-  this.ticket = this.ticket.substr(0, this.ticket.indexOf(" "));
+  console.log("Ticket we are processing: " + ticket);
 
-  console.log("Ticket we are processing: " + this.ticket);
+  const { ticketName, badgeImage, badgeNumberPrefix } = extractTicketDetailsForType(ticket);
+  const ticketText = extractTicketTextForTicketType(
+    ticket,
+    ticketName
+  );
+
   const adultDob = calculateAdultAfterDate();
-  const todayDate = new Date();
+  const { status, reason } = extractTicketStatus(ticket, adultDob);
 
-  const dayPassReason = `DAY PASS \nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDob})\nMAKE SURE DAY PASS IS ISSUED`;
+  this.ticket = ticketName;
+  this.ticketText = ticketText;
+  this.badgeImage = badgeImage;
+  this.attendeeId = `${badgeNumberPrefix}${this.attendeeId}`;
 
-  // Neon has a ticket name for each ticket, this identifies the type of ticket and sets the status and message for the Connie Head and pop-up
-  switch (this.ticket) {
-    case "Thursday":
-    case "Friday":
-    case "Saturday":
-    case "Sunday":
-      const isDayPassDayCorrect = todayDate.getDay() === getDayValueForDayName(this.ticket);
-      this.state = isDayPassDayCorrect ? 'yellow' : 'red';
-      this.reason = isDayPassDayCorrect ? dayPassReason : 'INCORRECT DAY\nDay Pass purchased for a different day than today. Please send attendee to Help Desk.';
-      this.ticketText = `${this.ticket.toUpperCase()} DAY PASS`;
-      this.attendeeId = `A${this.attendeeId}`;
-      this.badgeImage = "ADULT.tif";
-      break;
-    case "Comp":
-    case "Day":
-      this.state = "yellow";
-      this.reason = dayPassReason;
-      this.ticketText = `${this.ticket === 'Comp' ? 'COMP ' : ''}DAY PASS`;
-      this.attendeeId = `A${this.attendeeId}`;
-      this.badgeImage = "ADULT.tif";
-      break;
-    case "Adult":
-      this.state = "yellow";
-      this.reason = `ADULT \nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDob})\nMAKE SURE WEEKEND BADGE IS ISSUED`;
-      this.ticketText = "ADULT";
-      this.attendeeId = "A" + this.attendeeId;
-      this.badgeImage = "ADULT.tif";
-      break;
-    case "Child":
-      this.ticketText = "CHILD";
-      this.attendeeId = "K" + this.attendeeId;
-      this.badgeImage = "KID.tif";
-      break;
-    case "Youth":
-      this.ticketText = "YOUTH";
-      this.attendeeId = "C" + this.attendeeId;
-      this.badgeImage = "CHILD.tif";
-      break;
-    case "Teen":
-      this.ticketText = "TEEN";
-      this.attendeeId = "T" + this.attendeeId;
-      this.badgeImage = "TEEN.tif";
-      break;
-    /* Currently do not have a ticket type for Guests of Honor/prior Guests of Honor
-        case "Prior GOH":
-            this.state = 'yellow';
-            this.reason ="ADULT \nID VERIFICATION OF AGE OVER 18 REQUIRED (DOB BEFORE JULY 4 1995)";
-            this.ticketText ="ADULT";
-            this.badgeNumber = "A"+this.id;
-            this.badgeImage = 'ADULT.tif';
-            break;
-        case "GOH":
-            this.ticketText ="KID";
-            this.badgeNumber = "K"+this.id;
-            this.badgeImage = 'KID.tif';
-            break;
-            */
-    case "Invited Participant":
-      this.state = "yellow";
-      this.reason =
-        "ADULT \nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE THIS DAY IN 2004)";
-      this.ticketText = "ADULT";
-      this.attendeeId = "A" + this.attendeeId;
-      this.badgeImage = "ADULT.tif";
-      break;
-    /* Currently do not have a ticket type for Guests of Honor +1
-        case "GOH +1 (guest of guest)":
-            this.ticketText ="TEEN";
-            this.badgeNumber = "T"+this.id;
-            this.badgeImage = 'TEEN.tif';
-            break;
-            */
-    default:
-      this.state = "red";
-      this.reason =
-        "UNKNOWN \nPLEASE REVIEW AND SEE A SUB OR CO HEAD FOR ASSISTANCE!";
-      this.badgeNumber = "ERROR";
-      this.badgeImage = "NONE.tif";
-  }
+  this.state = status;
+  this.reason = reason;
 
   //Check to make sure the registration is in a "SUCCEEDED" state meaning that it is fully processed and paid
   if (this.regStatus != "SUCCEEDED") {
@@ -428,7 +452,7 @@ function attendee(
   }
 
   //Check to see if the Art Show has identified this person as needing to see them before picking up their badge
-  if (this.artShowHold == "Yes") {
+  if (this.artShowHold) {
     console.log("There is an art show hold");
     this.state = "red";
     this.reason =
@@ -436,7 +460,7 @@ function attendee(
   }
 
   //Check to see if the Operations has identified this person as needing to see them before picking up their badge
-  if (this.opsHold == "Yes") {
+  if (this.opsHold) {
     console.log("There is an operations department hold");
     this.state = "red";
     this.reason =
@@ -444,20 +468,12 @@ function attendee(
   }
 
   //Check to see if the Registration has identified this person as needing to see the Help Desk before picking up their badge
-  if (this.regHold == "Yes") {
+  if (this.regHold) {
     console.log("There is a registration department hold");
     this.state = "red";
     this.reason =
       "HOLD\nSend attendee to Help Desk.\nHelp Desk instructions: This badge has an Registration department hold. Please review notes on account or contact Head.";
   }
-
-  /* 
-    if (this.id < 65158) {    //Update each year to lowest numbered attendee to assist reduction of human error
-        this.state = 'red';
-        this.reason = 'THIS IS NOT AN ACTUAL CONVERGENCE REGISTRATION FOR THIS YEAR!\nCLICKED WRONG EVENT !!';
-
-    }
-    */
 
   //Some tickets (comps for example) are non-transferrable, if the names do not match they need to see the Help Desk
   if (this.nonTransferName !== "" && this.nonTransferName !== this.name) {
