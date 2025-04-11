@@ -101,11 +101,11 @@ function extractTicketTextForTicketType(ticketType, ticketName) {
   if (isDayPass) {
     const isComplimentaryDayPass = ticketType.includes("Comp");
     return isComplimentaryDayPass
-      ? "COMP DAY PASS"
-      : `${ticketName.toUpperCase()} DAY PASS`;
+      ? "Comp Day Pass"
+      : `${ticketName.toUpperCase()} Day Pass`;
   }
 
-  return ticketName.toUpperCase();
+  return 'Weekend';
 }
 
 /**
@@ -144,7 +144,7 @@ function extractTicketStatus(ticketType, adultDobDate) {
   } else if (isAdultTicket) {
     return {
       status: "yellow",
-      reason: `ADULT\nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})\nMAKE SURE WEEKEND BADGE IS ISSUED`,
+      reason: `ADULT\nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})`,
     };
   }
 
@@ -183,8 +183,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action == "Increment Badge Count") sendResponse(incrementBadge());
 });
 
-// Search the page for attendee information
-// Return null if nothing is found
+
+/**
+ * 
+ * @returns {attendee}
+ */
 function getAttendeeInfo() {
   console.log(
     "getAttendeeInfo Received a request to load up the attendee data"
@@ -427,8 +430,7 @@ function attendee(
   const adultDob = calculateAdultAfterDate();
   const { status, reason } = extractTicketStatus(ticket, adultDob);
 
-  this.ticket = ticketName;
-  this.ticketText = ticketText;
+  this.ticket = `${ticketName} ${ticketText}`;
   this.badgeImage = badgeImage;
   this.attendeeId = `${badgeNumberPrefix}${this.attendeeId}`;
 
