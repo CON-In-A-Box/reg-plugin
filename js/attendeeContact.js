@@ -123,7 +123,7 @@ function extractTicketStatus(ticketType, adultDobDate) {
       : "OK to proceed";
     if (isComplimentaryDayPass) {
       return {
-        status: "yellow",
+        status: isAdultTicket ? "yellow" : "green",
         reason: dayPassReason,
       };
     } else {
@@ -131,8 +131,9 @@ function extractTicketStatus(ticketType, adultDobDate) {
       const dayName = ticketType.match(/Thursday|Friday|Saturday|Sunday/)[0];
       const isDayPassDayCorrect =
         todayDay.getDay() === getDayValueForDayName(dayName);
+      const status = isAdultTicket ? "yellow" : "green";
       return {
-        status: isDayPassDayCorrect ? "yellow" : "red",
+        status: isDayPassDayCorrect ? status : "red",
         reason: isDayPassDayCorrect
           ? dayPassReason
           : "INCORRECT DAY\nDay Pass purchased for a different day than today. Please send attendee to Help Desk.",
