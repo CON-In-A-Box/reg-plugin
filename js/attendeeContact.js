@@ -94,15 +94,12 @@ function extractTicketDetailsForType(ticketType) {
  * @param {string} ticketName the current ticket name, such as "Adult", "Teen", "Youth", or "Child"
  * @returns {string} the ticket name to use for this ticket.
  */
-function extractTicketTextForTicketType(ticketType, ticketName) {
+function extractTicketTextForTicketType(ticketType) {
   const isDayPass = ticketType.includes("Day Pass");
 
   // Day pass is for a specific day
   if (isDayPass) {
-    const isComplimentaryDayPass = ticketType.includes("Comp");
-    return isComplimentaryDayPass
-      ? "Comp Day Pass"
-      : `${ticketName.toUpperCase()} Day Pass`;
+    return 'Day Pass';
   }
 
   return 'Weekend';
@@ -122,8 +119,8 @@ function extractTicketStatus(ticketType, adultDobDate) {
 
   if (isDayPass) {
     const dayPassReason = isAdultTicket
-      ? `DAY PASS\nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})\nMAKE SURE DAY PASS IS ISSUED`
-      : "MAKE SURE DAY PASS IS ISSUED";
+      ? `AGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})`
+      : "OK to proceed";
     if (isComplimentaryDayPass) {
       return {
         status: "yellow",
@@ -144,7 +141,7 @@ function extractTicketStatus(ticketType, adultDobDate) {
   } else if (isAdultTicket) {
     return {
       status: "yellow",
-      reason: `ADULT\nAGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})`,
+      reason: `AGE VERIFICATION: MUST BE 18 OR OLDER (DOB BEFORE ${adultDobDate})`,
     };
   }
 
@@ -422,10 +419,7 @@ function attendee(
   console.log("Ticket we are processing: " + ticket);
 
   const { ticketName, badgeImage, badgeNumberPrefix } = extractTicketDetailsForType(ticket);
-  const ticketText = extractTicketTextForTicketType(
-    ticket,
-    ticketName
-  );
+  const ticketText = extractTicketTextForTicketType(ticket);
 
   const adultDob = calculateAdultAfterDate();
   const { status, reason } = extractTicketStatus(ticket, adultDob);
