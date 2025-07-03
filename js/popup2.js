@@ -149,8 +149,8 @@ function buildRegistrationsDataPage(registrationData, tab) {
       {
         var ico = '../assets/wink-red-19.png';
         console.log("The icon path to set is: "+ico);
-        chrome.pageAction.setIcon({tabId: tab.id, path:ico}, function() {
-            chrome.pageAction.show(tab.id);
+        chrome.action.setIcon({tabId: tab.id, path:ico}, function() {
+            chrome.action.enable(tab.id);
         });
         d.appendChild(document.createTextNode(reg.reason));
         r.appendChild(d);
