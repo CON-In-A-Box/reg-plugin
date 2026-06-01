@@ -5,8 +5,8 @@
   "author": "CONvergence IT — Matt Resong, Colleen Baltutis, Sean Berry, Mark Sauntry",
   "version": "2026.3",
   "icons": {
-    "48": "assets/wink-with-note-black-48.png",
-    "16": "assets/wink-black-16.png"
+    "48": "assets/reggie-with-note-black-48.png",
+    "16": "assets/reggie-black-16.png"
   },
   "content_scripts": [
     {
@@ -20,7 +20,8 @@
       "matches": [
         "https://ce.app.neoncrm.com/np/admin/event/attendeeEdit.do*"
       ],
-      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/attendeeContact.js", "js/merch-attendee.js"],
+      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/attendeeContact.js", "js/merch-attendee.js", "js/modal-drag.js", "js/attendee-modal.js"],
+      "css": ["css/brand.css", "css/checkin-modal.css"],
       "run_at": "document_end"
     },
     {
@@ -34,7 +35,8 @@
       "matches": [
         "https://ce.app.neoncrm.com/np/admin/event/eventRegDetails.do*"
       ],
-      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/registrations.js"],
+      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/registrations.js", "js/modal-drag.js", "js/checkin-modal.js"],
+      "css": ["css/brand.css", "css/checkin-modal.css"],
       "run_at": "document_end"
     }
   ],
@@ -45,8 +47,8 @@
   ],
   "action": {
     "default_icon": {
-      "19": "assets/wink-black-19.png",
-      "38": "assets/wink-black-38.png"
+      "19": "assets/reggie-black-19.png",
+      "38": "assets/reggie-black-38.png"
     },
     "default_title": "CONvergence Check-In",
     "default_popup": "popup.html"

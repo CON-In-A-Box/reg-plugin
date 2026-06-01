@@ -211,12 +211,28 @@ function readFieldValueByLabel(labelText) {
     // Found the form-group. Probe each input pattern in priority order.
 
     // 1. <select> (T-shirt session/ticket OR a customDataList dropdown).
+    //
+    // SESSION-TICKET GATE: session items (e.g. "Preorder your 2026 T-shirt")
+    // have BOTH a "Will Attend" checkbox AND a size dropdown in the same
+    // form-group. The dropdown can hold a leftover size selection even when
+    // the attendee never paid for the item. The checkbox is the source of
+    // truth -- unchecked = not ordered, ignore whatever the dropdown says.
+    // We only enter this gate when both inputs coexist; a plain customDataList
+    // dropdown (e.g. "Comp Reason") has no sibling checkbox so the gate
+    // doesn't fire and the existing behavior is preserved.
     const select = fg.querySelector("select");
     if (select) {
-      const opt = select.options[select.selectedIndex];
-      const raw = (opt?.text ?? opt?.value ?? "").trim();
+      const gateCheckbox = fg.querySelector('input[type="checkbox"]');
+      if (gateCheckbox && !gateCheckbox.checked) {
+        const leftover = (select.options[select.selectedIndex]?.text ?? "").trim();
+        console.log(`merch-attendee.js:   readFieldValueByLabel "${labelText}" → session checkbox unchecked, treating as not ordered (dropdown leftover: "${leftover}")`);
+        return "";
+      }
+      const opt     = select.options[select.selectedIndex];
+      const raw     = (opt?.text ?? opt?.value ?? "").trim();
       const cleaned = stripSessionPrice(raw);
-      console.log(`merch-attendee.js:   readFieldValueByLabel "${labelText}" → select option "${raw}" → cleaned "${cleaned}"`);
+      const gateTag = gateCheckbox ? " (session checkbox checked)" : "";
+      console.log(`merch-attendee.js:   readFieldValueByLabel "${labelText}" → select option "${raw}" → cleaned "${cleaned}"${gateTag}`);
       return cleaned;
     }
 

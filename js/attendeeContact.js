@@ -39,6 +39,15 @@
 // ── TRIGGER ICON UPDATE ON PAGE LOAD ──────────────────────────────────────
 
 (async function triggerIconUpdate() {
+  // Manager Debug Walk -- if the walk is active, run the audit instead
+  // of the normal reg/merch flow and open the report. Takes precedence
+  // over the mode check below.
+  const walkResult = await chrome.storage.local.get(STORAGE_KEY.DEBUG_WALK_ACTIVE);
+  if (walkResult[STORAGE_KEY.DEBUG_WALK_ACTIVE]) {
+    await runDebugAuditOnAttendeePage();
+    return;
+  }
+
   // In MERCH mode, js/merch-attendee.js owns the page scrape and storage
   // writes for the attendee edit form. Bail early so we don't clobber its
   // STORAGE_KEY.ATTENDEE_MERCH write or fire a reg-flavored PENDING_ICON_UPDATE.
@@ -73,6 +82,10 @@
 // ── MESSAGE LISTENER ──────────────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === ACTION.PING) {
+    sendResponse({ ok: true, script: "attendeeContact.js" });
+    return false;
+  }
   if (request.action === ACTION.GET_ATTENDEE_DATA) {
     getAttendeeInfo().then(sendResponse);
     return true; // async response
@@ -281,6 +294,140 @@ function buildFieldIndex() {
 
 // Build field index once on page load and cache it for this session.
 const FIELD = buildFieldIndex();
+
+// ── MANAGER DEBUG WALK: attendee-page audit ─────────────────────────────────
+//
+// Final stop of the debug walk. Lists every editable field + value on the
+// attendee form, checks the labels the extension relies on
+// (CONFIG.fieldLabels / requiredFields / merch.items), records the "attendee"
+// step, then asks background.js to open the report tab. Reuses the resolution
+// already done in FIELD (buildFieldIndex) plus the merch-attendee.js globals
+// readFieldValueByLabel / isMerchItemOrdered (defined before this runs).
+
+/** Appends a step to STORAGE_KEY.DEBUG_REPORT. Caller has confirmed the walk is active. */
+async function appendAttendeeDebugStep(step, status, details, issues = []) {
+  const result = await chrome.storage.local.get(STORAGE_KEY.DEBUG_REPORT);
+  const report = result[STORAGE_KEY.DEBUG_REPORT] ?? { steps: [], startedAt: Date.now() };
+  report.steps.push({ step, status, details, issues, recordedAt: new Date().toISOString() });
+  await chrome.storage.local.set({ [STORAGE_KEY.DEBUG_REPORT]: report });
+  console.log(`attendeeContact.js: appended debug step "${step}" (${status})`, details, issues);
+}
+
+/** Enumerates every .form-group.edit-attendee field as {label, value}. */
+function enumerateAttendeeFormGroups() {
+  const out = [];
+  for (const fg of document.querySelectorAll(".form-group.edit-attendee")) {
+    const lbl = fg.querySelector("label.col-xs-4");
+    if (!lbl) continue;
+    const label = lbl.textContent.trim();
+    if (!label) continue;
+
+    let value = "";
+    const select = fg.querySelector("select");
+    const radios = fg.querySelectorAll('input[type="radio"]');
+    const checks = fg.querySelectorAll('input[type="checkbox"]');
+    const text   = fg.querySelector('input[type="text"], textarea');
+    if (select) {
+      const gate = fg.querySelector('input[type="checkbox"]');
+      if (gate && !gate.checked) value = "";
+      else value = (select.options[select.selectedIndex]?.text ?? "").trim();
+    } else if (radios.length) {
+      const c = Array.from(radios).find(r => r.checked);
+      value = c ? ((c.getAttribute("title") || "").trim() || (c.value || "").trim()) : "";
+    } else if (checks.length) {
+      const c = Array.from(checks).find(x => x.checked);
+      value = c ? ((c.getAttribute("title") || "").trim() || "checked") : "";
+    } else if (text) {
+      value = (text.value || "").trim();
+    }
+    out.push({ label, value });
+  }
+  return out;
+}
+
+async function runDebugAuditOnAttendeePage() {
+  try {
+    const fields       = enumerateAttendeeFormGroups();
+    const labelByIndex = buildCustomFieldLabelMap();
+    const allLabels    = [...Object.values(labelByIndex), ...fields.map(f => f.label)];
+    const hasLabel     = (needle) => !!needle && allLabels.some(l => l.includes(needle));
+
+    // CONFIG.fieldLabels roles — reuse the resolution already in FIELD.
+    const used = [
+      { role: "registrationHold",    label: CONFIG.holdMessages[0].title,            found: FIELD.registrationHold    != null },
+      { role: "artShowHold",         label: CONFIG.holdMessages[1].title,            found: FIELD.artShowHold         != null },
+      { role: "operationsHold",      label: CONFIG.holdMessages[2].title,            found: FIELD.operationsHold      != null },
+      { role: "iceContact",          label: CONFIG.fieldLabels.iceContact,           found: FIELD.iceContact          != null },
+      { role: "preferredName",       label: CONFIG.fieldLabels.preferredName,        found: FIELD.preferredName       != null },
+      { role: "nonTransferableName", label: CONFIG.fieldLabels.nonTransferableName,  found: FIELD.nonTransferableName != null },
+      { role: "activeBadgeCount",    label: CONFIG.fieldLabels.activeBadgeCount,     found: FIELD.activeBadgeCount    != null },
+      { role: "pickupSlots",         label: `${CONFIG.fieldLabels.pickupDateLabel} / ${CONFIG.fieldLabels.pickupTimeLabel}`, found: (FIELD.pickupSlots?.length ?? 0) > 0 },
+    ];
+    const missing = used.filter(u => !u.found);
+
+    // Required fields — present? and (if present) non-empty?
+    const requiredMissing = [];
+    const requiredEmpty   = [];
+    for (const rf of CONFIG.requiredFields ?? []) {
+      if (!hasLabel(rf.labelText)) { requiredMissing.push(rf.labelText); continue; }
+      const entry = Object.entries(labelByIndex).find(([, l]) => l.includes(rf.labelText));
+      const val   = entry ? (customField(parseInt(entry[0], 10))?.value?.trim() ?? "") : "";
+      if (!val) requiredEmpty.push(rf.labelText);
+    }
+
+    // Merch items — reuse merch-attendee.js globals when available.
+    const merchReady = typeof readFieldValueByLabel === "function" && typeof isMerchItemOrdered === "function";
+    const merch = (CONFIG.merch?.items ?? []).map(item => {
+      const sourceFound = fields.some(f => f.label.includes(item.source.label));
+      const sourceVal   = merchReady && sourceFound ? readFieldValueByLabel(item.source.label) : "";
+      const ordered     = merchReady && sourceFound ? isMerchItemOrdered(item, sourceVal) : false;
+      const pickupFound = fields.some(f => f.label.includes(item.pickupFieldLabel));
+      const pickupVal   = merchReady && pickupFound ? readFieldValueByLabel(item.pickupFieldLabel) : "";
+      return {
+        name: item.name,
+        sourceLabel: item.source.label, sourceFound, sourceVal,
+        ordered, variant: ordered && item.source.matchMode === "anyExcept" ? sourceVal : "",
+        pickupLabel: item.pickupFieldLabel, pickupFound, pickedUp: !!pickupVal, pickedUpAt: pickupVal,
+      };
+    });
+
+    const issues = [];
+    missing.forEach(m => issues.push({ severity: "warning", message: `Extension field "${m.role}" (label "${m.label}") was not found on the attendee page` }));
+    requiredMissing.forEach(l => issues.push({ severity: "error",   message: `Required field "${l}" was not found on the attendee page` }));
+    requiredEmpty.forEach(l   => issues.push({ severity: "warning", message: `Required field "${l}" is present but empty` }));
+    merch.forEach(m => {
+      if (!m.sourceFound) issues.push({ severity: "warning", message: `Merch "${m.name}" source field "${m.sourceLabel}" was not found` });
+      if (!m.pickupFound) issues.push({ severity: "warning", message: `Merch "${m.name}" pickup field "${m.pickupLabel}" was not found` });
+    });
+
+    // Dry-run: what a check-in WOULD write, without touching the form.
+    const plan = computeCheckinWrites();
+    if (!plan.ok) {
+      issues.push({ severity: "warning", message: `Check-in dry-run can't proceed: ${plan.error}` });
+    }
+
+    const status = issues.some(i => i.severity === "error") ? "error"
+                 : issues.length > 0 ? "warning" : "ok";
+
+    const params = new URLSearchParams(location.search);
+    await appendAttendeeDebugStep("attendee", status, {
+      accountId:  params.get("acct") ?? "",
+      attendeeId: params.get("id") ?? "",
+      phase: "fields",
+      fields, used, missing, requiredMissing, requiredEmpty, merch,
+      plannedWrites:      plan.ok ? plan.writes : null,
+      plannedWritesError: plan.ok ? null : plan.error,
+    }, issues);
+  } catch (err) {
+    console.error("attendeeContact.js: runDebugAuditOnAttendeePage failed:", err);
+    await appendAttendeeDebugStep("attendee", "error", { phase: "fields" }, [
+      { severity: "error", message: `Attendee audit threw: ${err.message}` },
+    ]);
+  }
+
+  // Whether the audit succeeded or threw, open the report (final walk stop).
+  chrome.runtime.sendMessage({ action: ACTION.OPEN_DEBUG_REPORT });
+}
 
 // ── FIELD ACCESS HELPERS ───────────────────────────────────────────────────
 
@@ -569,7 +716,23 @@ async function getAttendeeInfo() {
 
   const missingIce = !!freshConditions[CONDITION.MISSING_ICE];
 
-  console.log(`getAttendeeInfo: accountId=${accountId} name="${legalName}" ticket="${ticketTypeName}" state=${state} conditions=${reasons.map(r => r.key).join(", ") || "none"}`);
+  // Pending merch -- items the attendee ordered but has not yet picked up.
+  // Reuses scrapeAttendeeMerch() from js/merch-attendee.js (loaded after this
+  // file as a content-script global). try/catch is defensive: if a merch field
+  // label changes or the helper isn't available, the reg flow still works.
+  let merch = [];
+  try {
+    if (typeof scrapeAttendeeMerch === "function") {
+      const merchResult = scrapeAttendeeMerch();
+      merch = (merchResult?.items ?? [])
+        .filter(m => m.ordered && !m.alreadyPickedUp)
+        .map(m => ({ name: m.name }));
+    }
+  } catch (err) {
+    console.warn("getAttendeeInfo: merch scrape failed, continuing without merch summary:", err);
+  }
+
+  console.log(`getAttendeeInfo: accountId=${accountId} name="${legalName}" ticket="${ticketTypeName}" state=${state} conditions=${reasons.map(r => r.key).join(", ") || "none"} pendingMerch=${merch.map(m => m.name).join(", ") || "none"}`);
 
   return {
     accountId,
@@ -584,6 +747,7 @@ async function getAttendeeInfo() {
     state,
     reasons,
     missingRequiredFields: missingIce ? [CONFIG.fieldLabels.iceContact] : [],
+    merch,
   };
 }
 
@@ -646,7 +810,7 @@ function highlightRedConditionFields(attendeeData) {
       const checkboxInput = customCheckboxByRole(fieldRole);
       if (checkboxInput) {
         console.log(`highlightRedConditionFields: highlighting checkbox "${fieldRole}" (index ${FIELD[fieldRole]})`);
-        checkboxInput.style.accentColor = "#dc3545";
+        checkboxInput.style.accentColor = BRAND.red;
         const parent = checkboxInput.closest("div, td, label");
         if (parent) parent.style.background = "#ffcccc";
       }
@@ -688,11 +852,11 @@ function highlightAccountHolds(holds) {
     const checkbox = customCheckboxByRole(role);
     if (checkbox) {
       console.log(`attendeeContact.js: highlighting ${label} checkbox`);
-      checkbox.style.accentColor = "#dc3545";
+      checkbox.style.accentColor = BRAND.red;
       const parent = checkbox.closest("div, td, label, li");
       if (parent) {
         parent.style.background  = "#fff3cd";
-        parent.style.borderLeft  = "4px solid #dc3545";
+        parent.style.borderLeft  = `4px solid ${BRAND.red}`;
         parent.style.paddingLeft = "8px";
       }
     }
@@ -711,60 +875,72 @@ function highlightAccountHolds(holds) {
  * Returns { ok: true } on success or { ok: false, error: string } on failure.
  * Called by the popup via INCREMENT_BADGE_COUNT message.
  */
-function incrementBadge() {
-  console.log("incrementBadge: validating fields before writing");
-
+/**
+ * Pure-ish planner: works out exactly what a check-in would write, WITHOUT
+ * touching the form. Returns either { ok:false, error } if a required target
+ * is missing / all slots full, or { ok:true, slot:[dateIdx,timeIdx],
+ * writes:[{fieldIndex,label,currentValue,plannedValue}] }.
+ *
+ * incrementBadge() applies these writes; the debug walk's attendee audit calls
+ * it as a dry-run and shows the planned writes — so preview and reality use the
+ * exact same logic and can't drift.
+ */
+function computeCheckinWrites() {
   const activeBadgesEl    = customFieldByRole("activeBadgeCount");
   const nonTransferableEl = customFieldByRole("nonTransferableName");
   const saveButton        = document.getElementsByName("save")[0];
 
-  if (!activeBadgesEl) {
-    const msg = "Cannot complete check-in: Active Badge Count field not found on this form. Please contact Registration Head.";
-    console.error(msg);
-    return { ok: false, error: msg };
-  }
-  if (!nonTransferableEl) {
-    const msg = "Cannot complete check-in: Non-Transferable Name field not found on this form. Please contact Registration Head.";
-    console.error(msg);
-    return { ok: false, error: msg };
-  }
-  if (!saveButton) {
-    const msg = "Cannot complete check-in: Save button not found. Please contact Registration Head.";
-    console.error(msg);
-    return { ok: false, error: msg };
-  }
+  if (!activeBadgesEl)    return { ok: false, error: "Active Badge Count field not found on this form." };
+  if (!nonTransferableEl) return { ok: false, error: "Non-Transferable Name field not found on this form." };
+  if (!saveButton)        return { ok: false, error: "Save button not found." };
 
   const availableSlot = (FIELD.pickupSlots ?? [])
     .find(([, timeIdx]) => customField(timeIdx)?.value?.trim() === "");
-  if (!availableSlot) {
-    const msg = "Cannot complete check-in: All pickup time slots are already filled. Please contact Registration Head.";
+  if (!availableSlot) return { ok: false, error: "All pickup time slots are already filled." };
+
+  const currentCount = activeBadgesEl.value === "" ? 0 : parseInt(activeBadgesEl.value, 10);
+  // For the non-transferable name, use the visible first-name input (acInput)
+  // which works for both standard and dealer attendees (it holds the legal first name).
+  const firstName    = document.getElementById("acInput")?.value?.trim() ?? "";
+  const lastName     = document.getElementsByName("attendee.lastName")[0]?.value?.trim() ?? "";
+  const now          = new Date();
+  const [dateIdx, timeIdx] = availableSlot;
+
+  return {
+    ok:   true,
+    slot: [dateIdx, timeIdx],
+    writes: [
+      { fieldIndex: FIELD.activeBadgeCount,    label: CONFIG.fieldLabels.activeBadgeCount,    currentValue: activeBadgesEl.value,            plannedValue: String(currentCount + 1) },
+      { fieldIndex: FIELD.nonTransferableName, label: CONFIG.fieldLabels.nonTransferableName, currentValue: nonTransferableEl.value,         plannedValue: `${firstName} ${lastName}`.trim() },
+      { fieldIndex: dateIdx,                   label: CONFIG.fieldLabels.pickupDateLabel,     currentValue: customField(dateIdx)?.value ?? "", plannedValue: formattedDate(now) },
+      { fieldIndex: timeIdx,                   label: CONFIG.fieldLabels.pickupTimeLabel,     currentValue: customField(timeIdx)?.value ?? "", plannedValue: now.toLocaleTimeString() },
+    ],
+  };
+}
+
+function incrementBadge() {
+  console.log("incrementBadge: validating fields before writing");
+
+  const plan = computeCheckinWrites();
+  if (!plan.ok) {
+    const msg = `Cannot complete check-in: ${plan.error} Please contact Registration Head.`;
     console.error(msg);
     return { ok: false, error: msg };
   }
 
   console.log("incrementBadge: pre-flight passed, writing fields");
-
-  const currentCount   = activeBadgesEl.value === "" ? 0 : parseInt(activeBadgesEl.value, 10);
-  activeBadgesEl.value = currentCount + 1;
-
-  // For the non-transferable name, use the visible first-name input (acInput)
-  // which works for both standard and dealer attendees (it holds the legal first name).
-  const firstName         = document.getElementById("acInput")?.value?.trim() ?? "";
-  const lastName          = document.getElementsByName("attendee.lastName")[0]?.value?.trim() ?? "";
-  nonTransferableEl.value = `${firstName} ${lastName}`.trim();
-
-  const now                = new Date();
-  const [dateIdx, timeIdx] = availableSlot;
-  customField(dateIdx).value = formattedDate(now);
-  customField(timeIdx).value = now.toLocaleTimeString();
-  console.log(`Pickup timestamp written to slot date[${dateIdx}] / time[${timeIdx}]`);
+  for (const w of plan.writes) {
+    const el = customField(w.fieldIndex);
+    if (el) el.value = w.plannedValue;
+  }
+  console.log(`Pickup timestamp written to slot date[${plan.slot[0]}] / time[${plan.slot[1]}]`);
 
   // Arm the post-check-in redirect before the form POST. background.js
   // watches for the eventRegDetails navigation that Neon will trigger and
   // bounces the tab to the account search page.
   chrome.runtime.sendMessage({ action: ACTION.ARM_POST_CHECKIN_REDIRECT });
 
-  saveButton.click();
+  document.getElementsByName("save")[0].click();
   return { ok: true };
 }
 

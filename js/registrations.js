@@ -60,7 +60,133 @@ let extensionMode = EXTENSION_MODE.REG;
     [STORAGE_KEY.PENDING_ICON_UPDATE]: { page: "registrations", ts: Date.now() }
   });
   console.log(`registrations.js: wrote registration data (${data.length} attendees, ${notes.length} notes) and triggered icon update`);
+
+  // Manager Debug Walk -- if the walk is active, append a step entry with
+  // the eventreg findings, then auto-click the first attendee's edit link
+  // to advance the walk to its final stop.
+  await maybeAdvanceDebugWalk(data, notes);
 })();
+
+/**
+ * Debug-walk step for the eventreg page. No-op if STORAGE_KEY.DEBUG_WALK_ACTIVE
+ * is not set. Otherwise: appends one step entry with event-name + validation
+ * + attendee-count details, then clicks the first attendee's Edit link.
+ */
+async function maybeAdvanceDebugWalk(data, notes) {
+  const walkResult = await chrome.storage.local.get(STORAGE_KEY.DEBUG_WALK_ACTIVE);
+  if (!walkResult[STORAGE_KEY.DEBUG_WALK_ACTIVE]) return;
+
+  const eventName  = getEventName();
+  const validation = validateEventName(eventName);
+  const firstLink  = document.querySelector("td.textSmall a[href*='attendeeEdit']");
+
+  // Enumerate the first attendee's custom fields and check the labels the
+  // extension relies on. Presence (not value) is what matters here -- a field
+  // that exists but is empty is still "found".
+  const firstTextSmall = document.querySelector("td.textSmall");
+  const fieldsTable    = firstTextSmall ? findFieldsTable(firstTextSmall) : null;
+  const fields         = enumerateFieldsTable(fieldsTable);
+
+  const usedSpecs = [
+    { role: "registrationHold", label: CONFIG.holdMessages[0].title },
+    { role: "artShowHold",      label: CONFIG.holdMessages[1].title },
+    { role: "operationsHold",   label: CONFIG.holdMessages[2].title },
+    { role: "iceContact",       label: CONFIG.fieldLabels.iceContact, altLabel: "Badge: Emergency Contact" },
+    { role: "preferredName",    label: CONFIG.fieldLabels.preferredName },
+    { role: "activeBadgeCount", label: CONFIG.fieldLabels.activeBadgeCount },
+  ];
+  const used = usedSpecs.map(s => ({
+    role:  s.role,
+    label: s.label,
+    found: fields.some(f => f.label.includes(s.label)) ||
+           (s.altLabel ? fields.some(f => f.label.includes(s.altLabel)) : false),
+  }));
+  const missing = used.filter(u => !u.found);
+
+  // Roster audit -- inspect EVERY attendee in this registration (not just the
+  // first), resolving ticket type / holds / ICE / badges per attendee so
+  // ticket renames and missing data surface before the check-in line forms.
+  const roster = Array.from(document.querySelectorAll("td.textSmall")).map(td => {
+    const ft         = findFieldsTable(td);
+    const ticketName = readTicketType(td);
+    const ticketCfg  = resolveTicketConfig(ticketName);
+    const holds      = readHolds(ft);
+    return {
+      name:           readNameAndAccountId(td).legalName || "(no name)",
+      ticketName,
+      ticket:         ticketCfg.ticketLabel,
+      ticketResolved: ticketCfg.ticketLabel !== "Unknown",
+      icePresent:     readICEContact(ft) !== "",
+      badges:         parseInt(readField(ft, CONFIG.fieldLabels.activeBadgeCount) || "0", 10) || 0,
+      anyHold:        holds.regHold || holds.artHold || holds.opsHold,
+      layout:         ft ? (ft.textContent.includes(CONFIG.holdMessages[0].title) ? "standard" : "dealer/alt") : "none",
+    };
+  });
+
+  const issues = [];
+  if (validation.type === EVENT_MATCH.MISMATCH) {
+    issues.push({ severity: "error",   message: `Event "${eventName}" did not match any currentEventNames or testEventNames` });
+  }
+  if (data.length === 0) {
+    issues.push({ severity: "error",   message: "Zero attendee rows were scraped from this registration" });
+  }
+  if (!fieldsTable) {
+    issues.push({ severity: "warning", message: "Could not locate the first attendee's custom-fields table -- field list may be incomplete" });
+  }
+  missing.forEach(m => {
+    issues.push({ severity: "warning", message: `Extension field "${m.role}" (label "${m.label}") was not found on the eventReg page` });
+  });
+  roster.filter(a => !a.ticketResolved).forEach(a => {
+    issues.push({ severity: "warning", message: `Attendee "${a.name}" ticket "${a.ticketName || "(none)"}" did not match any CONFIG.ticketTypes — would be UNKNOWN_TICKET` });
+  });
+  if (!firstLink) {
+    issues.push({ severity: "error",   message: "Could not find an attendeeEdit link to click for the next walk step -- walk will halt here" });
+  }
+
+  const status = issues.some(i => i.severity === "error")   ? "error"
+               : issues.some(i => i.severity === "warning") ? "warning"
+               : "ok";
+
+  await appendDebugStep("eventreg", status,
+    {
+      eventName,
+      validationType:  validation.type,
+      attendeeCount:   data.length,
+      noteCount:       notes.length,
+      firstAttendeeId: firstLink?.getAttribute("href")?.match(/[?&]id=(\d+)/)?.[1] ?? null,
+      fields,
+      used,
+      missing,
+      roster,
+    },
+    issues,
+  );
+
+  if (!firstLink) {
+    // Walk halts here. Open the report anyway so the user sees the partial
+    // results plus why it stopped. background.js clears DEBUG_WALK_ACTIVE.
+    console.log("registrations.js: debug walk halting (no attendee link) -- opening partial report");
+    chrome.runtime.sendMessage({ action: ACTION.OPEN_DEBUG_REPORT });
+    return;
+  }
+
+  console.log("registrations.js: debug walk advancing to first attendee:", firstLink.href);
+  firstLink.click();
+}
+
+/**
+ * Local helper -- appends a step entry to STORAGE_KEY.DEBUG_REPORT.
+ * Mirrors appendDebugStepIfWalkActive in accountPage.js (different
+ * content-script world; can't share scope). Assumes walk is already
+ * confirmed active by the caller.
+ */
+async function appendDebugStep(step, status, details, issues = []) {
+  const result = await chrome.storage.local.get(STORAGE_KEY.DEBUG_REPORT);
+  const report = result[STORAGE_KEY.DEBUG_REPORT] ?? { steps: [], startedAt: Date.now() };
+  report.steps.push({ step, status, details, issues, recordedAt: new Date().toISOString() });
+  await chrome.storage.local.set({ [STORAGE_KEY.DEBUG_REPORT]: report });
+  console.log(`registrations.js: appended debug step "${step}" (${status})`, details, issues);
+}
 
 // ── MESSAGE LISTENER FOR POPUP REQUESTS ─────────────────────────────────
 
@@ -73,6 +199,10 @@ let extensionMode = EXTENSION_MODE.REG;
  * synchronous work to prevent Chrome from closing the channel early.
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === ACTION.PING) {
+    sendResponse({ ok: true, script: "registrations.js" });
+    return false;
+  }
   if (request.action === ACTION.GET_REGISTRATIONS) {
     console.log("registrations.js: received GET_REGISTRATIONS message");
     try {
@@ -245,6 +375,37 @@ function readField(fieldsTable, labelText) {
 
   console.log(`readField "${labelText}" → NOT FOUND`);
   return "";
+}
+
+/**
+ * DEBUG WALK: enumerates every label/value pair in an attendee's fields table.
+ * Used by the debug audit to show "all fields on the page". Returns
+ * [{label, value}], standard layout first, dealer layout as fallback.
+ *
+ * @param {Element|null} fieldsTable
+ * @returns {{label: string, value: string}[]}
+ */
+function enumerateFieldsTable(fieldsTable) {
+  const out = [];
+  if (!fieldsTable) return out;
+
+  const labelCells = fieldsTable.querySelectorAll("td.viewLabel");
+  if (labelCells.length > 0) {
+    for (const td of labelCells) {
+      const label = (td.childNodes[0]?.textContent ?? "").trim();
+      const value = (td.querySelector("span.viewField")?.textContent ?? "").trim();
+      if (label) out.push({ label, value });
+    }
+    return out;
+  }
+
+  // Dealer fallback: plain <td> with inline "Label: <span>value</span>"
+  for (const td of fieldsTable.querySelectorAll("td")) {
+    const label = (td.childNodes[0]?.textContent ?? "").trim();
+    const span  = td.querySelector("span");
+    if (label && span) out.push({ label, value: span.textContent.trim() });
+  }
+  return out;
 }
 
 /**

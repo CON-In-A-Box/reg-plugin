@@ -137,7 +137,7 @@ function buildMerchBanner() {
   return el("div", {
     className:   "override-bar",
     textContent: "MERCH MODE",
-    style:       "background:#2b6cb0; color:#fff;",
+    style:       `background:${BRAND.blue}; color:#fff;`,
   });
 }
 
@@ -269,7 +269,7 @@ function buildMerchAttendeeView(merchState, tab) {
           body.appendChild(el("div", {
             className:   "not-found-detail",
             textContent: `Could not record pickup: ${errMsg}`,
-            style:       "color:#c0392b; font-weight:bold; margin-top:8px;",
+            style:       `color:${BRAND.red}; font-weight:bold; margin-top:8px;`,
           }));
           return;
         }

@@ -125,6 +125,71 @@ wrong and the extension can't find the element to write to.
 
 ---
 
+## Verify field detection (labels changed in Neon)
+
+The extension finds every custom field by matching its **label text**. When
+Neon renames a label, the match fails and the field reads/writes wrong (or not
+at all). To see exactly which fields resolve, run the **Manager Debug Walk**:
+
+1. Open the extension Options, tick **Manager Override**, enter the manager
+   password, choose **Debugging**, and Save.
+2. In Neon, open the **account page** of a real attendee and click the extension
+   toolbar icon.
+3. The extension walks Account → Event Registration → first Attendee and opens a
+   report tab listing every field per page and flagging anything it can't find in
+   red. (If it halts early, the report still opens with a note explaining where.)
+4. Fix flagged labels in `config.js` (`CONFIG.fieldLabels` / `CONFIG.requiredFields`
+   for reg fields, `CONFIG.merch.items[]` for merch), reload, and re-run until
+   green. Switch **Debugging** back to **Regular** when done.
+
+Full walkthrough is Step 3 in `ANNUAL_UPDATE_GUIDE.md`. For a quick single-page
+check without manager mode, `tools/field-diagnostic.html` does the same matching
+from a pasted DevTools dump.
+
+---
+
+## Config looks wrong after editing config.js
+
+Open the extension **Options** page — the **Config check** panel runs automatically
+and lists any problems (missing/duplicate values, bad merch match modes, a real
+event left in the test list, an out-of-date password hash, version/year drift,
+debug mode left on). Fix the flagged items in `config.js`, reload the extension,
+and reopen Options until it says "No problems found." The same checks appear at
+the top of the Manager Debug Walk report.
+
+---
+
+## "Wrong attendee data" / popup won't react — quick resets
+
+Enable **Manager Override** on the Options page to reveal the **Maintenance** panel:
+
+- **Clear cached scrape data** — wipes the cached scrape (`attendee`,
+  `registrations`, `account`, etc.) without touching your settings. Use this for
+  the "wrong attendee data showing" problem, then reload the Neon tab.
+- **Check Neon tab(s)** — finds your open Neon tabs by URL and pings each one's
+  content script. If it reports none responded, the script didn't inject (the
+  "popup doesn't react" case) on a supported page — reload the Neon page, or
+  toggle the extension off/on in `chrome://extensions`.
+- **Storage contents** — expand to see every stored value (for IT).
+
+---
+
+## The check-in panel auto-opens now (or I want the old click-to-open back)
+
+On the **registration (Attendees)** page the check-in list now appears
+automatically as an in-page panel (top-right) once the page loads — no click
+needed. Close it with the **✕**; click the extension icon to re-open it (it
+re-reads the page first).
+
+- If it **didn't** open: make sure you're in Registration mode and that the
+  page finished loading; click the extension icon to force it. A manager can
+  also confirm the mode below.
+- To go back to the **old click-to-open popup**: open the extension Options,
+  enable **Manager Override**, and set **Pop-up behavior → Manual**. (Account
+  pages always behave the old way regardless.)
+
+---
+
 ## Debugging recipes (for IT)
 
 - **Content-script logs across navigations** — DevTools on the Neon tab,

@@ -1,0 +1,43 @@
+/* css/brand.css
+ *
+ * Single source of truth for CONvergence brand colors in CSS. See BRANDING.md
+ * for the palette, roles, and the colorblind status rule (Blue = "go", not
+ * green). Lighter backgrounds and darker hover/border variants are DERIVED from
+ * the base colors via color-mix() (Chrome 111+), so changing a base value
+ * updates everything that builds on it.
+ *
+ * Loaded by popup.html, the options page, and as a content-script stylesheet on
+ * the eventReg page (so the in-page check-in modal can use these vars too).
+ */
+
+:root {
+  /* ── Base palette ── */
+  --brand-purple: #620272;  /* section headers */
+  --brand-green:  #328332;  /* links */
+  --brand-blue:   #0072B2;  /* "go / OK / ready" status + primary buttons */
+  --brand-red:    #CC0202;  /* "stop / blocked / error" status + danger */
+  --brand-yellow: #FFB400;  /* "caution / attention" status */
+
+  /* ── Light backgrounds (pale tint of the base color) ── */
+  --brand-purple-bg: color-mix(in srgb, var(--brand-purple) 10%, white);
+  --brand-blue-bg:   color-mix(in srgb, var(--brand-blue)   10%, white);
+  --brand-green-bg:  color-mix(in srgb, var(--brand-green)  10%, white);
+  --brand-red-bg:    color-mix(in srgb, var(--brand-red)    10%, white);
+  --brand-yellow-bg: color-mix(in srgb, var(--brand-yellow) 16%, white);
+
+  /* ── Darker variants (hover states / borders) ── */
+  --brand-purple-dark: color-mix(in srgb, var(--brand-purple) 82%, black);
+  --brand-blue-dark:   color-mix(in srgb, var(--brand-blue)   82%, black);
+  --brand-green-dark:  color-mix(in srgb, var(--brand-green)  82%, black);
+  --brand-red-dark:    color-mix(in srgb, var(--brand-red)    82%, black);
+  /* Dark amber for buttons (bright yellow is unreadable with white text) */
+  --brand-yellow-dark: color-mix(in srgb, var(--brand-yellow) 52%, black);
+  --brand-yellow-dark2:color-mix(in srgb, var(--brand-yellow) 42%, black);
+
+  /* ── Readable text colors on light tints ── */
+  --brand-purple-ink: color-mix(in srgb, var(--brand-purple) 70%, black);
+  --brand-blue-ink:   color-mix(in srgb, var(--brand-blue)   72%, black);
+  --brand-green-ink:  color-mix(in srgb, var(--brand-green)  70%, black);
+  --brand-red-ink:    color-mix(in srgb, var(--brand-red)    72%, black);
+  --brand-yellow-ink: #6b4e00; /* dark amber — readable on the yellow tint */
+}

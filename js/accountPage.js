@@ -25,6 +25,91 @@ const ACCOUNT_PAGE_FEATURE_ENABLED = true;
 const POLL_MS       = 300;
 const POLL_ATTEMPTS = 40;
 
+// ── DEBUG WALK: append a step entry to STORAGE_KEY.DEBUG_REPORT ─────────────
+//
+// Used by all content scripts in the walk chain. Each script calls this
+// at its successful exit point (and at fatal failure points) so the final
+// report covers every leg of the journey.
+//
+// Status conventions: "ok" | "warning" | "error" | "skipped"
+//
+// No-op when STORAGE_KEY.DEBUG_WALK_ACTIVE is not set, so it's safe to
+// leave the calls in place during normal page loads.
+async function appendDebugStepIfWalkActive(step, status, details, issues = []) {
+  const walkResult = await chrome.storage.local.get(STORAGE_KEY.DEBUG_WALK_ACTIVE);
+  if (!walkResult[STORAGE_KEY.DEBUG_WALK_ACTIVE]) return;
+
+  const reportResult = await chrome.storage.local.get(STORAGE_KEY.DEBUG_REPORT);
+  const report = reportResult[STORAGE_KEY.DEBUG_REPORT] ?? { steps: [], startedAt: walkResult[STORAGE_KEY.DEBUG_WALK_ACTIVE].startedAt };
+  report.steps.push({ step, status, details, issues, recordedAt: new Date().toISOString() });
+
+  await chrome.storage.local.set({ [STORAGE_KEY.DEBUG_REPORT]: report });
+  console.log(`accountPage.js: appended debug step "${step}" (${status})`, details, issues);
+}
+
+// ── DEBUG WALK: open the report on an early halt ────────────────────────────
+//
+// Called at the auto-nav failure points. If the walk is active, asks
+// background.js to open the report tab so the user still gets a partial
+// report (background.js clears DEBUG_WALK_ACTIVE). No-op otherwise.
+async function openDebugReportIfWalkActive() {
+  const walkResult = await chrome.storage.local.get(STORAGE_KEY.DEBUG_WALK_ACTIVE);
+  if (!walkResult[STORAGE_KEY.DEBUG_WALK_ACTIVE]) return;
+  console.log("accountPage.js: debug walk halting -- opening partial report");
+  chrome.runtime.sendMessage({ action: ACTION.OPEN_DEBUG_REPORT });
+}
+
+// ── DEBUG WALK: enumerate the account About-page fields ─────────────────────
+//
+// Lists every label/value pair in the account "about" grid and flags the
+// labels the extension relies on (the three hold titles). Runs on the About
+// page via ACTION.RUN_ACCOUNT_DEBUG_AUDIT, sent by popup.js BEFORE the walk
+// navigates to the Attendees tab (the .neon_nest_grid_row grid only exists on
+// the About view).
+function enumerateAccountFields() {
+  const out = [];
+  for (const row of document.querySelectorAll(".neon_nest_grid_row")) {
+    const label = row.querySelector(".about-field-title")?.textContent?.trim() ?? "";
+    const value = row.querySelector(".neon_form_value")?.textContent?.trim() ?? "";
+    if (label) out.push({ label, value });
+  }
+  return out;
+}
+
+async function runAccountDebugAudit() {
+  const fields = enumerateAccountFields();
+
+  const usedSpecs = [
+    { role: "registrationHold", label: CONFIG.holdMessages[0].title },
+    { role: "artShowHold",      label: CONFIG.holdMessages[1].title },
+    { role: "operationsHold",   label: CONFIG.holdMessages[2].title },
+  ];
+  const used = usedSpecs.map(s => ({
+    role:  s.role,
+    label: s.label,
+    found: fields.some(f => f.label.includes(s.label)),
+  }));
+  const missing = used.filter(u => !u.found);
+
+  const issues = [];
+  if (fields.length === 0) {
+    issues.push({ severity: "warning", message: "No account fields (.neon_nest_grid_row) found on the About page" });
+  }
+  missing.forEach(m => {
+    issues.push({ severity: "warning", message: `Extension field "${m.role}" (label "${m.label}") was not found on the account page` });
+  });
+
+  const status = issues.length > 0 ? "warning" : "ok";
+
+  await appendDebugStepIfWalkActive("account", status, {
+    accountId: getAccountIdFromUrl(),
+    phase:     "fields",
+    fields,
+    used,
+    missing,
+  }, issues);
+}
+
 // ── HELPER: Extract account ID from URL ─────────────────────────────────────
 
 /**
@@ -277,7 +362,7 @@ function highlightHoldRows(holds, managementOverride) {
 
         if (labelCol) {
           labelCol.style.background  = "#ffcccc";
-          labelCol.style.borderLeft  = "4px solid #dc3545";
+          labelCol.style.borderLeft  = `4px solid ${BRAND.red}`;
           labelCol.style.paddingLeft = "8px";
         }
         if (valueCol) {
@@ -375,6 +460,10 @@ async function autoClickFirstSucceededRegistration() {
     if (!tableBody) {
       console.warn("accountPage.js: could not find table body");
       showAutoNavFailureBanner("Could not find the Attendees table — refresh and try again.");
+      await appendDebugStepIfWalkActive("account", "error", { accountId: stored.accountId }, [
+        { severity: "error", message: "Could not find #accountEventAttendeesList .el-table__body on the page" },
+      ]);
+      await openDebugReportIfWalkActive();
       chrome.storage.local.remove(STORAGE_KEY.ACCOUNT_AUTO_NAV);
       return;
     }
@@ -386,6 +475,10 @@ async function autoClickFirstSucceededRegistration() {
     if (cols.event == null || cols.status == null) {
       console.warn("accountPage.js: could not locate Event/Status columns in header", cols);
       showAutoNavFailureBanner("Could not read the Attendees table layout. Click the registration manually.");
+      await appendDebugStepIfWalkActive("account", "error", { accountId: stored.accountId, columnsFound: cols }, [
+        { severity: "error", message: "Could not locate Event/Status columns in the Attendees table header" },
+      ]);
+      await openDebugReportIfWalkActive();
       chrome.storage.local.remove(STORAGE_KEY.ACCOUNT_AUTO_NAV);
       return;
     }
@@ -429,6 +522,12 @@ async function autoClickFirstSucceededRegistration() {
                 ?? row.querySelector("a");
       if (link) {
         console.log(`accountPage.js: clicking SUCCEEDED registration: ${eventName} (from ${eventSource})`);
+        await appendDebugStepIfWalkActive("account", "ok", {
+          accountId:           stored.accountId,
+          rowCount:            rows.length,
+          matchedEventName:    eventName,
+          matchedEventSource:  eventSource,
+        });
         link.click();
         chrome.storage.local.remove(STORAGE_KEY.ACCOUNT_AUTO_NAV);
         return;
@@ -439,11 +538,19 @@ async function autoClickFirstSucceededRegistration() {
 
     console.log("accountPage.js: no valid SUCCEEDED registration found");
     showAutoNavFailureBanner("No active CONvergence registration found on this account. Click a registration row manually if appropriate.");
+    await appendDebugStepIfWalkActive("account", "error", { accountId: stored.accountId, rowCount: rows.length }, [
+      { severity: "error", message: "No SUCCEEDED registration matching currentEventNames or testEventNames was found in the Attendees table" },
+    ]);
+    await openDebugReportIfWalkActive();
     chrome.storage.local.remove(STORAGE_KEY.ACCOUNT_AUTO_NAV);
 
   } catch (err) {
     console.error("accountPage.js: auto-click failed:", err.message);
     showAutoNavFailureBanner("Could not find the Attendees table — refresh and try again.");
+    await appendDebugStepIfWalkActive("account", "error", { accountId: stored.accountId }, [
+      { severity: "error", message: `Auto-click threw: ${err.message}` },
+    ]);
+    await openDebugReportIfWalkActive();
     chrome.storage.local.remove(STORAGE_KEY.ACCOUNT_AUTO_NAV);
   }
 }
@@ -503,12 +610,27 @@ async function autoClickFirstSucceededRegistration() {
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
+  if (request.action === ACTION.PING) {
+    sendResponse({ ok: true, script: "accountPage.js" });
+    return false;
+  }
+
   if (request.action === ACTION.GET_ACCOUNT_DATA) {
     getAccountData()
       .then(sendResponse)
       .catch(err => {
         console.error("accountPage.js: GET_ACCOUNT_DATA failed:", err);
         sendResponse(null);
+      });
+    return true; // async response
+  }
+
+  if (request.action === ACTION.RUN_ACCOUNT_DEBUG_AUDIT) {
+    runAccountDebugAudit()
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => {
+        console.error("accountPage.js: RUN_ACCOUNT_DEBUG_AUDIT failed:", err);
+        sendResponse({ ok: false });
       });
     return true; // async response
   }

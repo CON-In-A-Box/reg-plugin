@@ -22,8 +22,10 @@
  *  14. Dynamic-layout helper classes (used by popup.js)
  *
  * Non-programmer maintenance notes:
- *   - Colors are standard hex codes (e.g. #dc3545 = red, #28a745 = green).
- *   - To change the accent red, search for "#dc3545" and replace all.
+ *   - Brand colors come from css/brand.css as CSS variables (var(--brand-*)).
+ *     To change a brand color, edit css/brand.css (and BRANDING.md) — do NOT
+ *     hunt for hex here. Neutral greys (#555, #ccc, …) remain literal.
+ *   - Status note: the "green"/ready state uses brand BLUE (colorblind-safe).
  *   - Sizes in "px" are pixels. 12px = small text, 14-15px = body text.
  *   - To hide an element, add "display: none;" inside its class block.
  *   - Class names beginning with "." are the selector — do not remove the dot.
@@ -54,7 +56,7 @@ body {
   padding: 8px 0;
   margin: -8px -8px 8px -8px;
   width: calc(100% + 16px);
-  background: #dc3545;
+  background: var(--brand-purple);
   color: #ffffff;
   font-size: 13px;
   font-weight: bold;
@@ -75,9 +77,10 @@ body {
   margin-bottom: 8px;
   font-size: 13px;
 }
-.banner-green  { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; font-weight: bold; }
-.banner-yellow { background: #fff3cd; color: #856404; border: 1px solid #ffc107; font-weight: bold; }
-.banner-red    { background: #f8d7da; color: #721c24; border: 2px solid #dc3545; }
+/* "green" banner = the GO/ready state → brand BLUE (colorblind-friendly) */
+.banner-green  { background: var(--brand-blue-bg);   color: var(--brand-blue-ink);   border: 1px solid color-mix(in srgb, var(--brand-blue) 35%, white); font-weight: bold; }
+.banner-yellow { background: var(--brand-yellow-bg); color: var(--brand-yellow-ink); border: 1px solid var(--brand-yellow); font-weight: bold; }
+.banner-red    { background: var(--brand-red-bg);    color: var(--brand-red-ink);    border: 2px solid var(--brand-red); }
 
 /* "STOP" headline inside the red banner */
 .banner-stop {
@@ -197,12 +200,12 @@ td.label {
 }
 .age-cutoff-label {
   font-size: 12px;
-  color: #856404;
+  color: var(--brand-yellow-ink);
 }
 .age-cutoff-date {
   font-size: 18px;
   font-weight: bold;
-  color: #856404;
+  color: var(--brand-yellow-ink);
 }
 
 
@@ -211,8 +214,8 @@ td.label {
  *    Standalone yellow warning box (separate from status banner).
  * ───────────────────────────────────────────────────────────────────────── */
 .warning {
-  background: #fff3cd;
-  border: 1px solid #ffc107;
+  background: var(--brand-yellow-bg);
+  border: 1px solid var(--brand-yellow);
   border-radius: 4px;
   padding: 8px;
   margin-bottom: 8px;
@@ -238,33 +241,33 @@ td.label {
 .btn-show-field {
   flex: 1;
   padding: 4px 8px;
-  background: #856404;
+  background: var(--brand-yellow-dark);
   color: white;
   border: none;
   border-radius: 3px;
   cursor: pointer;
   font-size: 12px;
 }
-.btn-show-field:hover { background: #664d03; }
+.btn-show-field:hover { background: var(--brand-yellow-dark2); }
 
 /* Small Re-check button (inside a row) */
 .btn-recheck {
   flex: 1;
   padding: 4px 8px;
-  background: #0d6efd;
+  background: var(--brand-blue);
   color: white;
   border: none;
   border-radius: 3px;
   cursor: pointer;
   font-size: 12px;
 }
-.btn-recheck:hover { background: #0a58ca; }
+.btn-recheck:hover { background: var(--brand-blue-dark); }
 
 /* Full-width Re-check button */
 .btn-recheck-large {
   width: 100%;
   padding: 10px;
-  background: #0d6efd;
+  background: var(--brand-blue);
   color: white;
   border: none;
   border-radius: 4px;
@@ -273,13 +276,13 @@ td.label {
   cursor: pointer;
   margin-bottom: 8px;
 }
-.btn-recheck-large:hover { background: #0a58ca; }
+.btn-recheck-large:hover { background: var(--brand-blue-dark); }
 
 /* Age-verified button — orange */
 .btn-age-verify {
   width: 100%;
   padding: 10px;
-  background: #fd7e14;
+  background: var(--brand-yellow-dark);
   color: white;
   border: none;
   border-radius: 4px;
@@ -288,13 +291,13 @@ td.label {
   cursor: pointer;
   margin-bottom: 4px;
 }
-.btn-age-verify:hover { background: #e06a00; }
+.btn-age-verify:hover { background: var(--brand-yellow-dark2); }
 
-/* Primary check-in button — green */
+/* Primary check-in button — brand BLUE (the affirmative "go" action) */
 .btn-checkin {
   width: 100%;
   padding: 10px;
-  background: #28a745;
+  background: var(--brand-blue);
   color: white;
   border: none;
   border-radius: 4px;
@@ -302,7 +305,7 @@ td.label {
   font-weight: bold;
   cursor: pointer;
 }
-.btn-checkin:hover    { background: #218838; }
+.btn-checkin:hover    { background: var(--brand-blue-dark); }
 .btn-checkin:disabled { background: #6c757d; cursor: not-allowed; }
 
 /* "Disabled by hold" button — grey with red border */
@@ -311,7 +314,7 @@ td.label {
   padding: 10px;
   background: #6c757d;
   color: white;
-  border: 2px solid #dc3545;
+  border: 2px solid var(--brand-red);
   border-radius: 4px;
   font-size: 15px;
   font-weight: bold;
@@ -322,7 +325,7 @@ td.label {
 /* Override button used in registrations list */
 .btn-override {
   padding: 5px 10px;
-  background: #dc3545;
+  background: var(--brand-red);
   color: white;
   border: none;
   border-radius: 4px;
@@ -330,12 +333,12 @@ td.label {
   font-size: 12px;
   font-weight: bold;
 }
-.btn-override:hover { background: #b02a37; }
+.btn-override:hover { background: var(--brand-red-dark); }
 
-/* "Check In →" button used in registrations list */
+/* "Check In →" button used in registrations list — brand BLUE */
 .btn-select {
   padding: 5px 10px;
-  background: #007bff;
+  background: var(--brand-blue);
   color: white;
   border: none;
   border-radius: 4px;
@@ -343,7 +346,7 @@ td.label {
   font-size: 13px;
   white-space: nowrap;
 }
-.btn-select:hover { background: #0056b3; }
+.btn-select:hover { background: var(--brand-blue-dark); }
 
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -353,9 +356,9 @@ td.label {
 .helpdesk-note {
   width: 100%;
   padding: 10px;
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #dc3545;
+  background: var(--brand-red-bg);
+  color: var(--brand-red-ink);
+  border: 1px solid var(--brand-red);
   border-radius: 4px;
   font-size: 13px;
   font-weight: bold;
@@ -367,10 +370,10 @@ td.label {
 .helpdesk-note-inline {
   font-size: 12px;
   font-weight: bold;
-  color: #721c24;
+  color: var(--brand-red-ink);
   padding: 4px 8px;
-  background: #f8d7da;
-  border: 1px solid #dc3545;
+  background: var(--brand-red-bg);
+  border: 1px solid var(--brand-red);
   border-radius: 3px;
   display: inline-block;
 }
@@ -383,23 +386,23 @@ td.label {
 .confirm-screen {
   text-align: center;
   padding: 20px 10px;
-  background: #d4edda;
+  background: var(--brand-blue-bg);
   border-radius: 4px;
 }
-.confirm-icon   { font-size: 40px; color: #28a745; margin-bottom: 4px; }
-.confirm-title  { font-size: 18px; font-weight: bold; color: #155724; margin-bottom: 8px; }
+.confirm-icon   { font-size: 40px; color: var(--brand-blue); margin-bottom: 4px; }
+.confirm-title  { font-size: 18px; font-weight: bold; color: var(--brand-blue-ink); margin-bottom: 8px; }
 .confirm-name   { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
 .confirm-badge  { font-size: 14px; color: #555; margin-bottom: 8px; }
-.confirm-detail { font-size: 12px; color: #155724; white-space: pre-line; }
+.confirm-detail { font-size: 12px; color: var(--brand-blue-ink); white-space: pre-line; }
 
 .error-screen {
   text-align: center;
   padding: 16px 10px;
-  background: #f8d7da;
+  background: var(--brand-red-bg);
   border-radius: 4px;
 }
-.error-icon    { font-size: 32px; color: #dc3545; margin-bottom: 8px; }
-.error-message { font-size: 13px; color: #721c24; white-space: pre-line; text-align: left; }
+.error-icon    { font-size: 32px; color: var(--brand-red); margin-bottom: 8px; }
+.error-message { font-size: 13px; color: var(--brand-red-ink); white-space: pre-line; text-align: left; }
 
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -416,9 +419,9 @@ td.label {
   border-radius: 4px;
   border: 1px solid #ddd;
 }
-.reg-row-green  { background: #f8fff9; }
-.reg-row-yellow { background: #fffef0; }
-.reg-row-red    { background: #fff5f5; }
+.reg-row-green  { background: var(--brand-blue-bg); }   /* ready/go → blue */
+.reg-row-yellow { background: var(--brand-yellow-bg); }
+.reg-row-red    { background: var(--brand-red-bg); }
 .reg-name   { font-weight: bold; margin-bottom: 2px; }
 .reg-ticket { font-size: 12px; color: #555; margin-bottom: 4px; }
 
@@ -431,10 +434,10 @@ td.label {
 .not-found-heading {
   font-weight: bold;
   font-size: 14px;
-  color: #721c24;
+  color: var(--brand-red-ink);
   margin-bottom: 6px;
   padding: 8px;
-  background: #f8d7da;
+  background: var(--brand-red-bg);
   border-radius: 4px;
 }
 .not-found-detail {

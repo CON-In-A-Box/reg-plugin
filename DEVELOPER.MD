@@ -167,6 +167,12 @@ regStatus:             string,   // e.g. "SUCCEEDED"
 state:                 string,   // "green" | "yellow" | "red"
 reason:                string,   // Staff-facing message
 missingRequiredFields: string[], // Labels of any empty required fields
+merch:                 [{name: string}], // Pending merch (ordered, not yet picked up).
+                                          // Populated by getAttendeeInfo via scrapeAttendeeMerch
+                                          // (defined in js/merch-attendee.js). popup.js renders
+                                          // one "{name} Ordered" line per entry and switches
+                                          // the action button to "Badge Issued - Send to
+                                          // Merchandise" when the array is non-empty.
 }
 
 ---
@@ -198,8 +204,13 @@ All custom fields on the AttendeeEdit page use the pattern:
 
 ### If field indexes change
 
+> Fields are resolved at runtime by **label substring** (`CONFIG.fieldLabels`),
+> not by hardcoded index — the index table above is reference only. The fastest
+> way to see what resolves and what doesn't is `tools/field-diagnostic.html`
+> (see the Tools section). The manual mapping below still works as a fallback.
+
 If the extension stops reading or writing fields correctly after a Neon
-update, the indexes may have changed. To map the new ones:
+update, a label may have changed. To map the new ones:
 
 1. Open the Neon AttendeeEdit page in Chrome and open DevTools → Console.
 2. Run `Array.from(document.querySelectorAll('[name^="attendee.customDataList"]')).map((el, i) => ({ index: i, name: el.name, label: el.closest('tr')?.querySelector('td:first-child')?.innerText?.trim() }))`.
@@ -263,10 +274,119 @@ a matching page finishes loading (via `background.js`).
 - [ ] Regenerate management password hash and update `config.js`
 - [ ] Confirm `adultMinimumAge` is still correct
 - [ ] Confirm ticket type `nameIncludes` values match current Neon ticket names
-- [ ] Confirm `fieldIndexes` still match live Neon form (spot-check with diagnostic)
+- [ ] Confirm field labels still resolve against the live Neon form (run `tools/field-diagnostic.html`)
 - [ ] Update `version` in `manifest.json` to current year
 - [ ] Test on the training event (ID 142) before con weekend
 - [ ] Brief incoming Registration IT volunteer on this document
+
+---
+
+## Manager Debug Walk
+
+A diagnostic that audits field detection across all three Neon pages and opens a
+report tab. Gated behind Manager Override + **Debugging** on the options page
+(`debugMode = mngtOverride && behavior === "debugging"`).
+
+**Trigger & flow** (clicking the toolbar icon on an account page):
+1. `displayPopup()` (`js/popup.js`) sees `MANAGEMENT_OVERRIDE` + `DEBUG_MODE` and calls
+   `initiateDebugWalk()`, which arms `STORAGE_KEY.DEBUG_WALK_ACTIVE`, sends
+   `ACTION.RUN_ACCOUNT_DEBUG_AUDIT` to the account content script (captures the About-page
+   `.neon_nest_grid_row` fields *before* navigating), then navigates to the Attendees tab
+   (reusing `ACCOUNT_AUTO_NAV` / `autoClickFirstSucceededRegistration()`).
+2. `js/registrations.js` `maybeAdvanceDebugWalk()` enumerates the first attendee's custom-field
+   rows, records the `eventreg` step, then clicks the first attendee.
+3. `js/attendeeContact.js` `runDebugAuditOnAttendeePage()` enumerates the attendee form, checks
+   `CONFIG.fieldLabels` / `requiredFields` / `merch.items[]` (reusing `FIELD`,
+   `readFieldValueByLabel`, `isMerchItemOrdered`), records the `attendee` step, then sends
+   `ACTION.OPEN_DEBUG_REPORT`.
+4. `js/background.js` handles `OPEN_DEBUG_REPORT` → opens `debug-report.html` in a new tab and
+   clears `DEBUG_WALK_ACTIVE`. Every early-halt point (no SUCCEEDED reg, no attendee link) also
+   sends `OPEN_DEBUG_REPORT`, so a **partial** report still opens with a note on where it stopped.
+
+**Storage:** each leg appends to `STORAGE_KEY.DEBUG_REPORT`
+(`{startedAt, steps:[{step, status, details, issues, recordedAt}]}`) via
+`appendDebugStepIfWalkActive` (account), `appendDebugStep` (registrations), and a local appender
+(attendee). `debug-report.html` + `js/debug-report.js` read that key and render one section per page.
+
+**To extend:** if you change what a leg records, keep the `details` keys (`fields`, `used`,
+`missing`, `requiredMissing`, `requiredEmpty`, `merch`, `roster`, `plannedWrites`) aligned with the
+renderers in `js/debug-report.js`.
+
+### Other diagnostics (surfaced in the same report / options page)
+
+- **Config Doctor** — `validateConfig(CONFIG, extras)` in `js/config-doctor.js` (pure, DOM-free).
+  Catches silent `config.js` mistakes: `holdMessages` count, `conditionOrder` vs `CONDITION`,
+  merch `matchMode`/sub-keys, event-name overlap, password-hash format, ticket catch-all, plus
+  version/debug drift. Rendered as a "Config check" panel on the **options page**
+  (`renderConfigCheck()` in `js/options.js`) and a "Config check" section in the report.
+- **Roster audit** — `maybeAdvanceDebugWalk()` builds `details.roster` for **every** attendee
+  (ticket via `resolveTicketConfig(readTicketType())`, holds, ICE, badges, layout); the report
+  red-flags unresolved tickets / missing ICE.
+- **Check-in dry-run** — `computeCheckinWrites()` (`js/attendeeContact.js`) returns the planned
+  field writes; `incrementBadge()` applies them and the attendee audit records them as
+  `details.plannedWrites` (preview only, no submit), so preview and reality share one code path.
+- **Error log** — `recordErrorInStorage()` (`js/background.js`) appends to a 20-entry ring buffer
+  `STORAGE_KEY.ERROR_LOG`, rendered as "Recent errors" in the report.
+- **Environment health** (options page, manager-gated): storage inspector + **Clear cached scrape
+  data** (`CACHE_KEYS` in `js/options.js`, leaves settings keys), and a **Check Neon tab(s)**
+  button that finds Neon tabs by URL (`chrome.tabs.query({url})` — the Options dialog isn't the
+  active tab) and pings each via `ACTION.PING` (handled in `accountPage.js`, `registrations.js`,
+  `attendeeContact.js`).
+
+---
+
+## Auto-opening check-in modal
+
+In **Automated** pop-up mode (`STORAGE_KEY.POPUP_MODE`, default `"automated"`; managers can pick
+`"manual"` on the options page) the eventReg AND attendee pages show their check-in UI as an
+**in-page modal** instead of the toolbar popup.
+
+**Phase 1 — eventReg list modal:**
+- `js/checkin-modal.js` (manifest-injected **after** `js/registrations.js`, with
+  `css/checkin-modal.css`) auto-opens the modal on load when REG + Automated and no debug walk is
+  active. It reuses `registrations.js`'s `getRegistrationsInfo()` / `getRegistrationNotes()` globals
+  and mirrors `popup.js`'s `buildAttendeeListContent()` + `navigateToAttendeeEdit()`. All styles are
+  scoped under `#cvg-checkin-modal`.
+
+**Phase 2 — attendee-page check-in modal:**
+- `js/attendee-modal.js` (manifest-injected **after** `js/attendeeContact.js` + `js/merch-attendee.js`,
+  with `css/checkin-modal.css`) auto-opens on the `attendeeEdit.do` page under the same gate. Same
+  isolated world, so it calls `attendeeContact.js`'s globals **directly** (no messaging):
+  `getAttendeeInfo()` (scrape / Re-check), `incrementBadge()` (write fields + submit),
+  `highlightICEField()` (Show-me-the-field). `renderAttendeeModal()` mirrors `popup.js`'s
+  `buildAttendeeView` (override banner, age-verify gate, red/yellow banners, badge cell vs
+  placeholder, info table, blocked → help-desk, Re-check section, Badge-Issued) and the
+  `completeCheckIn` flow (`saveBadgeCSV` — replicated locally — then `incrementBadge`, then clear
+  `AGE_VERIFIED`). Reuses the `#cvg-checkin-modal` container/styles.
+
+**Both pages:**
+- `js/background.js` `applyPopupForTab()` clears the tab's action popup (`setPopup({tabId, popup:""})`)
+  in REG+Automated mode for `page === "registrations"` and `page === "attendee"`, so a toolbar click
+  fires `chrome.action.onClicked` → `ACTION.SHOW_CHECKIN_MODAL` (re-scrape + re-open). Account pages
+  and Manual mode keep `popup.html`. Toggling `POPUP_MODE` re-applies the active eventReg tab
+  immediately.
+- **Draggable:** `js/modal-drag.js` (shared, loaded before each modal script) exposes
+  `makeDraggable(modalEl, handleEl)`. Header `mousedown` switches the modal to `left/top` and drags it
+  (clamped to the viewport); the position is remembered in a module variable and reapplied on
+  re-render so it survives a Re-check or toolbar re-open. Clicks on the ✕ (or any header button) don't
+  start a drag.
+
+---
+
+## Brand colors
+
+Canonical palette + rules live in `BRANDING.md`. In code:
+- **CSS:** `css/brand.css` defines `:root` brand variables (`--brand-purple/green/blue/red/yellow`)
+  plus `color-mix()`-derived `*-bg` (light backgrounds), `*-dark` (hover/border), and `*-ink` (text)
+  variants. It's loaded by `popup.html`, the options page, and the eventReg `content_scripts` css.
+  `css/popup.css` and `css/checkin-modal.css` reference `var(--brand-*)` — no raw brand hex.
+- **JS:** `BRAND` in `shared/js/constants-base.js` mirrors the base hexes for non-CSS uses (the icon
+  "M" badge in `background-core.js`, a few inline styles in popup/content scripts).
+- **Colorblind status rule:** the "ready/go" state uses **blue**, not green (green is links). This
+  shows up as `--brand-blue-bg` for `.banner-green` / `.reg-row-green`, the blue `reggie-blue-*`
+  toolbar icon, and blue primary buttons.
+- **Toolbar faces:** `assets/reggie-*` (REG) and `assets/connie-*` (MERCH); raster, so not affected
+  by the CSS vars.
 
 ---
 
@@ -278,3 +398,13 @@ in `config.js`. This file is gitignored (`.gitignore` line 6) — it lives
 on individual maintainers' machines and must not be committed. If you
 don't have a copy, regenerate the hash with this one-liner in DevTools:
 `crypto.subtle.digest("SHA-256", new TextEncoder().encode("yourPassword")).then(b => console.log(Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,"0")).join("")))`.
+
+### `tools/field-diagnostic.html`
+Open locally in Chrome. Loads `../config.js` and compares a field dump scraped
+from a live Neon AttendeeEdit page against `CONFIG.fieldLabels`,
+`CONFIG.requiredFields`, and `CONFIG.merch.items[]`, flagging anything it can't
+resolve in red. It mirrors the runtime matching in `buildFieldIndex()`
+(`js/attendeeContact.js`) and `scrapeAttendeeMerch()` (`js/merch-attendee.js`) —
+keep it in sync if those resolution rules change. The page shows a copy-paste
+console snippet that produces the dump. Unlike the password-hash tool it holds
+no secret, so it **is** committed. Walkthrough: Step 3 in `ANNUAL_UPDATE_GUIDE.md`.

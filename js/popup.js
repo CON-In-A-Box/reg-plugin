@@ -63,12 +63,26 @@ async function displayPopup() {
   const activeTab = await getActiveTab();
   const url = activeTab?.url ?? "";
 
-  // Mode dispatch -- merch mode delegates to popup-merch.js, leaving the
-  // registration flow below untouched. Options page sets the mode; default
-  // is REG so existing installs keep their current behavior.
-  const modeResult = await chrome.storage.local.get({ [STORAGE_KEY.EXTENSION_MODE]: EXTENSION_MODE.REG });
-  const mode       = modeResult[STORAGE_KEY.EXTENSION_MODE];
-  console.log("popup.js: displayPopup mode =", mode, "url =", url);
+  // Mode + manager-debug dispatch. Read all three flags up front.
+  const flagResult = await chrome.storage.local.get({
+    [STORAGE_KEY.EXTENSION_MODE]:      EXTENSION_MODE.REG,
+    [STORAGE_KEY.MANAGEMENT_OVERRIDE]: false,
+    [STORAGE_KEY.DEBUG_MODE]:          false,
+  });
+  const mode             = flagResult[STORAGE_KEY.EXTENSION_MODE];
+  const managerOverride  = flagResult[STORAGE_KEY.MANAGEMENT_OVERRIDE];
+  const debugMode        = flagResult[STORAGE_KEY.DEBUG_MODE];
+  console.log("popup.js: displayPopup mode =", mode, "manager =", managerOverride, "debug =", debugMode, "url =", url);
+
+  // Manager Debug walk -- only fires from an account page when both
+  // Management Override and Debug Mode are on. Initiates an automated
+  // walk through account → eventreg → attendee that audits field-label
+  // resolution and opens a report tab at the end. Takes precedence over
+  // the merch dispatch + the normal account view below.
+  if (managerOverride && debugMode && url.includes("/admin/accounts/")) {
+    return initiateDebugWalk(activeTab, url);
+  }
+
   if (mode === EXTENSION_MODE.MERCH) {
     return displayMerchPopup(activeTab, url);
   }
@@ -317,6 +331,62 @@ async function buildAccountView(account, tab) {
     // AUTO-NAVIGATE immediately
     navigateToEventReg(tab, account);
   }
+}
+
+/**
+ * Manager Debug Mode entry point. Triggered from the account page when
+ * MANAGEMENT_OVERRIDE and DEBUG_MODE are both true. Sets up the walk
+ * state in chrome.storage and navigates the tab to the same URL the
+ * normal reg flow uses (so accountPage.js's existing
+ * autoClickFirstSucceededRegistration takes over from there).
+ *
+ * The walk's later steps live in registrations.js and attendeeContact.js;
+ * each checks STORAGE_KEY.DEBUG_WALK_ACTIVE on page load and appends to
+ * STORAGE_KEY.DEBUG_REPORT before advancing.
+ */
+async function initiateDebugWalk(tab, url) {
+  const accountMatch = url.match(/\/admin\/accounts\/(\d+)/);
+  const accountId    = accountMatch?.[1] ?? "";
+  if (!accountId) {
+    console.warn("popup.js: initiateDebugWalk could not parse accountId from URL", url);
+    return;
+  }
+
+  // Reset any prior report and arm the walk. ACCOUNT_AUTO_NAV reuses the
+  // existing accountPage.js auto-click mechanism with no new code needed.
+  await chrome.storage.local.remove([STORAGE_KEY.DEBUG_REPORT]);
+  await chrome.storage.local.set({
+    [STORAGE_KEY.DEBUG_WALK_ACTIVE]: {
+      startedAt: Date.now(),
+      accountId,
+      startedFromUrl: url,
+    },
+    [STORAGE_KEY.ACCOUNT_AUTO_NAV]: {
+      accountId,
+      currentEventNames: Array.isArray(CONFIG.event.currentEventNames)
+        ? CONFIG.event.currentEventNames
+        : [CONFIG.event.currentEventNames],
+      testEventNames: Array.isArray(CONFIG.event.testEventNames)
+        ? CONFIG.event.testEventNames
+        : [CONFIG.event.testEventNames],
+      timestamp: Date.now(),
+    },
+  });
+
+  // Capture the account About-page fields into the report BEFORE navigating
+  // away -- the .neon_nest_grid_row grid only exists on the About view, and
+  // the walk is about to leave it. accountPage.js is already loaded here.
+  try {
+    await chrome.tabs.sendMessage(tab.id, { action: ACTION.RUN_ACCOUNT_DEBUG_AUDIT });
+  } catch (e) {
+    console.warn("popup.js: account debug audit message failed (continuing):", e?.message);
+  }
+
+  const tabUrl = new URL(tab.url);
+  const newUrl = `${tabUrl.protocol}//${tabUrl.host}/admin/accounts/${accountId}/event-registrations?tab=Attendees`;
+  console.log("popup.js: initiateDebugWalk armed, navigating to", newUrl);
+  await chrome.tabs.update(tab.id, { url: newUrl });
+  window.close();
 }
 
 function navigateToEventReg(tab, account) {
@@ -758,8 +828,20 @@ async function buildAttendeeView(attendee, tab) {
     noIssueBtn.disabled = true;
     body.appendChild(noIssueBtn);
   } else if (fixableReasons.length === 0 || managementOverride) {
+    // Pending merch summary -- one bold line per ordered-not-picked-up item.
+    // Populated by getAttendeeInfo in js/attendeeContact.js (REG mode only).
+    // Same visual style as the merch-mode eventreg list for consistency.
+    const pendingMerch    = Array.isArray(attendee.merch) ? attendee.merch : [];
+    const hasPendingMerch = pendingMerch.length > 0;
+
+    pendingMerch.forEach(m => {
+      const line = el("div", { textContent: `${m.name} Ordered` });
+      line.style.cssText = "font-size:14px; font-weight:bold; margin:4px 0 4px 6px;";
+      body.appendChild(line);
+    });
+
     const btn = el("button", { className: "btn-checkin" });
-    btn.textContent = "Badge Delivered";
+    btn.textContent = hasPendingMerch ? "Badge Issued - Send to Merchandise" : "Badge Issued";
     btn.addEventListener("click", () => completeCheckIn(attendee, tab, btn));
     body.appendChild(btn);
   }

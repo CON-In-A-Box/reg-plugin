@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merchandise Pickup — Volunteer Training Guide</title>
+<style>
+  :root {
+    --purple: #620272;
+    --green:  #328332;
+    --blue:   #0072B2;
+    --red:    #CC0202;
+    --yellow: #FFB400;
+    --ink:    #1a1a1a;
+    --bg:     #f5f4f7;
+    --card:   #fff;
+    --border: #e0dce6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  nav {
+    width: 220px; flex-shrink: 0;
+    background: var(--purple);
+    padding: 24px 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  nav .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 18px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    margin-bottom: 14px;
+  }
+  nav .nav-logo img { width: 36px; height: 36px; }
+  nav .nav-logo span { color: #fff; font-weight: bold; font-size: 13px; line-height: 1.3; }
+  nav a {
+    display: block; color: rgba(255,255,255,0.8);
+    text-decoration: none; padding: 7px 18px; font-size: 13px;
+    border-left: 3px solid transparent; transition: all 0.15s;
+  }
+  nav a:hover { color: #fff; background: rgba(255,255,255,0.12); border-left-color: #fff; }
+  nav .nav-section {
+    color: rgba(255,255,255,0.45); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1px; padding: 14px 18px 4px;
+  }
+  /* Mode banner */
+  .modebar {
+    background: var(--blue); color: #fff;
+    padding: 8px 14px; font-weight: bold; font-size: 14px;
+    letter-spacing: 1px; text-align: center;
+    border-radius: 6px; margin-bottom: 8px;
+  }
+  main { flex: 1; padding: 36px 48px; max-width: 860px; }
+  .page-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px; padding-bottom: 20px;
+    border-bottom: 3px solid var(--purple);
+  }
+  .page-header img { width: 56px; height: 56px; }
+  .page-header h1 { margin: 0; font-size: 26px; color: var(--purple); }
+  .page-header .subtitle { margin: 4px 0 0; font-size: 14px; color: #666; }
+  .mode-badge {
+    margin-left: auto; background: #f0e8f7;
+    border: 2px solid var(--purple); border-radius: 8px;
+    padding: 10px 14px; font-size: 12px; text-align: right;
+    color: var(--purple); flex-shrink: 0;
+  }
+  .section { margin-bottom: 36px; }
+  .section h2 {
+    font-size: 17px; color: var(--purple); margin: 0 0 14px;
+    padding-bottom: 6px; border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section h2 .icon { font-size: 20px; }
+  /* Legend */
+  .legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .legend .chip {
+    border: 2px solid var(--border); border-radius: 10px;
+    padding: 14px 10px; text-align: center;
+  }
+  .legend .dot { width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 8px; }
+  .legend .chip-label { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+  .legend .chip-desc { font-size: 12px; color: #555; line-height: 1.3; }
+  .legend .green  { border-color: var(--green);  } .legend .green  .dot { background: var(--green);  }
+  .legend .yellow { border-color: var(--yellow); } .legend .yellow .dot { background: var(--yellow); }
+  .legend .red    { border-color: var(--red);    } .legend .red    .dot { background: var(--red);    }
+  .legend .idle   { border-color: #999; } .legend .idle .dot { background: #777; }
+  /* Steps */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex; gap: 18px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px; margin-bottom: 10px;
+  }
+  .step-num {
+    flex-shrink: 0; width: 36px; height: 36px;
+    background: var(--purple); color: #fff; border-radius: 50%;
+    font-weight: bold; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-body { flex: 1; }
+  .step-title { font-weight: bold; font-size: 15px; margin: 0 0 6px; }
+  .step-desc { font-size: 14px; color: #333; margin: 0; }
+  .branch-list { list-style: none; margin: 10px 0 0; padding: 0; }
+  .branch-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 6px 0; border-bottom: 1px solid #e8e8e8; font-size: 14px;
+  }
+  .branch-list li:last-child { border-bottom: none; }
+  .branch-dot {
+    flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%; margin-top: 3px;
+  }
+  .branch-dot.green  { background: var(--green); }
+  .branch-dot.yellow { background: var(--yellow); }
+  .branch-dot.red    { background: var(--red); }
+  .btn {
+    display: inline-block; padding: 2px 9px; border-radius: 5px;
+    font-size: 13px; font-weight: bold; color: #fff; white-space: nowrap; vertical-align: middle;
+  }
+  .btn.go   { background: var(--green); }
+  .btn.stop { background: var(--red); }
+  .alert {
+    border-radius: 8px; padding: 14px 18px; margin: 12px 0;
+    border-left: 5px solid;
+  }
+  .alert.green  { background: #f0faf0; border-color: var(--green); }
+  .alert.yellow { background: #fffbf0; border-color: var(--yellow); }
+  .alert.red    { background: #fff5f5; border-color: var(--red); }
+  .alert.blue   { background: #f0f7ff; border-color: var(--blue); }
+  .alert-title { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+  .alert ul { margin: 6px 0 0; padding-left: 20px; }
+  .alert li { margin: 3px 0; font-size: 14px; }
+  /* Checkbox mock-up */
+  .checkbox-mock {
+    background: #fff; border: 2px solid var(--border);
+    border-radius: 10px; overflow: hidden; margin: 12px 0; max-width: 380px;
+  }
+  .checkbox-mock-row {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .checkbox-mock-row:last-child { border-bottom: none; }
+  .checkbox-mock-row.picked { opacity: 0.6; }
+  .cm-check {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 4px;
+    border: 2px solid #aaa; margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; font-size: 14px; font-weight: bold; color: var(--green);
+  }
+  .cm-check.checked { background: #e0f0e0; border-color: var(--green); }
+  .cm-label { flex: 1; }
+  .cm-label strong { display: block; font-size: 14px; }
+  .cm-label .cm-sub { font-size: 12px; color: #666; }
+  .confirm-btn {
+    display: block; margin: 10px 16px 14px;
+    padding: 10px; background: var(--green); color: #fff;
+    border-radius: 6px; font-weight: bold; font-size: 14px;
+    text-align: center; cursor: default;
+  }
+  .shot {
+    border: 2px dashed #bbb; border-radius: 8px;
+    padding: 24px; text-align: center;
+    color: #aaa; font-size: 12px; font-style: italic; margin: 12px 0;
+  }
+  .manager-box {
+    border: 2px solid var(--red); border-radius: 10px;
+    background: #fff5f5; padding: 16px 20px;
+  }
+  .manager-box h3 { color: var(--red); margin: 0 0 10px; font-size: 16px; }
+  .manager-box ul { margin: 0; padding-left: 22px; }
+  .manager-box li { margin: 5px 0; font-size: 14px; }
+  .manager-box .punch {
+    margin-top: 12px; font-weight: bold; color: var(--red); font-size: 15px;
+    border-top: 1px solid #f0c0c0; padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav>
+  <div class="nav-logo">
+    <img src="../assets/connie-green-38.png" alt="Connie">
+    <span>Merchandise<br>Pickup</span>
+  </div>
+  <div class="nav-section">Sections</div>
+  <a href="#overview">Overview</a>
+  <a href="#icon-legend">Icon Colors</a>
+  <a href="#steps">Steps</a>
+  <a href="#already-picked-up">Already Picked Up</a>
+  <a href="#escalate">When to Escalate</a>
+</nav>
+
+<main>
+
+  <div class="page-header">
+    <img src="../assets/connie-green-38.png" alt="Connie">
+    <div>
+      <h1>Merchandise Pickup</h1>
+      <div class="subtitle">Volunteer training guide — T-shirts &amp; Souvenir Guides</div>
+    </div>
+    <div class="mode-badge">
+      <strong>Toolbar face:</strong> Connie<br>
+      Blue MERCH MODE banner always visible.<br>
+      No banner? Tell your lead.
+    </div>
+  </div>
+
+  <!-- Mode banner demo -->
+  <div class="modebar">MERCH MODE</div>
+  <p style="font-size:13px;color:#666;margin:-4px 0 24px;">
+    This blue banner appears at the top of every screen when the extension is in Merchandise mode.
+    If you don't see it, something is wrong — tell your lead before continuing.
+  </p>
+
+  <!-- Overview -->
+  <div class="section" id="overview">
+    <h2><span class="icon">📋</span> Overview</h2>
+    <p>
+      This station hands out pre-ordered merchandise: <strong>T-shirts</strong> and
+      <strong>Souvenir Guides</strong>. The extension reads what each attendee ordered in
+      Neon and records the pickup date and time automatically. <strong>You check the boxes and
+      click Confirm — that's it.</strong>
+    </p>
+    <div class="alert blue">
+      <div class="alert-title">Before you start each shift</div>
+      <ul>
+        <li>Confirm the toolbar face is <strong>Connie</strong> (not Reggie).</li>
+        <li>Every screen has a blue <strong>MERCH MODE</strong> banner.</li>
+        <li>If either is wrong, ask your lead to fix it on the Options page.</li>
+      </ul>
+    </div>
+    <div class="alert green">
+      <div class="alert-title">No age checks or holds at this station</div>
+      Merch mode skips all badge-eligibility checks. You only need to confirm the
+      attendee ordered the items and hand them over. Age ID, holds, and emergency contact
+      are handled at the Registration (badge) check-in stations.
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="section" id="icon-legend">
+    <h2><span class="icon">🎨</span> What the icon color means</h2>
+    <div class="legend">
+      <div class="chip green">
+        <div class="dot"></div>
+        <div class="chip-label">Green</div>
+        <div class="chip-desc">Ready — proceed normally</div>
+      </div>
+      <div class="chip yellow">
+        <div class="dot"></div>
+        <div class="chip-label">Yellow</div>
+        <div class="chip-desc">Item not yet picked up — eligible to hand out</div>
+      </div>
+      <div class="chip red">
+        <div class="dot"></div>
+        <div class="chip-label">Red</div>
+        <div class="chip-desc">Stop — ask your lead</div>
+      </div>
+      <div class="chip idle">
+        <div class="dot"></div>
+        <div class="chip-label">Grey</div>
+        <div class="chip-desc">Idle — not on a merch page yet</div>
+      </div>
+    </div>
+    <div class="shot">[SCREENSHOT: Connie icon states in toolbar]</div>
+  </div>
+
+  <!-- Steps -->
+  <div class="section" id="steps">
+    <h2><span class="icon">🪜</span> Steps</h2>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Open the attendee in Neon</div>
+          <div class="step-desc">
+            Search for the attendee by name or account number. Click their name to open their
+            account page, then click the Connie icon in the toolbar. The extension moves you
+            to their registration automatically.
+          </div>
+          <div class="shot">[SCREENSHOT: MERCH MODE banner on account page]</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Pick the right person from the list</div>
+          <div class="step-desc">
+            The screen shows <strong>"Select the attendee picking up merch:"</strong>. Each row
+            lists the person's name and what they ordered. Find the person standing in front of
+            you and click <span class="btn go">Review Merch →</span> on their row.
+          </div>
+          <div class="alert yellow">
+            <div class="alert-title">Attendee says their name isn't listed?</div>
+            If the person isn't in the list, ask your lead — don't hand out merch until it's
+            confirmed in the system.
+          </div>
+          <div class="shot">[SCREENSHOT: attendee list showing T-Shirt (Unisex L) and Souvenir Guide]</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Check off the items you're handing over</div>
+          <div class="step-desc">
+            You'll see a checkbox for each item the attendee ordered. Tick the box for each
+            item you hand them right now.
+          </div>
+          <div class="checkbox-mock">
+            <div class="checkbox-mock-row">
+              <div class="cm-check">✓</div>
+              <div class="cm-label">
+                <strong>T-Shirt (Unisex L)</strong>
+                <span class="cm-sub">Tap to check off</span>
+              </div>
+            </div>
+            <div class="checkbox-mock-row picked">
+              <div class="cm-check checked">✓</div>
+              <div class="cm-label">
+                <strong>Souvenir Guide</strong>
+                <span class="cm-sub">Already picked up: 07/03/2026 14:22</span>
+              </div>
+            </div>
+          </div>
+          <div class="alert yellow">
+            <div class="alert-title">⚠ Greyed-out "Already picked up" items</div>
+            If an item is checked, greyed out, and shows <strong>"Already picked up: [date/time]"</strong>,
+            that item was collected at an earlier visit. <strong>Don't hand out a second one.</strong>
+            See <a href="#already-picked-up">below</a> for what to do if the attendee disputes this.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Hand over the merch, then confirm</div>
+          <div class="step-desc">
+            Give the checked items to the attendee first, then click
+            <span class="btn go">Confirm Pickup</span>. The extension records the date and time
+            automatically. You'll see <strong>"Pickup Recorded ✓"</strong> for about 1 second,
+            then the tool resets for the next person.
+          </div>
+          <div class="checkbox-mock">
+            <div class="confirm-btn">Confirm Pickup</div>
+          </div>
+          <div class="shot">[SCREENSHOT: "Pickup Recorded ✓" confirmation screen]</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Already picked up -->
+  <div class="section" id="already-picked-up">
+    <h2><span class="icon">🔒</span> "Already Picked Up" — What It Means</h2>
+    <p>
+      When an item shows <strong>"Already picked up: [date and time]"</strong>, Neon
+      has a record that someone collected it. The checkbox is locked — you can't check it again.
+    </p>
+    <div class="alert yellow">
+      <div class="alert-title">If the attendee says they never received it:</div>
+      <ul>
+        <li>Don't hand out another item on your own authority.</li>
+        <li>Tell your lead — they can look up the record in Neon and decide.</li>
+        <li>The recording includes the exact date and time, which helps resolve disputes.</li>
+      </ul>
+    </div>
+    <div class="alert red">
+      <div class="alert-title">⛔ Never override a locked checkbox</div>
+      Handing out a second item without manager approval is against policy.
+      Always escalate these cases.
+    </div>
+  </div>
+
+  <!-- Escalate -->
+  <div class="section" id="escalate">
+    <h2><span class="icon">🚨</span> When to Call a Manager / Lead</h2>
+    <div class="manager-box">
+      <h3>Stop and get help if:</h3>
+      <ul>
+        <li>The toolbar icon is <strong>red</strong>, or the <strong>MERCH MODE</strong> banner is missing.</li>
+        <li>The attendee says they ordered something that <strong>doesn't appear in the list</strong>.</li>
+        <li>An item shows <strong>"Already picked up"</strong> but the attendee says they never got it.</li>
+        <li>The screen shows <em>"Attendee merch data not ready"</em> or <em>"Could not record pickup"</em>
+            after you retry.</li>
+        <li>The person's name isn't in the attendee list at all.</li>
+      </ul>
+      <div class="punch">When in doubt — don't hand out the item. Ask first.</div>
+    </div>
+  </div>
+
+</main>
+</div>
+</body>
+</html>

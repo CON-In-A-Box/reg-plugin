@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CONvergence Check-In — Field Diagnostic</title>
+
+<!--
+  Field Diagnostic — local developer/IT utility (NOT part of the extension).
+
+  Opens in any browser via file://. It loads the live config.js and compares a
+  field dump scraped from a Neon AttendeeEdit page against what the extension
+  expects, flagging mismatches in red.
+
+  It mirrors the same resolution logic the extension uses at runtime:
+    - reg fields   → buildFieldIndex()      in js/attendeeContact.js
+    - merch fields → scrapeAttendeeMerch()  in js/merch-attendee.js
+  Keep those in sync if the matching rules change.
+
+  Like tools/generate-password-hash.html this is a standalone utility, but it
+  contains NO secret, so it is committed to the repo.
+-->
+
+<!-- Pulls in the global `const CONFIG` so the tool always reflects current expectations. -->
+<script src="../config.js"></script>
+
+<style>
+  :root {
+    --red: #dc3545;
+    --green: #28a745;
+    --amber: #b8860b;
+    --border: #d0d0d0;
+    --bg-soft: #f7f7f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    margin: 0; padding: 24px; color: #222; line-height: 1.45;
+    max-width: 1100px; margin: 0 auto;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  p.sub { color: #666; margin: 0 0 16px; font-size: 13px; }
+  details { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; }
+  details summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+  pre.snippet {
+    background: #1e1e1e; color: #e8e8e8; padding: 12px; border-radius: 6px;
+    overflow-x: auto; font-size: 12px; line-height: 1.4; margin: 10px 0 0;
+    white-space: pre; tab-size: 2;
+  }
+  ol.steps { font-size: 13px; margin: 4px 0 0; padding-left: 20px; }
+  ol.steps li { margin: 3px 0; }
+  textarea {
+    width: 100%; min-height: 120px; font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+  }
+  .row { display: flex; gap: 10px; align-items: center; margin: 10px 0 0; flex-wrap: wrap; }
+  button {
+    font-size: 13px; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border);
+    background: #fff; cursor: pointer;
+  }
+  button.primary { background: #0b62d6; color: #fff; border-color: #0b62d6; }
+  button:hover { filter: brightness(0.96); }
+  .banner { margin: 18px 0 0; padding: 12px 14px; border-radius: 6px; font-weight: 600; font-size: 14px; }
+  .banner.ok { background: #e7f6ec; color: #1a7a37; border: 1px solid #b6e2c4; }
+  .banner.bad { background: #fdeaec; color: #a51d2a; border: 1px solid #f3b9c0; }
+  .banner.hint { background: #fff8e1; color: #7a5c00; border: 1px solid #f0e0a0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ececec; vertical-align: top; }
+  th { background: var(--bg-soft); font-weight: 600; }
+  td.mono, th.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  tr.bad td { background: #fdeaec; }
+  tr.warn td { background: #fff8e1; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .pill.ok { background: #e7f6ec; color: var(--green); }
+  .pill.bad { background: #fdeaec; color: var(--red); }
+  .pill.warn { background: #fff8e1; color: var(--amber); }
+  .muted { color: #999; }
+  .empty { color: #999; font-style: italic; }
+  footer { margin-top: 32px; color: #999; font-size: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Field Diagnostic</h1>
+<p class="sub">Compares a field dump from a Neon <strong>AttendeeEdit</strong> page against
+<code>config.js</code> and highlights anything the extension can't resolve.</p>
+
+<details open>
+  <summary>How to get the field dump</summary>
+  <ol class="steps">
+    <li>Open Neon and go to any attendee's <strong>AttendeeEdit</strong> page (use test event 142 to be safe).</li>
+    <li>Open DevTools (<kbd>F12</kbd>), click the <strong>Console</strong> tab.</li>
+    <li>Paste the snippet below and press <kbd>Enter</kbd>. It copies the result to your clipboard
+        (and prints it).</li>
+    <li>Paste the result into the box below and click <strong>Analyze</strong>.</li>
+  </ol>
+  <pre class="snippet" id="snippet"></pre>
+  <div class="row">
+    <button id="copySnippet">Copy snippet</button>
+    <span id="copyStatus" class="muted"></span>
+  </div>
+</details>
+
+<h2>Paste field dump</h2>
+<textarea id="dump" placeholder='{"customFields":[...],"formGroups":[...]}'></textarea>
+<div class="row">
+  <button class="primary" id="analyze">Analyze</button>
+  <button id="clear">Clear</button>
+  <span id="configStatus" class="muted"></span>
+</div>
+
+<div id="results"></div>
+
+<footer>
+  Local utility. Mirrors <code>buildFieldIndex()</code> (js/attendeeContact.js) and
+  <code>scrapeAttendeeMerch()</code> (js/merch-attendee.js). Not loaded by the extension.
+</footer>
+
+<script>
+// ── The dump snippet shown to the user ───────────────────────────────────────
+// Mirrors buildCustomFieldLabelMap() + readFieldValueByLabel() so the captured
+// values match what the extension would read on the same page.
+const DUMP_SNIPPET = `(() => {
+  const stripPrice = raw => { const m = raw.match(/^(.+?)\\s*-\\s*\\$[\\d,]+(?:\\.\\d+)?$/); return m ? m[1].trim() : raw; };
+
+  // customDataList inputs (reg fields) — dedup by index, label from .form-group
+  const seen = {}, customFields = [];
+  document.querySelectorAll("[name^='attendee.customDataList[']").forEach(el => {
+    const m = el.getAttribute("name").match(/\\[(\\d+)\\]/); if (!m) return;
+    const idx = parseInt(m[1], 10); if (idx in seen) return; seen[idx] = true;
+    const fg = el.closest(".form-group");
+    const label = (fg && fg.querySelector("label") ? fg.querySelector("label").textContent.trim() : "");
+    let value = "";
+    if (el.type === "checkbox" || el.type === "radio") value = el.checked ? ((el.getAttribute("title") || "").trim() || "checked") : "";
+    else value = (el.value || "").trim();
+    customFields.push({ idx, label, value });
+  });
+
+  // .form-group.edit-attendee (merch source + pickup fields)
+  const formGroups = [];
+  document.querySelectorAll(".form-group.edit-attendee").forEach(fg => {
+    const lbl = fg.querySelector("label.col-xs-4"); if (!lbl) return;
+    const label = lbl.textContent.trim(); if (!label) return;
+    let value = "";
+    const select = fg.querySelector("select");
+    const radios = fg.querySelectorAll('input[type="radio"]');
+    const checks = fg.querySelectorAll('input[type="checkbox"]');
+    const text = fg.querySelector('input[type="text"], textarea');
+    if (select) {
+      const gate = fg.querySelector('input[type="checkbox"]');
+      if (gate && !gate.checked) value = "";
+      else { const o = select.options[select.selectedIndex]; value = stripPrice(((o && o.text) || "").trim()); }
+    } else if (radios.length) {
+      const c = Array.from(radios).find(r => r.checked);
+      value = c ? ((c.getAttribute("title") || "").trim() || (c.value || "").trim()) : "";
+    } else if (checks.length) {
+      const c = Array.from(checks).find(x => x.checked);
+      value = c ? ((c.getAttribute("title") || "").trim() || "checked") : "";
+    } else if (text) {
+      value = (text.value || "").trim();
+    }
+    formGroups.push({ label, value });
+  });
+
+  const dump = JSON.stringify({ customFields, formGroups });
+  try { copy(dump); console.log("Field dump copied to clipboard."); } catch (e) { console.log("Copy failed — select the line below manually."); }
+  console.log(dump);
+  return dump;
+})();`;
+
+document.getElementById("snippet").textContent = DUMP_SNIPPET;
+
+document.getElementById("copySnippet").addEventListener("click", async () => {
+  const status = document.getElementById("copyStatus");
+  try {
+    await navigator.clipboard.writeText(DUMP_SNIPPET);
+    status.textContent = "Copied — paste into the Neon page's DevTools console.";
+  } catch (e) {
+    status.textContent = "Copy failed — select the snippet text manually.";
+  }
+});
+
+// ── Config availability ──────────────────────────────────────────────────────
+const configStatus = document.getElementById("configStatus");
+const CONFIG_OK = typeof CONFIG !== "undefined" && CONFIG && CONFIG.fieldLabels;
+if (!CONFIG_OK) {
+  configStatus.textContent = "⚠ config.js did not load — check that this file sits in tools/ next to config.js.";
+  configStatus.style.color = "var(--red)";
+} else {
+  configStatus.textContent = "config.js loaded.";
+}
+
+// ── Analysis ─────────────────────────────────────────────────────────────────
+const HOLD_ROLES = ["registrationHold", "artShowHold", "operationsHold"];
+const ICE_DEALER_FALLBACK = "Badge: Emergency Contact";
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+function val(v) {
+  return v === "" || v == null ? '<span class="empty">(empty)</span>' : esc(v);
+}
+function pill(kind, text) {
+  return `<span class="pill ${kind}">${esc(text)}</span>`;
+}
+
+// Mirrors isMerchItemOrdered() in js/merch-attendee.js
+function isMerchItemOrdered(item, fieldValue) {
+  const src = item.source || {};
+  if (src.matchMode === "anyExcept") return fieldValue !== "" && fieldValue !== src.notOrderedValue;
+  if (src.matchMode === "substring") return fieldValue.includes(src.matchValue || "");
+  return false;
+}
+
+function analyze() {
+  const results = document.getElementById("results");
+  results.innerHTML = "";
+
+  if (!CONFIG_OK) {
+    results.innerHTML = `<div class="banner bad">Cannot analyze: config.js is not loaded.</div>`;
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(document.getElementById("dump").value.trim());
+  } catch (e) {
+    results.innerHTML = `<div class="banner bad">Could not parse the dump as JSON. Re-run the snippet and paste the whole line.</div>`;
+    return;
+  }
+
+  const customFields = Array.isArray(parsed.customFields) ? parsed.customFields : [];
+  const formGroups   = Array.isArray(parsed.formGroups) ? parsed.formGroups : [];
+
+  if (customFields.length === 0 && formGroups.length === 0) {
+    results.innerHTML = `<div class="banner bad">The dump has no fields. Make sure you ran the snippet on an AttendeeEdit page.</div>`;
+    return;
+  }
+
+  // index → {label, value}
+  const byIdx = {};
+  customFields.forEach(f => { byIdx[f.idx] = { label: f.label || "", value: f.value || "" }; });
+  const idxEntries = Object.entries(byIdx); // [ [idxStr, {label,value}], ... ]
+
+  const findByLabel = (needle) =>
+    idxEntries.find(([, o]) => needle && o.label.includes(needle));
+
+  let issues = 0;
+  const fields = CONFIG.fieldLabels;
+
+  // ── Reg fields table ──
+  const regRows = [];
+
+  // Holds matched by holdMessages title (same as buildFieldIndex).
+  const holdTitles = {
+    registrationHold: CONFIG.holdMessages?.[0]?.title || "Registration Hold",
+    artShowHold:      CONFIG.holdMessages?.[1]?.title || "Art Show Hold",
+    operationsHold:   CONFIG.holdMessages?.[2]?.title || "Operations Hold",
+  };
+  HOLD_ROLES.forEach(role => {
+    const title = holdTitles[role];
+    const hit = idxEntries.find(([, o]) => o.label.includes(title));
+    if (hit) {
+      regRows.push(rowOk(role, `label ~ "${title}"`, hit[0], hit[1].label, hit[1].value));
+    } else {
+      issues++;
+      regRows.push(rowBad(role, `label ~ "${title}"`, "NOT FOUND"));
+    }
+  });
+
+  // ICE: configured label, then dealer fallback.
+  {
+    const role = "iceContact";
+    const hit = findByLabel(fields.iceContact) || findByLabel(ICE_DEALER_FALLBACK);
+    if (hit) {
+      regRows.push(rowOk(role, `"${fields.iceContact}" / "${ICE_DEALER_FALLBACK}"`, hit[0], hit[1].label, hit[1].value));
+    } else {
+      issues++;
+      regRows.push(rowBad(role, `"${fields.iceContact}" / "${ICE_DEALER_FALLBACK}"`, "NOT FOUND"));
+    }
+  }
+
+  // Remaining named roles (skip holds, ice, pickup labels).
+  const SKIP = new Set([...HOLD_ROLES, "iceContact", "pickupDateLabel", "pickupTimeLabel"]);
+  Object.entries(fields).forEach(([role, searchText]) => {
+    if (SKIP.has(role)) return;
+    const hit = findByLabel(searchText);
+    if (hit) {
+      regRows.push(rowOk(role, `"${searchText}"`, hit[0], hit[1].label, hit[1].value));
+    } else {
+      issues++;
+      regRows.push(rowBad(role, `"${searchText}"`, "NOT FOUND"));
+    }
+  });
+
+  results.appendChild(section("Registration fields (CONFIG.fieldLabels)",
+    table(["Role", "Search text", "Index", "Matched label", "Value", "Status"], regRows)));
+
+  // ── Required fields ──
+  const reqRows = [];
+  (CONFIG.requiredFields || []).forEach(rf => {
+    const hit = findByLabel(rf.labelText);
+    if (!hit) {
+      issues++;
+      reqRows.push(tr("bad", [tdMono(rf.labelText), td('<span class="empty">—</span>'), tdStatus("bad", "FIELD NOT FOUND")]));
+    } else if (!hit[1].value) {
+      issues++;
+      reqRows.push(tr("bad", [tdMono(rf.labelText), td(val(hit[1].value)), tdStatus("bad", "MISSING")]));
+    } else {
+      reqRows.push(tr("", [tdMono(rf.labelText), td(val(hit[1].value)), tdStatus("ok", "OK")]));
+    }
+  });
+  if (reqRows.length) {
+    results.appendChild(section("Required check-in fields (CONFIG.requiredFields)",
+      table(["Label text", "Value", "Status"], reqRows)));
+  }
+
+  // ── Pickup slots ──
+  const dateLabel = fields.pickupDateLabel || "Pickup Date";
+  const timeLabel = fields.pickupTimeLabel || "Pickup Time";
+  const dateIdx = idxEntries.filter(([, o]) => o.label.includes(dateLabel)).map(([i]) => parseInt(i, 10)).sort((a, b) => a - b);
+  const timeIdx = idxEntries.filter(([, o]) => o.label.includes(timeLabel)).map(([i]) => parseInt(i, 10)).sort((a, b) => a - b);
+  const slotRows = [];
+  const slotCount = Math.max(dateIdx.length, timeIdx.length);
+  for (let i = 0; i < slotCount; i++) {
+    const d = dateIdx[i], t = timeIdx[i];
+    const ok = d != null && t != null;
+    if (!ok) issues++;
+    slotRows.push(tr(ok ? "" : "warn", [
+      td(String(i)),
+      tdMono(d != null ? `[${d}]` : "—"),
+      tdMono(t != null ? `[${t}]` : "—"),
+      tdStatus(ok ? "ok" : "warn", ok ? "paired" : "unpaired"),
+    ]));
+  }
+  if (slotCount > 0) {
+    results.appendChild(section("Pickup slots (date/time pairs)",
+      table(["Slot", "Date index", "Time index", "Status"], slotRows)));
+  }
+
+  // ── Merch ──
+  const merchRows = [];
+  (CONFIG.merch?.items || []).forEach(item => {
+    const src = item.source || {};
+    const sourceFg = formGroups.find(fg => src.label && fg.label.includes(src.label));
+    const pickupFg = formGroups.find(fg => item.pickupFieldLabel && fg.label.includes(item.pickupFieldLabel));
+
+    let status = "ok", statusText = "OK", rowClass = "";
+    if (!sourceFg) { status = "bad"; statusText = "SOURCE FIELD NOT FOUND"; rowClass = "bad"; issues++; }
+    else if (!pickupFg) { status = "bad"; statusText = "PICKUP FIELD NOT FOUND"; rowClass = "bad"; issues++; }
+
+    const sourceVal = sourceFg ? sourceFg.value : "";
+    const ordered = sourceFg ? isMerchItemOrdered(item, sourceVal) : false;
+    const variant = ordered && src.matchMode === "anyExcept" ? sourceVal : "";
+    const pickupVal = pickupFg ? pickupFg.value : "";
+    const pickedUp = !!pickupVal;
+
+    merchRows.push(tr(rowClass, [
+      td(esc(item.name)),
+      tdMono(`"${src.label || ""}"`),
+      td(sourceFg ? val(sourceVal) : '<span class="pill bad">no field</span>'),
+      td(ordered ? pill("ok", "ordered") : '<span class="muted">no</span>'),
+      td(variant ? esc(variant) : '<span class="muted">—</span>'),
+      tdMono(`"${item.pickupFieldLabel || ""}"`),
+      td(pickupFg ? (pickedUp ? pill("warn", "picked up: " + pickupVal) : '<span class="muted">not picked up</span>') : '<span class="pill bad">no field</span>'),
+      tdStatus(status, statusText),
+    ]));
+  });
+  if (merchRows.length) {
+    results.appendChild(section("Merch items (CONFIG.merch.items)",
+      table(["Item", "Source label", "Source value", "Ordered?", "Variant", "Pickup label", "Pickup state", "Status"], merchRows)));
+  }
+
+  // ── Summary banner (prepended) ──
+  const banner = document.createElement("div");
+  banner.className = "banner " + (issues === 0 ? "ok" : "bad");
+  banner.textContent = issues === 0
+    ? "All configured fields resolved against this page."
+    : `${issues} issue${issues === 1 ? "" : "s"} found — see red rows below.`;
+  results.insertBefore(banner, results.firstChild);
+}
+
+// ── Small DOM builders ───────────────────────────────────────────────────────
+function section(title, tableEl) {
+  const wrap = document.createElement("div");
+  const h = document.createElement("h2");
+  h.textContent = title;
+  wrap.appendChild(h);
+  wrap.appendChild(tableEl);
+  return wrap;
+}
+function table(headers, rows) {
+  const t = document.createElement("table");
+  t.innerHTML = `<thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead>`;
+  const tbody = document.createElement("tbody");
+  tbody.innerHTML = rows.join("");
+  t.appendChild(tbody);
+  return t;
+}
+function tr(cls, cells) { return `<tr class="${cls}">${cells.join("")}</tr>`; }
+function td(html) { return `<td>${html}</td>`; }
+function tdMono(text) { return `<td class="mono">${esc(text)}</td>`; }
+function tdStatus(kind, text) { return `<td>${pill(kind, text)}</td>`; }
+function rowOk(role, search, idx, label, value) {
+  return tr("", [tdMono(role), tdMono(search), tdMono(`[${idx}]`), td(esc(label)), td(val(value)), tdStatus("ok", "OK")]);
+}
+function rowBad(role, search, statusText) {
+  return tr("bad", [tdMono(role), tdMono(search), tdMono("—"), td('<span class="empty">—</span>'), td('<span class="empty">—</span>'), tdStatus("bad", statusText)]);
+}
+
+document.getElementById("analyze").addEventListener("click", analyze);
+document.getElementById("clear").addEventListener("click", () => {
+  document.getElementById("dump").value = "";
+  document.getElementById("results").innerHTML = "";
+});
+</script>
+
+</body>
+</html>

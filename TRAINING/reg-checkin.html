@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registration Check-In — Volunteer Training Guide</title>
+<style>
+  :root {
+    --purple: #620272;
+    --green:  #328332;
+    --blue:   #0072B2;
+    --red:    #CC0202;
+    --yellow: #FFB400;
+    --ink:    #1a1a1a;
+    --bg:     #f5f4f7;
+    --card:   #fff;
+    --border: #e0dce6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; }
+  nav {
+    width: 220px; flex-shrink: 0;
+    background: var(--purple);
+    padding: 24px 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  nav .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 18px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    margin-bottom: 14px;
+  }
+  nav .nav-logo img { width: 36px; height: 36px; }
+  nav .nav-logo span { color: #fff; font-weight: bold; font-size: 13px; line-height: 1.3; }
+  nav a {
+    display: block;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    padding: 7px 18px;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  nav a:hover, nav a.active {
+    color: #fff; background: rgba(255,255,255,0.12);
+    border-left-color: #fff;
+  }
+  nav .nav-section {
+    color: rgba(255,255,255,0.45);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    padding: 14px 18px 4px;
+  }
+  main {
+    flex: 1; padding: 36px 48px;
+    max-width: 860px;
+  }
+  /* ── Page header ── */
+  .page-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid var(--purple);
+  }
+  .page-header img { width: 56px; height: 56px; }
+  .page-header h1 { margin: 0; font-size: 26px; color: var(--purple); }
+  .page-header .subtitle { margin: 4px 0 0; font-size: 14px; color: #666; }
+  .mode-badge {
+    margin-left: auto;
+    background: #f0e8f7; border: 2px solid var(--purple);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 12px; text-align: right; color: var(--purple);
+    flex-shrink: 0;
+  }
+  /* ── Section headings ── */
+  .section { margin-bottom: 36px; }
+  .section h2 {
+    font-size: 17px; color: var(--purple);
+    margin: 0 0 14px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section h2 .icon { font-size: 20px; }
+  /* ── Icon legend ── */
+  .legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .legend .chip {
+    border: 2px solid var(--border); border-radius: 10px;
+    padding: 14px 10px; text-align: center;
+  }
+  .legend .dot { width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 8px; }
+  .legend .chip-label { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+  .legend .chip-desc { font-size: 12px; color: #555; line-height: 1.3; }
+  .legend .blue   { border-color: var(--blue);   } .legend .blue   .dot { background: var(--blue);   }
+  .legend .yellow { border-color: var(--yellow);  } .legend .yellow .dot { background: var(--yellow);  }
+  .legend .red    { border-color: var(--red);    } .legend .red    .dot { background: var(--red);    }
+  .legend .idle   { border-color: #999; } .legend .idle   .dot { background: #777; }
+  /* ── Step cards ── */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex; gap: 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    background: var(--purple); color: #fff;
+    border-radius: 50%;
+    font-weight: bold; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-body { flex: 1; }
+  .step-title { font-weight: bold; font-size: 15px; margin: 0 0 6px; }
+  .step-desc { font-size: 14px; color: #333; margin: 0; }
+  .step.highlight { border-color: var(--blue); background: #f0f7ff; }
+  /* ── Decision tree inside step ── */
+  .branch-list { list-style: none; margin: 10px 0 0; padding: 0; }
+  .branch-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 6px 0; border-bottom: 1px solid #e8e8e8; font-size: 14px;
+  }
+  .branch-list li:last-child { border-bottom: none; }
+  .branch-dot {
+    flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%;
+    margin-top: 3px;
+  }
+  .branch-dot.blue   { background: var(--blue); }
+  .branch-dot.yellow { background: var(--yellow); }
+  .branch-dot.red    { background: var(--red); }
+  /* ── Inline button mock-ups ── */
+  .btn {
+    display: inline-block; padding: 2px 9px; border-radius: 5px;
+    font-size: 13px; font-weight: bold; color: #fff; white-space: nowrap;
+    vertical-align: middle;
+  }
+  .btn.go     { background: var(--blue); }
+  .btn.go-g   { background: var(--green); }
+  .btn.warn   { background: var(--yellow); color: #000; }
+  .btn.stop   { background: var(--red); }
+  .btn.purple { background: var(--purple); }
+  /* ── Alert / callout boxes ── */
+  .alert {
+    border-radius: 8px; padding: 14px 18px; margin: 12px 0;
+    border-left: 5px solid;
+  }
+  .alert.green  { background: #f0faf0; border-color: var(--green); }
+  .alert.yellow { background: #fffbf0; border-color: var(--yellow); }
+  .alert.red    { background: #fff5f5; border-color: var(--red); }
+  .alert.blue   { background: #f0f7ff; border-color: var(--blue); }
+  .alert-title { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+  .alert ul { margin: 6px 0 0; padding-left: 20px; }
+  .alert li { margin: 3px 0; font-size: 14px; }
+  /* ── ID check detail box ── */
+  .id-check {
+    background: #fff;
+    border: 2px solid var(--blue);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 14px 0;
+  }
+  .id-check-header {
+    background: var(--blue); color: #fff;
+    padding: 10px 16px; font-weight: bold; font-size: 14px;
+  }
+  .id-check-body { padding: 16px; }
+  .id-check-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px solid #e8e8f0; font-size: 14px;
+  }
+  .id-check-row:last-child { border-bottom: none; }
+  .id-check-num {
+    flex-shrink: 0;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--blue); color: #fff;
+    font-size: 12px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .id-check-text { flex: 1; }
+  .id-check-text strong { display: block; margin-bottom: 2px; }
+  .id-check-text .detail { color: #555; font-size: 13px; }
+  /* ── Screen mock-up ── */
+  .screen-mock {
+    background: #f8f8f8; border: 2px solid #ccc;
+    border-radius: 10px; padding: 14px 18px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    max-width: 320px; margin: 12px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .screen-mock .sm-label { font-size: 11px; color: #777; margin-bottom: 2px; }
+  .screen-mock .sm-badge {
+    text-align: center; font-size: 11px; color: #666; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .screen-mock .sm-num {
+    text-align: center; font-size: 28px; font-weight: bold;
+    color: var(--ink); line-height: 1;
+  }
+  .screen-mock .sm-ticket { text-align: center; font-size: 13px; color: #555; margin-bottom: 10px; }
+  .screen-mock table { width: 100%; font-size: 13px; margin-bottom: 10px; }
+  .screen-mock td { padding: 3px 4px; vertical-align: top; }
+  .screen-mock td:first-child { color: #777; white-space: nowrap; width: 36%; }
+  .screen-mock .sm-divider { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
+  .screen-mock .sm-btn {
+    display: block; width: 100%; padding: 8px;
+    background: var(--blue); color: #fff;
+    border: none; border-radius: 5px;
+    font-size: 13px; font-weight: bold; text-align: center;
+    margin-top: 6px; cursor: default;
+  }
+  .screen-mock .sm-btn.sm-merch { font-size: 12px; }
+  /* ── ICE mock ── */
+  .ice-box {
+    background: #fff; border: 2px solid var(--yellow);
+    border-radius: 10px; overflow: hidden; margin: 12px 0;
+  }
+  .ice-box-header { background: var(--yellow); padding: 8px 14px; font-weight: bold; font-size: 14px; }
+  .ice-box-body { padding: 14px 16px; font-size: 14px; }
+  .ice-box-body ol { margin: 6px 0 0; padding-left: 20px; }
+  .ice-box-body li { margin: 4px 0; }
+  /* ── Screenshot placeholder ── */
+  .shot {
+    border: 2px dashed #bbb; border-radius: 8px;
+    padding: 24px; text-align: center;
+    color: #aaa; font-size: 12px; font-style: italic; margin: 12px 0;
+  }
+  /* ── Manager callbox ── */
+  .manager-box {
+    border: 2px solid var(--red); border-radius: 10px;
+    background: #fff5f5; padding: 16px 20px;
+  }
+  .manager-box h3 { color: var(--red); margin: 0 0 10px; font-size: 16px; }
+  .manager-box ul { margin: 0; padding-left: 22px; }
+  .manager-box li { margin: 5px 0; font-size: 14px; }
+  .manager-box .punch {
+    margin-top: 12px; font-weight: bold; color: var(--red); font-size: 15px;
+    border-top: 1px solid #f0c0c0; padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- Sidebar nav -->
+<nav>
+  <div class="nav-logo">
+    <img src="../assets/reggie-blue-38.png" alt="Reggie">
+    <span>Registration<br>Check-In</span>
+  </div>
+  <div class="nav-section">Sections</div>
+  <a href="#overview">Overview</a>
+  <a href="#icon-legend">Icon Colors</a>
+  <a href="#steps">Steps</a>
+  <a href="#age-verify">Age Verification</a>
+  <a href="#ice">Emergency Contact</a>
+  <a href="#badge-issued">Issuing the Badge</a>
+  <a href="#escalate">When to Escalate</a>
+</nav>
+
+<main>
+
+  <!-- Header -->
+  <div class="page-header">
+    <img src="../assets/reggie-blue-38.png" alt="Reggie">
+    <div>
+      <h1>Registration Check-In</h1>
+      <div class="subtitle">Volunteer training guide — badge issuance</div>
+    </div>
+    <div class="mode-badge">
+      <strong>Toolbar face:</strong> Reggie<br>
+      No blue "MERCH MODE" banner.<br>
+      Wrong mode? Tell your lead.
+    </div>
+  </div>
+
+  <!-- Overview -->
+  <div class="section" id="overview">
+    <h2><span class="icon">📋</span> Overview</h2>
+    <p>
+      The extension reads the Neon page, checks whether the attendee can receive their badge,
+      and handles all the typing when you confirm. <strong>Your job is to read what the screen
+      shows and follow it.</strong> You never need to type badge numbers, dates, or times.
+    </p>
+    <div class="alert blue">
+      <div class="alert-title">Before you start each shift</div>
+      <ul>
+        <li>Confirm the toolbar face is <strong>Reggie</strong> (not Connie).</li>
+        <li>No blue <strong>MERCH MODE</strong> banner on any screen.</li>
+        <li>If either is wrong, the extension is in the wrong mode — ask your lead to fix it on the Options page.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Icon legend -->
+  <div class="section" id="icon-legend">
+    <h2><span class="icon">🎨</span> What the icon color means</h2>
+    <p>The Reggie icon in the toolbar changes color to signal status at a glance.</p>
+    <div class="legend">
+      <div class="chip blue">
+        <div class="dot"></div>
+        <div class="chip-label">Blue</div>
+        <div class="chip-desc">Good — clear to issue the badge</div>
+      </div>
+      <div class="chip yellow">
+        <div class="dot"></div>
+        <div class="chip-label">Yellow</div>
+        <div class="chip-desc">Caution — read the screen before doing anything</div>
+      </div>
+      <div class="chip red">
+        <div class="dot"></div>
+        <div class="chip-label">Red</div>
+        <div class="chip-desc">Stop — send the attendee to the Help Desk</div>
+      </div>
+      <div class="chip idle">
+        <div class="dot"></div>
+        <div class="chip-label">Grey</div>
+        <div class="chip-desc">Idle — not on a check-in page yet</div>
+      </div>
+    </div>
+    <div class="shot">[SCREENSHOT: four icon states side by side in the toolbar]</div>
+  </div>
+
+  <!-- Steps -->
+  <div class="section" id="steps">
+    <h2><span class="icon">🪜</span> Steps</h2>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Find the attendee in Neon</div>
+          <div class="step-desc">
+            Search for the attendee by name or account number. Click their name to open
+            their <strong>account page</strong>. The check-in window appears on its own.
+            If it doesn't appear, click the Reggie icon in the toolbar.
+          </div>
+          <div class="shot">[SCREENSHOT: Neon search results → clicking an account name]</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Read the account screen</div>
+          <div class="step-desc">One of these will appear:</div>
+          <ul class="branch-list">
+            <li>
+              <span class="branch-dot blue"></span>
+              <span><strong>Green "✓ … Ready for check-in"</strong> — the tool moves you forward
+              automatically. Wait a moment.</span>
+            </li>
+            <li>
+              <span class="branch-dot yellow"></span>
+              <span><strong>Yellow note(s)</strong> — read every note carefully. Tick
+              <em>"I have read and understood the note(s) above"</em>, then click
+              <span class="btn warn">Proceed to Check-In →</span>.</span>
+            </li>
+            <li>
+              <span class="branch-dot red"></span>
+              <span><strong>Red "⛔ SEND TO HELP DESK"</strong> — stop. Send the attendee
+              to the Help Desk without issuing anything.</span>
+            </li>
+          </ul>
+          <div class="shot">[SCREENSHOT: account screen — yellow note with checkbox]</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Pick the attendee from the list</div>
+          <div class="step-desc">
+            The screen shows <strong>"Select the attendee to check in:"</strong> with a row
+            per person on the registration.
+          </div>
+          <ul class="branch-list">
+            <li>
+              <span class="branch-dot blue"></span>
+              <span>Row has a <span class="btn go">Check In →</span> button → click it.</span>
+            </li>
+            <li>
+              <span class="branch-dot red"></span>
+              <span>Row says <strong>"Send to Help Desk"</strong> → that person is blocked.
+              Send them to the Help Desk.</span>
+            </li>
+          </ul>
+          <div class="alert yellow">
+            <div class="alert-title">📋 Registration Note</div>
+            If a note screen appears before the list, read it and click
+            <span class="btn warn">Note Read ✓</span> to continue.
+          </div>
+          <div class="shot">[SCREENSHOT: attendee list — one green row, one red blocked row]</div>
+        </div>
+      </div>
+
+      <div class="step highlight">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Handle what the check-in screen asks</div>
+          <div class="step-desc">
+            The screen may show tasks to complete before the badge number appears.
+            Work through them top to bottom.
+          </div>
+          <ul class="branch-list">
+            <li>
+              <span class="branch-dot yellow"></span>
+              <span><strong>Age verification required</strong> (Adult &amp; Dealer badges) —
+              <a href="#age-verify">see the detailed walkthrough below ↓</a></span>
+            </li>
+            <li>
+              <span class="branch-dot yellow"></span>
+              <span><strong>Missing emergency contact (ICE)</strong> — click
+              <span class="btn warn">Show me the field ↓</span>, fill it in on the form,
+              click <span class="btn warn">Re-check ↺</span>. <a href="#ice">Details below ↓</a></span>
+            </li>
+            <li>
+              <span class="branch-dot red"></span>
+              <span><strong>"NOT ALLOWED — SEND TO HELP DESK"</strong> → stop.
+              Send to the Help Desk.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Issue the badge</div>
+          <div class="step-desc">
+            When all issues are clear, the <strong>BADGE NUMBER</strong> and ticket type
+            appear, and a button activates. See <a href="#badge-issued">Issuing the Badge ↓</a>.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /steps -->
+  </div>
+
+  <!-- Age verification detail -->
+  <div class="section" id="age-verify">
+    <h2><span class="icon">🪪</span> Age Verification (Adult &amp; Dealer badges)</h2>
+    <p>
+      <strong>Adult</strong> and <strong>Dealer</strong> ticket types require age verification.
+      When this step is active, the screen shows the attendee's legal name and a cutoff date —
+      and blocks the badge until you confirm the ID.
+    </p>
+
+    <div class="screen-mock">
+      <table>
+        <tr>
+          <td>Legal Name</td>
+          <td><strong>Sample, Angela</strong></td>
+        </tr>
+        <tr>
+          <td>ID Required</td>
+          <td style="color:#CC0202; font-weight:bold;">DOB on or before 7/3/2007</td>
+        </tr>
+      </table>
+      <div style="display:block;width:100%;padding:8px;background:#FFB400;color:#000;border:none;border-radius:5px;font-size:13px;font-weight:bold;text-align:center;cursor:default;">
+        Age Verified, ID Returned ✓
+      </div>
+    </div>
+    <p style="font-size:13px;color:#666;margin-top:2px;">
+      The cutoff date is calculated automatically each time. You don't need to do the math.
+    </p>
+
+    <div class="id-check">
+      <div class="id-check-header">How to verify — step by step</div>
+      <div class="id-check-body">
+        <div class="id-check-row">
+          <div class="id-check-num">1</div>
+          <div class="id-check-text">
+            <strong>Ask for a government-issued photo ID.</strong>
+            <span class="detail">Driver's license, passport, or state/government ID card. Student IDs and
+            library cards are not sufficient.</span>
+          </div>
+        </div>
+        <div class="id-check-row">
+          <div class="id-check-num">2</div>
+          <div class="id-check-text">
+            <strong>Confirm the face on the ID matches the person in front of you.</strong>
+            <span class="detail">If they look significantly different or you have any doubt, tell your lead.</span>
+          </div>
+        </div>
+        <div class="id-check-row">
+          <div class="id-check-num">3</div>
+          <div class="id-check-text">
+            <strong>Read the <em>date of birth</em> on the ID.</strong>
+            <span class="detail">Compare it to the <strong>"DOB on or before"</strong> date shown on screen.
+            If the ID's DOB is on or before that date, they meet the age requirement.</span>
+          </div>
+        </div>
+        <div class="id-check-row">
+          <div class="id-check-num">4</div>
+          <div class="id-check-text">
+            <strong>Return the ID immediately.</strong>
+            <span class="detail">Hand it back before you click anything. Do not set it on the desk where it could be forgotten.</span>
+          </div>
+        </div>
+        <div class="id-check-row">
+          <div class="id-check-num">5</div>
+          <div class="id-check-text">
+            <strong>Click <span class="btn go">Age Verified, ID Returned ✓</span></strong>
+            <span class="detail">Only click after returning the ID. The screen re-renders and continues.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert red">
+      <div class="alert-title">⛔ Don't click — call your lead if:</div>
+      <ul>
+        <li>The ID date of birth is <strong>after</strong> the cutoff date (too young).</li>
+        <li>The face on the ID doesn't clearly match.</li>
+        <li>The attendee doesn't have a government-issued photo ID.</li>
+        <li>You're unsure about anything on the ID.</li>
+      </ul>
+    </div>
+
+    <div class="shot">[SCREENSHOT: age verification screen showing legal name + DOB cutoff]</div>
+  </div>
+
+  <!-- Emergency contact -->
+  <div class="section" id="ice">
+    <h2><span class="icon">🆘</span> Missing Emergency Contact (ICE)</h2>
+    <p>
+      If the attendee's emergency contact field is blank, a yellow warning appears. You can
+      fix this right at the station without sending them elsewhere.
+    </p>
+    <div class="ice-box">
+      <div class="ice-box-header">⚠ How to fix a missing emergency contact</div>
+      <div class="ice-box-body">
+        <ol>
+          <li>Ask the attendee for their emergency contact's <strong>name and phone number</strong>.</li>
+          <li>Click <span class="btn warn">Show me the field ↓</span> — the field on the Neon form highlights in yellow.</li>
+          <li>Type the emergency contact info into the highlighted field on the page behind the check-in window.</li>
+          <li>Click <span class="btn warn">Re-check ↺</span> in the check-in window. If it saved correctly, the warning clears.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="shot">[SCREENSHOT: yellow ICE warning with Show me the field button]</div>
+  </div>
+
+  <!-- Badge issued -->
+  <div class="section" id="badge-issued">
+    <h2><span class="icon">✅</span> Issuing the Badge</h2>
+    <p>
+      When all issues are resolved, the <strong>BADGE NUMBER</strong> (the attendee's Neon
+      account number) and ticket type appear. The button activates.
+    </p>
+
+    <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+      <div>
+        <p style="font-size:13px;color:#666;margin:0 0 6px;">No pending merch:</p>
+        <div class="screen-mock">
+          <div class="sm-badge">BADGE NUMBER</div>
+          <div class="sm-num">100042</div>
+          <div class="sm-ticket">Adult</div>
+          <table><tr><td>Legal Name</td><td>Sample, Angela</td></tr></table>
+          <div class="sm-btn">Badge Issued</div>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:13px;color:#666;margin:0 0 6px;">Pending merch (T-Shirt ordered):</p>
+        <div class="screen-mock">
+          <div class="sm-badge">BADGE NUMBER</div>
+          <div class="sm-num">100042</div>
+          <div class="sm-ticket">Adult</div>
+          <table><tr><td>Legal Name</td><td>Sample, Angela</td></tr></table>
+          <div style="font-size:13px;font-weight:bold;margin:4px 0;">T-Shirt Ordered</div>
+          <div class="sm-btn sm-merch">Badge Issued - Send to Merchandise</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert blue" style="margin-top:16px;">
+      <div class="alert-title">Badge Issued vs. Badge Issued - Send to Merchandise</div>
+      Both buttons complete the check-in the same way. The second means the attendee
+      also pre-ordered merchandise. After clicking, <strong>tell them to visit the
+      Merchandise table</strong> before they head in.
+    </div>
+
+    <p>After you click, the extension:</p>
+    <ul style="font-size:14px;">
+      <li>Downloads a badge-printer CSV file to the workstation's Downloads folder.</li>
+      <li>Records the pickup date, time, and name in Neon automatically.</li>
+      <li>Shows <strong>"Check-In Complete ✓"</strong> and resets for the next person.</li>
+    </ul>
+    <div class="shot">[SCREENSHOT: "Check-In Complete ✓" confirmation screen]</div>
+  </div>
+
+  <!-- Escalate -->
+  <div class="section" id="escalate">
+    <h2><span class="icon">🚨</span> When to Call a Manager / Help Desk</h2>
+    <div class="manager-box">
+      <h3>Stop and get help if you see any of these:</h3>
+      <ul>
+        <li>Anything <strong>red</strong>, or any "Send to Help Desk" / "NOT ALLOWED" message.</li>
+        <li>A <strong>hold</strong> — Registration Hold, Art Show Hold, or Operations Hold.</li>
+        <li>The ID date of birth is after the cutoff date (attendee is under 18).</li>
+        <li>The face on the ID doesn't clearly match the person.</li>
+        <li>The attendee doesn't have a valid government-issued photo ID.</li>
+        <li><strong>Badge already issued</strong> — "ALREADY ISSUED" message on screen.</li>
+        <li><strong>Name mismatch</strong> — badge is non-transferable and name doesn't match.</li>
+        <li>Screen says <em>"The badge file didn't download"</em> or <em>"Contact Registration Head."</em></li>
+      </ul>
+      <div class="punch">When in doubt — don't issue the badge. Ask first.</div>
+    </div>
+  </div>
+
+</main>
+</div>
+</body>
+</html>

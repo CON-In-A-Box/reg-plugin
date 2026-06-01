@@ -80,38 +80,98 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
         await setIcon(tab.id, account.state);
       }
     }
+
+    // Decide whether this tab's toolbar click opens the classic popup or
+    // fires onClicked (so the in-page modal can re-open). See applyPopupForTab.
+    await applyPopupForTab(tab.id, pending.page);
   }
 
   // ── Management override toggled -- refresh icon for the active tab ──
   if (changes[STORAGE_KEY.MANAGEMENT_OVERRIDE]) {
+    await refreshActiveTabIcon();
+  }
+
+  // ── Extension mode toggled -- swap the icon face (reggie ⇄ connie) ──
+  if (changes[STORAGE_KEY.EXTENSION_MODE]) {
+    await applyDefaultIconForMode();
+    await refreshActiveTabIcon();
+  }
+
+  // ── Pop-up mode toggled -- re-apply click behavior on an open eventReg tab ──
+  if (changes[STORAGE_KEY.POPUP_MODE]) {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     const tab  = tabs?.[0];
-    if (!tab) return;
-
-    const url = tab.url ?? "";
-
-    if (url.includes("attendeeEdit")) {
-      const result   = await chrome.storage.local.get(STORAGE_KEY.ATTENDEE);
-      const attendee = result[STORAGE_KEY.ATTENDEE];
-      if (attendee?.state) await setIcon(tab.id, attendee.state);
-
-    } else if (url.includes("eventRegDetails")) {
-      const result        = await chrome.storage.local.get(STORAGE_KEY.REGISTRATIONS);
-      const registrations = result[STORAGE_KEY.REGISTRATIONS];
-      if (registrations?.data) {
-        await setIcon(tab.id, worstStateFromRows(registrations.data));
-      }
-
-    } else if (url.includes("/admin/accounts/")) {
-      const result  = await chrome.storage.local.get(STORAGE_KEY.ACCOUNT);
-      const account = result[STORAGE_KEY.ACCOUNT];
-      if (account?.state) await setIcon(tab.id, account.state);
-
-    } else if (url.includes("neoncrm.com")) {
-      await setIcon(tab.id, STATE.GREEN);
+    if (tab && (tab.url ?? "").includes("eventRegDetails")) {
+      await applyPopupForTab(tab.id, "registrations");
     }
   }
 });
+
+/**
+ * Sets a tab's toolbar-click behavior. In Automated pop-up mode the eventReg
+ * page uses the in-page modal, so we CLEAR the popup for that tab (an empty
+ * popup string makes chrome.action.onClicked fire on click). Every other page
+ * — and Manual mode — keeps the classic popup.html.
+ *
+ * @param {number} tabId
+ * @param {string} page - "registrations" | "attendee" | "account"
+ */
+async function applyPopupForTab(tabId, page) {
+  let popup = "popup.html";
+  // The eventReg and attendee pages both use the in-page modal in Automated
+  // REG mode, so clear their per-tab popup (an empty string makes a toolbar
+  // click fire chrome.action.onClicked → SHOW_CHECKIN_MODAL → the modal).
+  if (page === "registrations" || page === "attendee") {
+    const r = await chrome.storage.local.get({
+      [STORAGE_KEY.POPUP_MODE]:     "automated",
+      [STORAGE_KEY.EXTENSION_MODE]: EXTENSION_MODE.REG,
+    });
+    const automated = (r[STORAGE_KEY.POPUP_MODE] ?? "automated") === "automated";
+    const regMode   = (r[STORAGE_KEY.EXTENSION_MODE] ?? EXTENSION_MODE.REG) === EXTENSION_MODE.REG;
+    if (automated && regMode) popup = ""; // clear → toolbar click fires onClicked → modal
+  }
+  try {
+    await chrome.action.setPopup({ tabId, popup });
+  } catch (e) {
+    // Tab may have closed/navigated; harmless.
+  }
+}
+
+// Toolbar click — only fires when the tab's popup is cleared (Automated mode
+// on the eventReg page). Ask the content script to re-scrape and re-open the
+// in-page modal.
+chrome.action.onClicked.addListener((tab) => {
+  if (!tab?.id) return;
+  chrome.tabs.sendMessage(tab.id, { action: ACTION.SHOW_CHECKIN_MODAL }).catch(() => {});
+});
+
+/**
+ * Re-applies the toolbar icon for the active tab from its stored scrape state.
+ * Used when something that affects icon appearance changes (manager override,
+ * extension mode) without a fresh page scrape.
+ */
+async function refreshActiveTabIcon() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tab  = tabs?.[0];
+  if (!tab) return;
+  const url = tab.url ?? "";
+
+  if (url.includes("attendeeEdit")) {
+    const result = await chrome.storage.local.get(STORAGE_KEY.ATTENDEE);
+    if (result[STORAGE_KEY.ATTENDEE]?.state) await setIcon(tab.id, result[STORAGE_KEY.ATTENDEE].state);
+
+  } else if (url.includes("eventRegDetails")) {
+    const result = await chrome.storage.local.get(STORAGE_KEY.REGISTRATIONS);
+    if (result[STORAGE_KEY.REGISTRATIONS]?.data) await setIcon(tab.id, worstStateFromRows(result[STORAGE_KEY.REGISTRATIONS].data));
+
+  } else if (url.includes("/admin/accounts/")) {
+    const result = await chrome.storage.local.get(STORAGE_KEY.ACCOUNT);
+    if (result[STORAGE_KEY.ACCOUNT]?.state) await setIcon(tab.id, result[STORAGE_KEY.ACCOUNT].state);
+
+  } else if (url.includes("neoncrm.com")) {
+    await setIcon(tab.id, STATE.GREEN);
+  }
+}
 
 // ── POST-CHECK-IN REDIRECT ─────────────────────────────────────────────
 //
@@ -249,6 +309,24 @@ async function recordErrorInStorage(errorType, originalError, context = {}) {
 
   await chrome.storage.local.set({ [STORAGE_KEY.REGISTRATION_ERROR]: errorState });
   console.log("[BackgroundScript] Error stored for popup display:", errorState);
+
+  // Also append to a bounded ring buffer for the debug report's error history.
+  // REGISTRATION_ERROR above is the single latest error the popup shows; this
+  // keeps the last 20 so IT can spot recurring failures.
+  try {
+    const logResult = await chrome.storage.local.get(STORAGE_KEY.ERROR_LOG);
+    const log = Array.isArray(logResult[STORAGE_KEY.ERROR_LOG]) ? logResult[STORAGE_KEY.ERROR_LOG] : [];
+    log.push({
+      type: errorType,
+      title: messageTemplate.title,
+      message: String(originalError),
+      context,
+      at: new Date(timestamp).toISOString(),
+    });
+    await chrome.storage.local.set({ [STORAGE_KEY.ERROR_LOG]: log.slice(-20) });
+  } catch (e) {
+    console.warn("[BackgroundScript] could not append to ERROR_LOG:", e?.message);
+  }
 }
 
 /**
@@ -265,6 +343,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       armedPostCheckin.set(tabId, Date.now());
       console.log(`background.js: armed post-check-in redirect for tab ${tabId}`);
     }
+    sendResponse({ ok: true });
+    return;
+  }
+
+  // Manager Debug Walk finished (or halted) -- open the report tab and clear
+  // the walk flag so subsequent normal clicks aren't hijacked. DEBUG_REPORT is
+  // left in place for the report page to read.
+  if (message?.action === ACTION.OPEN_DEBUG_REPORT) {
+    chrome.tabs.create({ url: chrome.runtime.getURL("debug-report.html") });
+    chrome.storage.local.remove(STORAGE_KEY.DEBUG_WALK_ACTIVE);
+    console.log("background.js: opened debug report tab and cleared DEBUG_WALK_ACTIVE");
     sendResponse({ ok: true });
     return;
   }

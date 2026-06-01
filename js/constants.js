@@ -59,6 +59,22 @@ const ACTION = {
   // finished). merch-attendee.js scrapes fresh and returns the state
   // synchronously so the popup can render without waiting on storage.
   GET_ATTENDEE_MERCH:         "Get Attendee Merch",
+  // Sent by attendeeContact.js after the manager debug walk's final
+  // audit step writes STORAGE_KEY.DEBUG_REPORT. background.js opens the
+  // full-page report tab in response. Also sent at every early-halt point
+  // (accountPage.js / registrations.js) so a partial report still opens.
+  OPEN_DEBUG_REPORT:          "Open Debug Report",
+  // Sent by popup.js initiateDebugWalk to accountPage.js BEFORE navigating
+  // away from the account About page, so the About-page fields are captured
+  // into the debug report while they are still on screen.
+  RUN_ACCOUNT_DEBUG_AUDIT:    "Run Account Debug Audit",
+  // Connectivity check: every content script answers PING so the options-page
+  // maintenance panel can confirm the script actually injected on the tab.
+  PING:                       "Ping Content Script",
+  // Sent by background.js (chrome.action.onClicked) when the toolbar icon is
+  // clicked in Automated pop-up mode on the eventReg page, so the in-page
+  // check-in modal re-scrapes and re-opens.
+  SHOW_CHECKIN_MODAL:         "Show Check-In Modal",
 };
 
 // ── EXTEND STORAGE_KEY WITH APP-SPECIFIC KEYS ───────────────────────────
@@ -80,6 +96,11 @@ STORAGE_KEY.ACCOUNT           = "account";
 STORAGE_KEY.AGE_VERIFIED      = "ageVerified";
 STORAGE_KEY.ACCOUNT_AUTO_NAV  = "cvgAccountAutoNav";
 STORAGE_KEY.NOTE_ACKNOWLEDGED = "noteAcknowledged";
+// POPUP_MODE -- "automated" | "manual". Automated (default) auto-opens the
+// in-page check-in modal on the eventReg page and re-opens it on toolbar click;
+// Manual keeps the classic click-to-open popup.html. Only managers can pick
+// manual (set on the options page); everyone else is automated.
+STORAGE_KEY.POPUP_MODE        = "popupMode";
 
 // ── BLOCKING / WARNING CONDITION KEYS ────────────────────────────────────
 // Keys for every blocking/warning condition. Used as keys in the reasons

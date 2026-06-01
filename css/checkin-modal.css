@@ -1,0 +1,334 @@
+/* css/checkin-modal.css
+ *
+ * Styles for the in-page check-in modal injected by js/checkin-modal.js on the
+ * eventReg page (Automated pop-up mode). EVERY rule is scoped under
+ * #cvg-checkin-modal so nothing leaks into Neon's own page styling, and the
+ * root resets inherited Neon styles. Colors mirror css/popup.css.
+ */
+
+#cvg-checkin-modal {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 2147483647;
+  width: 380px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  background: #ffffff;
+  color: #222;
+  border: 1px solid #c9c9c9;
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+}
+#cvg-checkin-modal * { box-sizing: border-box; }
+
+/* Header bar */
+#cvg-checkin-modal .cvg-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--brand-purple);
+  color: #fff;
+  padding: 8px 12px;
+  font-weight: bold;
+  border-radius: 8px 8px 0 0;
+  cursor: move;
+  user-select: none;
+}
+#cvg-checkin-modal .cvg-modal-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+#cvg-checkin-modal .cvg-modal-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+#cvg-checkin-modal .cvg-modal-body { padding: 12px; }
+
+/* Manager override banner */
+#cvg-checkin-modal .cvg-override-banner {
+  background: var(--brand-purple-bg);
+  color: var(--brand-purple-ink);
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-purple) 30%, white);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+#cvg-checkin-modal .cvg-heading {
+  font-weight: bold;
+  margin: 0 0 8px;
+}
+
+/* Registrant rows */
+#cvg-checkin-modal .cvg-reg-row {
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+#cvg-checkin-modal .cvg-reg-row.green  { background: var(--brand-blue-bg); }   /* ready/go → blue */
+#cvg-checkin-modal .cvg-reg-row.yellow { background: var(--brand-yellow-bg); }
+#cvg-checkin-modal .cvg-reg-row.red    { background: var(--brand-red-bg); border-color: color-mix(in srgb, var(--brand-red) 30%, white); }
+#cvg-checkin-modal .cvg-reg-name   { font-weight: bold; margin-bottom: 2px; }
+#cvg-checkin-modal .cvg-reg-ticket { font-size: 12px; color: #555; margin-bottom: 6px; }
+#cvg-checkin-modal .cvg-helpdesk   { color: var(--brand-red-ink); font-weight: bold; font-size: 13px; }
+
+/* Buttons */
+#cvg-checkin-modal button.cvg-btn {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#cvg-checkin-modal button.cvg-btn-checkin  { background: var(--brand-blue); }
+#cvg-checkin-modal button.cvg-btn-checkin:hover  { background: var(--brand-blue-dark); }
+#cvg-checkin-modal button.cvg-btn-override { background: var(--brand-red); }
+#cvg-checkin-modal button.cvg-btn-override:hover { background: var(--brand-red-dark); }
+#cvg-checkin-modal button.cvg-btn-checkin:disabled { background: #6c757d; cursor: not-allowed; }
+
+/* Note gate */
+#cvg-checkin-modal .cvg-note-banner {
+  background: var(--brand-yellow-bg);
+  color: var(--brand-yellow-ink);
+  border: 1px solid var(--brand-yellow);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+#cvg-checkin-modal .cvg-note-title { font-weight: bold; margin-bottom: 2px; }
+#cvg-checkin-modal .cvg-note-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+#cvg-checkin-modal .cvg-note-row input { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+
+#cvg-checkin-modal .cvg-empty { color: #777; font-style: italic; }
+
+
+/* ── ATTENDEE VIEW (mirrors css/popup.css, scoped under the modal) ──────────
+ * Rendered by js/attendee-modal.js on the attendeeEdit page. Class names match
+ * popup.js's buildAttendeeView so the markup builder stays parallel.
+ */
+
+/* Status banners + reason blocks */
+#cvg-checkin-modal .banner {
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+#cvg-checkin-modal .banner-yellow {
+  background: var(--brand-yellow-bg);
+  color: var(--brand-yellow-ink);
+  border: 1px solid var(--brand-yellow);
+  font-weight: bold;
+}
+#cvg-checkin-modal .banner-red {
+  background: var(--brand-red-bg);
+  color: var(--brand-red-ink);
+  border: 2px solid var(--brand-red);
+}
+#cvg-checkin-modal .banner-stop {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+#cvg-checkin-modal .reason-block { margin: 0; padding: 4px 0; }
+#cvg-checkin-modal .reason-title { font-weight: bold; }
+#cvg-checkin-modal .reason-body {
+  font-weight: normal;
+  white-space: pre-line;
+  margin-top: 2px;
+  font-size: 12px;
+}
+#cvg-checkin-modal .reason-divider {
+  border: none;
+  border-top: 1px solid rgba(114, 28, 36, 0.25);
+  margin: 6px 0;
+}
+#cvg-checkin-modal .banner-yellow .reason-divider { border-top-color: rgba(133, 100, 4, 0.25); }
+
+/* Badge number cell + placeholder */
+#cvg-checkin-modal .badge-number-cell {
+  text-align: center;
+  padding: 10px 6px 14px;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 10px;
+}
+#cvg-checkin-modal .badge-number-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+#cvg-checkin-modal .badge-number-value {
+  font-size: 48px;
+  font-weight: bold;
+  color: #111;
+  line-height: 1;
+  letter-spacing: 2px;
+}
+#cvg-checkin-modal .badge-ticket-value {
+  font-size: 26px;
+  font-weight: bold;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+#cvg-checkin-modal .cvg-badge-placeholder {
+  text-align: center;
+  padding: 14px 8px;
+  margin-bottom: 10px;
+  background: #f1f3f5;
+  border: 1px dashed #adb5bd;
+  border-radius: 4px;
+  color: #495057;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Info table */
+#cvg-checkin-modal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+#cvg-checkin-modal table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+  font-size: 15px;
+}
+#cvg-checkin-modal td.label {
+  font-weight: bold;
+  white-space: nowrap;
+  width: 42%;
+  color: #555;
+  font-size: 12px;
+}
+#cvg-checkin-modal .legal-name-value { font-size: 18px; font-weight: bold; color: #333; }
+#cvg-checkin-modal .age-cutoff-date  { font-size: 18px; font-weight: bold; color: var(--brand-yellow-ink); }
+
+/* Pending-merch line above the action button */
+#cvg-checkin-modal .cvg-merch-line { font-size: 14px; font-weight: bold; margin: 4px 0 4px 6px; }
+
+/* Re-check section */
+#cvg-checkin-modal .recheck-section { margin-bottom: 8px; }
+#cvg-checkin-modal .recheck-block   { display: flex; gap: 6px; margin-bottom: 6px; }
+
+/* Attendee-view buttons */
+#cvg-checkin-modal .btn-show-field {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--brand-yellow-dark);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+#cvg-checkin-modal .btn-show-field:hover { background: var(--brand-yellow-dark2); }
+#cvg-checkin-modal .btn-recheck {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--brand-blue);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+#cvg-checkin-modal .btn-recheck:hover { background: var(--brand-blue-dark); }
+#cvg-checkin-modal .btn-age-verify {
+  width: 100%;
+  padding: 10px;
+  background: var(--brand-yellow-dark);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+#cvg-checkin-modal .btn-age-verify:hover { background: var(--brand-yellow-dark2); }
+#cvg-checkin-modal .btn-checkin {
+  width: 100%;
+  padding: 10px;
+  background: var(--brand-blue);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#cvg-checkin-modal .btn-checkin:hover    { background: var(--brand-blue-dark); }
+#cvg-checkin-modal .btn-checkin:disabled { background: #6c757d; cursor: not-allowed; }
+#cvg-checkin-modal .btn-no-issue {
+  width: 100%;
+  padding: 10px;
+  background: #6c757d;
+  color: #fff;
+  border: 2px solid var(--brand-red);
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: not-allowed;
+  letter-spacing: 1px;
+}
+
+/* Help-desk note */
+#cvg-checkin-modal .helpdesk-note {
+  width: 100%;
+  padding: 10px;
+  background: var(--brand-red-bg);
+  color: var(--brand-red-ink);
+  border: 1px solid var(--brand-red);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Confirmation / error screens */
+#cvg-checkin-modal .confirm-screen {
+  text-align: center;
+  padding: 20px 10px;
+  background: var(--brand-blue-bg);
+  border-radius: 4px;
+}
+#cvg-checkin-modal .confirm-icon  { font-size: 40px; color: var(--brand-blue); margin-bottom: 4px; }
+#cvg-checkin-modal .confirm-title { font-size: 18px; font-weight: bold; color: var(--brand-blue-ink); margin-bottom: 8px; }
+#cvg-checkin-modal .confirm-name  { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+#cvg-checkin-modal .error-screen {
+  text-align: center;
+  padding: 16px 10px;
+  background: var(--brand-red-bg);
+  border-radius: 4px;
+}
+#cvg-checkin-modal .error-icon    { font-size: 32px; color: var(--brand-red); margin-bottom: 8px; }
+#cvg-checkin-modal .error-message { font-size: 13px; color: var(--brand-red-ink); white-space: pre-line; text-align: left; }

@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>CONvergence Check-In — Options</title>
+  <link rel="stylesheet" href="css/brand.css">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -108,6 +109,31 @@
     }
 
     button:hover { background: #0056b3; }
+
+    .panel {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .panel h3 { font-size: 13px; margin: 0 0 6px; }
+    .panel button { margin: 0 6px 6px 0; padding: 5px 10px; font-size: 12px; }
+    .panel .issue { margin: 2px 0; }
+    .panel .issue.error { color: #721c24; }
+    .panel .issue.warning { color: #7a5c00; }
+    .panel .allgood { color: #155724; }
+    .panel pre {
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 220px;
+      overflow: auto;
+      background: #f7f7f7;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    .maint-status { min-height: 16px; margin: 4px 0; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -135,13 +161,57 @@
     <input type="password" id="mngt-password" placeholder="Enter password to enable override">
   </div>
 
+  <!-- Behavior sub-mode (Regular vs Debugging). Only visible when -->
+  <!-- Management Override is checked. Persisted in STORAGE_KEY.DEBUG_MODE. -->
+  <div id="behavior-row" class="mode-row" style="display:none;">
+    <span class="mode-label">Behavior (Manager only)</span>
+    <label class="mode-option">
+      <input type="radio" name="behavior-mode" value="regular" id="behavior-regular">
+      <span>Regular</span>
+    </label>
+    <label class="mode-option">
+      <input type="radio" name="behavior-mode" value="debugging" id="behavior-debugging">
+      <span>Debugging (pre-con field check walk)</span>
+    </label>
+  </div>
+
+  <!-- Pop-up behavior (Automated vs Manual). Only visible when Management -->
+  <!-- Override is checked. Persisted in STORAGE_KEY.POPUP_MODE. -->
+  <div id="popup-mode-row" class="mode-row" style="display:none;">
+    <span class="mode-label">Pop-up behavior (Manager only)</span>
+    <label class="mode-option">
+      <input type="radio" name="popup-mode" value="automated" id="popup-automated">
+      <span>Automated (modal opens on its own)</span>
+    </label>
+    <label class="mode-option">
+      <input type="radio" name="popup-mode" value="manual" id="popup-manual">
+      <span>Manual (click the icon to open)</span>
+    </label>
+  </div>
+
   <div id="status"></div>
   <button id="save">Save Options</button>
+
+  <!-- Config Doctor — validates config.js for silent annual-update mistakes. -->
+  <div id="config-check" class="panel"></div>
+
+  <!-- Maintenance (manager only) — storage inspector, cache reset, connectivity. -->
+  <div id="maintenance-row" class="panel" style="display:none;">
+    <h3>Maintenance</h3>
+    <button type="button" id="check-tab">Check Neon tab(s)</button>
+    <button type="button" id="clear-cache">Clear cached scrape data</button>
+    <div id="maint-status" class="maint-status"></div>
+    <details>
+      <summary>Storage contents</summary>
+      <pre id="storage-dump"></pre>
+    </details>
+  </div>
 
   <script src="shared/js/constants-base.js"></script>
   <script src="shared/js/crypto.js"></script>
   <script src="config.js"></script>
   <script src="js/constants.js"></script>
+  <script src="js/config-doctor.js"></script>
   <script src="js/options.js"></script>
 </body>
 </html>

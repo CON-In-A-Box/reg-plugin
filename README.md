@@ -42,7 +42,8 @@ When a volunteer confirms check-in, the extension automatically:
 ├── config.js                        ← ANNUAL UPDATE FILE — edit this each year
 ├── manifest.json                    ← Chrome extension configuration
 ├── popup.html                       ← Extension popup window
-├── extension_options_page.html      ← Options page (workstation ID, override)
+├── extension_options_page.html      ← Options page (mode, manager override, debug)
+├── debug-report.html                ← Manager Debug Walk report tab
 ├── assets/                          ← Extension icons
 ├── _locales/en/                     ← Localisation strings
 ├── installation/                    ← Page shown on first install
@@ -59,10 +60,13 @@ When a volunteer confirms check-in, the extension automatically:
 │   ├── accountPage.js               ← Account page auto-nav
 │   ├── attendeeContact.js           ← AttendeeEdit page logic (REG mode)
 │   ├── merch-attendee.js            ← AttendeeEdit page logic (MERCH mode)
-│   └── registrations.js             ← EventRegDetails page logic (both modes)
+│   ├── registrations.js             ← EventRegDetails page logic (both modes)
+│   ├── checkin-modal.js             ← Auto-opening in-page check-in modal (eventReg)
+│   ├── config-doctor.js             ← validateConfig() — config.js self-check
+│   └── debug-report.js              ← Renders the Manager Debug Walk report
 └── tools/
 ├── generate-password-hash.html  ← Run locally to hash the annual password
-└── find-field-indexes.html      ← Run locally if Neon fields stop working
+└── field-diagnostic.html        ← Single-page field check (paste a DevTools dump)
 
 ## Key People
 
@@ -76,6 +80,11 @@ When a volunteer confirms check-in, the extension automatically:
 
 | Document | Who Should Read It |
 |---|---|
+| `TRAINING/reg-checkin.html` | Registration check-in volunteers — graphical guide |
+| `TRAINING/merch-checkin.html` | Merchandise pickup volunteers — graphical guide |
+| `TRAINING/management.html` | Registration management / Help Desk leads — full manual |
+| `TRAINING/reg-checkin-card.html` | Print-ready reg station card (Chrome → Print → laminate) |
+| `TRAINING/merch-checkin-card.html` | Print-ready merch station card (Chrome → Print → laminate) |
 | `ANNUAL_UPDATE_GUIDE.md` | Anyone doing the yearly update |
 | `SETUP.md` | Anyone setting up a new workstation |
 | `TROUBLESHOOTING.md` | Anyone dealing with a problem at con |

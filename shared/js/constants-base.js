@@ -43,6 +43,31 @@ const STORAGE_KEY = {
   PENDING_ICON_UPDATE: "pendingIconUpdate",
   REGISTRATION_ERROR:  "REGISTRATION_ERROR",
   EXTENSION_MODE:      "extensionMode",
+  // ── Manager debug walk (pre-con field-label resolution audit) ──
+  // DEBUG_MODE        -- options-page toggle, only honored when MANAGEMENT_OVERRIDE is true
+  // DEBUG_WALK_ACTIVE -- {startedAt, accountId} | null; present while the walk is in flight
+  // DEBUG_REPORT      -- {steps: [{step, status, details, issues:[]}], finishedAt} | null
+  DEBUG_MODE:          "debugMode",
+  DEBUG_WALK_ACTIVE:   "debugWalkActive",
+  DEBUG_REPORT:        "debugReport",
+  // ERROR_LOG -- bounded ring buffer (last ~20) of recorded errors, for the
+  // debug report's "Recent errors" section. REGISTRATION_ERROR above is the
+  // single latest error the popup surfaces; this is the rolling history.
+  ERROR_LOG:           "errorLog",
+};
+
+// ── BRAND COLORS ─────────────────────────────────────────────────────────
+// JS mirror of the brand palette (see BRANDING.md + css/brand.css) for the few
+// places colors are set outside CSS: the toolbar icon "M" override badge and a
+// handful of inline styles. Keep in sync with css/brand.css.
+//   purple = section headers/override · green = links · blue = "go/OK" status
+//   (colorblind-friendly) · red = stop/error · yellow = caution
+const BRAND = {
+  purple: "#620272",
+  green:  "#328332",
+  blue:   "#0072B2",
+  red:    "#CC0202",
+  yellow: "#FFB400",
 };
 
 // ── ERROR MESSAGE TEMPLATES ──────────────────────────────────────────────

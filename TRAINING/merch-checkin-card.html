@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Merchandise Pickup — Quick Card</title>
+<style>
+  :root {
+    --purple: #620272;
+    --green:  #328332;
+    --blue:   #0072B2;
+    --red:    #CC0202;
+    --yellow: #FFB400;
+    --ink:    #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--ink);
+    background: #f0f0f0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .card {
+    width: 7.5in;
+    min-height: 10in;
+    margin: 0.25in auto;
+    background: #fff;
+    padding: 0.4in 0.45in;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 4px solid var(--purple);
+    padding-bottom: 10px;
+  }
+  header img { width: 44px; height: 44px; }
+  header h1 {
+    font-size: 22px;
+    margin: 0;
+    color: var(--purple);
+  }
+  header .mode-note {
+    margin-left: auto;
+    font-size: 11px;
+    text-align: right;
+    color: #555;
+    max-width: 2.4in;
+  }
+  /* Mode banner mimic */
+  .modebar {
+    background: var(--blue); color: #fff;
+    text-align: center; font-weight: bold;
+    padding: 6px; border-radius: 5px;
+    font-size: 13px; letter-spacing: 1px;
+    margin: 12px 0 4px;
+  }
+  h2 {
+    font-size: 14px;
+    color: var(--purple);
+    margin: 16px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .legend { display: flex; gap: 8px; margin: 10px 0; }
+  .legend .chip {
+    flex: 1;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 11px;
+  }
+  .legend .dot { width: 20px; height: 20px; border-radius: 50%; margin: 0 auto 5px; }
+  .legend .green  .dot { background: var(--green); }
+  .legend .yellow .dot { background: var(--yellow); }
+  .legend .red    .dot { background: var(--red); }
+  .legend .idle   .dot { background: #555; }
+  .legend b { display: block; font-size: 12px; margin-bottom: 2px; }
+  ol.steps { margin: 0; padding: 0; counter-reset: step; list-style: none; }
+  ol.steps > li {
+    position: relative;
+    padding: 8px 0 8px 40px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+  }
+  ol.steps > li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute; left: 0; top: 8px;
+    width: 26px; height: 26px;
+    background: var(--purple); color: #fff;
+    border-radius: 50%;
+    text-align: center; line-height: 26px;
+    font-weight: bold; font-size: 14px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 1px 7px; border-radius: 4px;
+    font-size: 12px; font-weight: bold; color: #fff;
+    white-space: nowrap;
+  }
+  .btn.go   { background: var(--green); }
+  .btn.warn { background: var(--yellow); color: #000; }
+  .callbox {
+    border: 2px solid var(--red);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    background: #fff5f5;
+  }
+  .callbox h2 { color: var(--red); margin-top: 0; }
+  .callbox ul { margin: 4px 0 0; padding-left: 18px; font-size: 12px; }
+  .callbox li { margin: 3px 0; }
+  .callbox .punch { margin-top: 8px; font-weight: bold; color: var(--red); font-size: 13px; }
+  .shot {
+    border: 2px dashed #bbb; border-radius: 6px;
+    padding: 14px; text-align: center;
+    color: #999; font-size: 11px; font-style: italic;
+    margin: 8px 0;
+  }
+  @media print {
+    body { background: #fff; }
+    .card { margin: 0; width: auto; min-height: auto; }
+    @page { size: letter portrait; margin: 0.4in; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <header>
+    <img src="../assets/connie-green-38.png" alt="Connie">
+    <h1>Merchandise Pickup</h1>
+    <div class="mode-note">
+      Toolbar face = <b>Connie</b>.<br>
+      Every screen shows the blue banner below.<br>
+      No banner? Tell your lead.
+    </div>
+  </header>
+
+  <div class="modebar">MERCH MODE</div>
+
+  <h2>What the icon color means</h2>
+  <div class="legend">
+    <div class="chip green"><div class="dot"></div><b>Green</b>Ready — continue</div>
+    <div class="chip yellow"><div class="dot"></div><b>Yellow</b>Not yet picked up</div>
+    <div class="chip red"><div class="dot"></div><b>Red</b>Stop — ask lead</div>
+    <div class="chip idle"><div class="dot"></div><b>Grey</b>Not on a merch page</div>
+  </div>
+
+  <h2>Steps</h2>
+  <ol class="steps">
+    <li><b>Open the attendee.</b> Find them in Neon, open their account page,
+      click the Connie icon. It moves you forward automatically.</li>
+    <li><b>Pick the right person.</b> The list shows what each person ordered
+      (e.g. <b>T-Shirt (Unisex L)</b>, <b>Souvenir Guide</b>). Click
+      <span class="btn go">Review Merch →</span> on their row.</li>
+    <li><b>Check off what you hand over.</b> Tick the box for each item you give
+      them now. An item already checked + greyed with <b>"Already picked up"</b>
+      was collected before — leave it, don't give a second one.</li>
+    <li><b>Confirm.</b> Hand over the merch, click
+      <span class="btn go">Confirm Pickup</span>. You'll see <b>Pickup Recorded ✓</b>.</li>
+  </ol>
+
+  <div class="shot">[SCREENSHOT: checkbox list with one item already picked up]</div>
+
+  <div class="callbox">
+    <h2>Call a manager / lead if…</h2>
+    <ul>
+      <li>The toolbar is <b>red</b>, or you don't see the <b>MERCH MODE</b> banner.</li>
+      <li>They say they ordered something the list doesn't show.</li>
+      <li>An item shows <b>"Already picked up"</b> but they say they never got it.</li>
+      <li>You see "Attendee merch data not ready" or "Could not record pickup".</li>
+    </ul>
+    <div class="punch">When in doubt — don't hand out the item. Ask.</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -196,50 +196,64 @@ new items are offered, copy an existing entry and adjust the labels.
 
 ---
 
-## Step 3 — Verify Field Indexes
+## Step 3 — Verify Field Detection
 
-Neon occasionally reorganizes its custom fields. If the indexes have changed,
-the extension will read and write the wrong fields at check-in.
+> **First, run the Config check.** Open the extension **Options** page — the
+> **Config check** panel runs automatically and flags structural mistakes in your
+> `config.js` edits (a real event left in `testEventNames`, a bad merch match mode,
+> an out-of-date password hash, a version/year mismatch, etc.). Fix anything it
+> lists, reload the extension, and reopen Options until it says "No problems
+> found." This catches the edit mistakes; the steps below catch label drift in Neon.
 
-**To verify the indexes:**
+Neon occasionally renames or reorganizes its custom fields. The extension finds
+each field by matching its **label text** (a substring) — see `CONFIG.fieldLabels`,
+`CONFIG.requiredFields`, and `CONFIG.merch.items[]` in `config.js`. If Neon renames
+a label, the substring no longer matches and the extension reads/writes the wrong
+field (or nothing) at check-in.
 
-1. Log into Neon and open any attendee's AttendeeEdit page
-2. Open **DevTools** in Chrome: press `F12` or right-click → **Inspect**
-3. Click the **Console** tab
-4. Paste and run this code:
+**Recommended: run the Manager Debug Walk.** This drives the extension through
+the same three pages a real check-in touches and opens a report tab that lists
+every field on each page and flags anything the extension relies on but can't
+find — no copy/paste required.
 
-```javascript
-document.querySelectorAll('[name^="attendee.customDataList"]').forEach((el, i) => {
-  const name = el.getAttribute('name');
-  const idx = name.match(/\[(\d+)\]/)?.[1];
-  const val = el.value || el.checked || '';
-  console.log(`[${idx}] ${name} = "${val}"`);
-});
-```
+1. Open the extension **Options** (right-click the toolbar icon → Options, or
+   `chrome://extensions` → Details → Extension options).
+2. Tick **Manager Override**, enter the manager password, choose **Debugging**,
+   and **Save**.
+3. In Neon, open the **account page** of any real attendee. Click the extension toolbar icon.
+4. The extension walks Account → Event Registration → first Attendee and opens a
+   **Debug Walk Report** tab with one section per page: every field + value, plus
+   a red **NOT FOUND** list for any label the extension expects but didn't see.
+5. When done, return to Options and switch **Debugging** back to **Regular**.
 
-5. Compare the output to the `fieldIndexes` section in `config.js`:
+A green report means check-in will resolve every field. If a walk halts early
+(e.g. no SUCCEEDED registration), the report still opens with the pages it
+reached and a note explaining where it stopped.
 
-```javascript
-fieldIndexes: {
-  registrationHold:    0,
-  artShowHold:         1,
-  operationsHold:      2,
-  iceContact:          4,
-  preferredName:       6,
-  nonTransferableName: 10,
-  activeBadgeCount:    11,
-  pickupSlots: [
-    [12, 13],
-    [14, 15],
-    [16, 17],
-    [18, 19],
-  ],
-},
-```
+**If the report flags a field:** open `config.js` and update the matching label so
+it is a substring of the field's actual label on the Neon form:
 
-If the indexes in the console output do not match, update `config.js` → `fieldIndexes`
-to reflect the new positions. Also update `requiredFields` if the ICE index changed.
-Contact IT if you are unsure.
+- Registration fields → `CONFIG.fieldLabels` (and `CONFIG.requiredFields` for the
+  ICE contact).
+- Merch fields → `CONFIG.merch.items[].source.label` and `pickupFieldLabel`.
+
+Reload the extension and re-run until everything is green. Contact IT if unsure.
+
+> **Fallback A — single-page tool:** open `tools/field-diagnostic.html` in Chrome,
+> click **Copy snippet**, paste it into DevTools Console on an AttendeeEdit page,
+> then paste the result back into the tool and click **Analyze**. Same matching,
+> one page at a time, no manager mode needed.
+>
+> **Fallback B — raw console dump:**
+>
+> ```javascript
+> document.querySelectorAll('[name^="attendee.customDataList"]').forEach((el) => {
+>   const name = el.getAttribute('name');
+>   const idx = name.match(/\[(\d+)\]/)?.[1];
+>   const val = el.value || el.checked || '';
+>   console.log(`[${idx}] ${name} = "${val}"`);
+> });
+> ```
 
 ---
 
@@ -268,11 +282,10 @@ Update the year to the current year.
 Before the convention weekend:
 
 1. Load the updated extension on a test computer (see `SETUP.md`)
-2. Log into Neon and navigate to an attendee on the **training event**
-   (event ID 142)
-3. The extension should activate (icon turns green or yellow)
-4. Click the icon and verify the popup shows the correct attendee info
-5. Do NOT complete a check-in on real attendees during testing
+2. Run the **Manager Debug Walk** (Options → Manager Override + Debugging mode) against
+   a real Neon attendee page to verify every field resolves correctly (see Step 3 above).
+3. The Debug Walk report should show no red NOT FOUND items.
+4. Do NOT complete an actual check-in during testing.
 
 If the extension does not activate or shows errors, see `TROUBLESHOOTING.md`
 or contact IT.
@@ -288,8 +301,8 @@ The most common problems after an annual update:
 | Extension shows "Wrong Year" for all attendees | Event ID not updated or wrong ID entered | Re-check the event ID in Neon |
 | Management Override password not accepted | Hash not updated, or wrong password shared | Regenerate hash with correct password |
 | Ticket type shows as "Unknown" | Neon renamed a ticket type | Update `nameIncludes` to match new name |
-| Fields not writing at check-in | Neon reorganized custom fields | Run the Step 3 diagnostic and update `fieldIndexes` |
-| Wrong data showing in popup (e.g. wrong name) | Neon reorganized custom fields | Run the Step 3 diagnostic and update `fieldIndexes` |
+| Fields not writing at check-in | Neon renamed a custom field label | Run the Step 3 Field Diagnostic and fix the label in `CONFIG.fieldLabels` |
+| Wrong data showing in popup (e.g. wrong name) | Neon renamed a custom field label | Run the Step 3 Field Diagnostic and fix the label in `CONFIG.fieldLabels` |
 
 ---
 

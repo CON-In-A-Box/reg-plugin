@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - MUST not use verbose answers
 - MUST only provide changes in files
 - MUST clearly identify where in the file the new/changed code should go
-- MUST update project files (`README.md`, `DEVELOPER.MD`, `ANNUAL_UPDATE_GUIDE.md`, `TROUBLESHOOTING.md`, `SETUP.MD`) as changes are made
+- MUST update project files (`README.md`, `DEVELOPER.md`, `ANNUAL_UPDATE_GUIDE.md`, `TROUBLESHOOTING.md`, `SETUP.md`) as changes are made
 
 ## What this is
 A Chrome Manifest V3 extension used by CONvergence Registration volunteers to validate and complete attendee check-ins inside Neon CRM. The extension itself has no build step — files are loaded directly by Chrome as-is. A Playwright test harness lives in `tests/`; `package.json`, `playwright.config.ts`, and `tsconfig.json` exist only to support those tests (run `npm test`).
@@ -16,13 +16,21 @@ A Chrome Manifest V3 extension used by CONvergence Registration volunteers to va
 - After editing any file: click the refresh icon on the extension card in `chrome://extensions`.
 - Inspect the service worker: extension card → Details → "Inspect views: service worker".
 - Inspect content scripts: open DevTools on the Neon page itself.
-- Test event in Neon has ID 142 ("CONvergence Example For Training Only") — use this, never a real registration.
+- Event ID 142 ("CONvergence Example For Training Only") exists in `config.js` as a testEventName so the extension accepts it without triggering wrong-year errors. It does not have all Neon custom fields and is not suitable for testing full check-in functionality — use real attendee data for any field-detection or end-to-end testing.
 - Testing manager-override password is `reggie` (its hash lives in `config.js`).
 
 ## How to run tests
 - `npm install` once to fetch Playwright.
 - `npm test` runs the full suite; `npm run test:smoke` runs `green-adult-clean` only; `npm run test:headed` runs with a visible Chrome window.
 - Specs live in `tests/specs/`, fixtures in `tests/fixtures/`, helpers in `tests/helpers/`. The harness loads the unpacked extension via Playwright's `--disable-extensions-except` / `--load-extension` Chrome flags — there is no separate build step.
+
+## Annual training materials
+- `node tools/generate-training-pptx.js` generates three PowerPoint presentations in `TRAINING/`: reg-checkin, merch-checkin, management. Run after updating config or volunteer scripts.
+- `tools/generate-password-hash.html` — open locally to generate new SHA-256 hash for `CONFIG.managementPasswordHash` (do NOT upload to GitHub). Replace hash in `config.js` yearly or when rotating password.
+- All training updates enumerated in `ANNUAL_UPDATE_GUIDE.md`; keep in sync when config shape changes.
+
+## Project tracking
+- Beads issue tracking: `bd ready` shows available work, `bd close <id>` marks done, `.beads/` excluded from upstream PRs.
 
 ## Architecture
 
@@ -81,9 +89,9 @@ Neon attendee page loads
 | URL pattern | Scripts (in manifest load order, after shared+config+constants) |
 |---|---|
 | `/admin/accounts/*` | `js/accountPage.js` |
-| `/np/admin/event/attendeeEdit.do*` | `js/attendeeContact.js`, `js/merch-attendee.js` |
+| `/np/admin/event/attendeeEdit.do*` | `js/attendeeContact.js`, `js/merch-attendee.js`, `js/modal-drag.js`, `js/attendee-modal.js` (+ `css/brand.css`, `css/checkin-modal.css`) — the auto-opening in-page attendee check-in modal (Phase 2) |
 | `/np/admin/event/contactSelect.do*` | `js/attendeeContact.js`, `js/merch-attendee.js` |
-| `/np/admin/event/eventRegDetails.do*` | `js/registrations.js` (mode-aware: in MERCH mode it skips reg validation and attaches a per-attendee merch summary using `readField()` + `readCartLineValue()`) |
+| `/np/admin/event/eventRegDetails.do*` | `js/registrations.js` (mode-aware: in MERCH mode it skips reg validation and attaches a per-attendee merch summary using `readField()` + `readCartLineValue()`), then `js/modal-drag.js`, `js/checkin-modal.js` (+ `css/checkin-modal.css`) — the auto-opening in-page check-in modal |
 
 `js/merch-attendee.js` is loaded AFTER `js/attendeeContact.js` so that helpers defined as content-script globals in attendeeContact.js (`buildCustomFieldLabelMap`, etc.) are in scope.
 
@@ -92,7 +100,7 @@ Other entry points:
 - `extension_options_page.html` is the manifest `options_ui` page; loads `shared/js/constants-base.js`, `shared/js/crypto.js`, `config.js`, `js/constants.js`, `js/options.js` (mode radio + manager-override toggle).
 - `js/background.js` is the MV3 service worker. It uses `importScripts("../shared/js/constants-base.js", "../config.js", "constants.js", "../shared/js/background-core.js")` (paths relative to `js/background.js`) — keep that working when moving files. Icon caching, `setIcon`, and `worstStateFromRows` live in `shared/js/background-core.js` and are mode-agnostic.
 
-Icons are rendered as `ImageData` (not paths) from `assets/wink-{state}-{size}.png` because `setIcon({ path })` is unreliable from an MV3 service worker. The "M" badge for Manager Override is drawn over the cached ImageData at runtime.
+Icons are rendered as `ImageData` (not paths) because `setIcon({ path })` is unreliable from an MV3 service worker. The toolbar face is **mode-aware**: REG mode uses `assets/reggie-{token}-{size}.png`, MERCH mode uses `assets/connie-{token}-{size}.png` (sizes 19/38; plus `{prefix}-black-{16,19,38}.png` for the idle default icon). Internal `STATE` values stay `green`/`yellow`/`red` (semantic), but the **file token** is mapped per face via `ICON_FILE_TOKENS`: the reggie "go" icon is **blue** (`reggie-blue-*`, colorblind-friendly per `BRANDING.md`) while connie's stays `green`. `setIcon()` and `applyDefaultIconForMode()` in `shared/js/background-core.js` pick the prefix from `STORAGE_KEY.EXTENSION_MODE` (mapping in `ICON_PREFIX_BY_MODE`), falling back to reggie if a file is missing. `background.js` re-applies the icon when `EXTENSION_MODE` changes. The "M" badge for Manager Override is drawn over the cached ImageData at runtime (brand purple, `BRAND.purple`). PNG icons can't be recolored by the brand CSS — they're raster.
 
 ## Key conventions
 - **Every cross-script message MUST use an `ACTION.*` constant** from `js/constants.js`. Never raw strings.
@@ -101,9 +109,11 @@ Icons are rendered as `ImageData` (not paths) from `assets/wink-{state}-{size}.p
 - **Blocking/warning conditions** are keyed by `CONDITION.*` and must appear in `CONFIG.conditionOrder` (in `config.js`) to be rendered.
 - **Hold messages order** in `CONFIG.holdMessages` MUST match the hold-index order used in `attendeeContact.js` (`[regHold, artShowHold, opsHold]`).
 - **Custom fields are resolved by label substring** (`CONFIG.fieldLabels`), then positional within duplicates — three fields share the label "HOLD", resolved by order. If Neon reorganizes fields, hand-trace the field indexes in DevTools against the live page.
-- **Attendee state object** built by `attendeeContact.js` and consumed by `popup.js` — if you change its shape, update both. Documented in `DEVELOPER.MD`.
+- **Attendee state object** built by `attendeeContact.js` and consumed by `popup.js` — if you change its shape, update both. Documented in `DEVELOPER.md`.
 - **Merch state object** built by `merch-attendee.js` and consumed by `popup-merch.js` — shape `{ accountId, attendeeId, legalName, preferredName, items: [{name, ordered, variant, alreadyPickedUp, pickedUpAt}] }`. Stored under `STORAGE_KEY.ATTENDEE_MERCH`. If you change the shape, update both files.
-- **Mode awareness in content scripts:** any content script that reads/writes for a specific mode must check `STORAGE_KEY.EXTENSION_MODE` at the top of its IIFE and return early if it's not its mode, leaving message listeners registered. Today: `attendeeContact.js` bails in MERCH; `merch-attendee.js` bails in REG; `registrations.js` is mode-aware in its scrape rather than bailing (it serves both modes).
+- **Merch surfaced in REG flow** — `getAttendeeInfo()` (`js/attendeeContact.js`) calls `scrapeAttendeeMerch()` (a content-script global from `js/merch-attendee.js`) and attaches a pruned, names-only list of pending items as `attendee.merch` (filter: ordered AND not yet picked up). `popup.js`'s `buildAttendeeView` renders one "{name} Ordered" line above the action button per entry and switches the button text from `"Badge Issued"` to `"Badge Issued - Send to Merchandise"` when the array is non-empty. Already-picked-up items are filtered out before reaching popup.
+- **Mode awareness in content scripts:** any content script that reads/writes for a specific mode must check `STORAGE_KEY.EXTENSION_MODE` at the top of its IIFE and return early if it's not its mode, leaving message listeners registered. Today: `attendeeContact.js` bails in MERCH; `merch-attendee.js` bails in REG; `registrations.js` is mode-aware in its scrape rather than bailing (it serves both modes); `checkin-modal.js` and `attendee-modal.js` only auto-open in REG + Automated mode.
+- **Pop-up vs in-page modal (`STORAGE_KEY.POPUP_MODE` = `"automated"|"manual"`, default automated; managers pick on the options page).** In Automated mode on the eventReg page, `background.js` clears that tab's action popup via `chrome.action.setPopup({tabId, popup:""})`, so a toolbar click fires `chrome.action.onClicked` → `ACTION.SHOW_CHECKIN_MODAL` → `checkin-modal.js` re-scrapes (via `registrations.js` globals) and (re)draws an in-page modal scoped under `#cvg-checkin-modal`. It auto-opens on page load too. The **attendee page** (`attendeeEdit.do`) behaves the same way (Phase 2): `background.js` clears its per-tab popup in Automated REG mode, and `attendee-modal.js` (loaded after `attendeeContact.js`, calling its `getAttendeeInfo()` / `incrementBadge()` / `highlightICEField()` globals directly — same isolated world, no messaging) auto-opens + handles `SHOW_CHECKIN_MODAL`, mirroring `popup.js` `buildAttendeeView`/`completeCheckIn` inside the same `#cvg-checkin-modal` container. Both modals are **draggable by their header** via `makeDraggable()` in the shared `js/modal-drag.js` (loaded before each modal script); the dragged position is remembered in a module variable and reapplied on re-render. Account pages and Manual mode keep the classic `popup.html`.
 - **Merch field labels match by substring** like the rest of the form-label resolution. `CONFIG.merch.items[].source.label` and `pickupFieldLabel` are substrings of the actual Neon labels — keep them generic enough to survive minor copy edits but specific enough not to collide. Matcher modes: `"anyExcept"` (ordered if value differs from `notOrderedValue`; the value IS the variant) and `"substring"` (ordered if value contains `matchValue`; no variant).
 - **Date/time written to merch pickup fields** is `MM/DD/YYYY HH:MM` 24-hour, from `formatMerchDateTime()` in `merch-attendee.js`. Change there if Neon's text-field validation gets fussier.
 - **Management password** is only stored as a SHA-256 hex hash in `CONFIG.managementPasswordHash`. The plaintext goes nowhere in the repo. Hashing helper lives in `shared/js/crypto.js`.

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Management &amp; Help Desk Manual</title>
+<style>
+  :root {
+    --purple: #620272;
+    --green:  #328332;
+    --blue:   #0072B2;
+    --red:    #CC0202;
+    --yellow: #FFB400;
+    --ink:    #1a1a1a;
+    --bg:     #f5f4f7;
+    --card:   #fff;
+    --border: #e0dce6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg); color: var(--ink);
+    font-size: 15px; line-height: 1.55;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  nav {
+    width: 230px; flex-shrink: 0; background: var(--purple);
+    padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  nav .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 18px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 14px;
+  }
+  nav .nav-logo img { width: 34px; height: 34px; }
+  nav .nav-logo span { color: #fff; font-weight: bold; font-size: 13px; line-height: 1.3; }
+  nav a {
+    display: block; color: rgba(255,255,255,0.8);
+    text-decoration: none; padding: 6px 18px; font-size: 12.5px;
+    border-left: 3px solid transparent;
+  }
+  nav a:hover { color: #fff; background: rgba(255,255,255,0.12); border-left-color: #fff; }
+  nav .nav-section {
+    color: rgba(255,255,255,0.45); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1px; padding: 14px 18px 4px;
+  }
+  main { flex: 1; padding: 36px 52px; max-width: 920px; }
+  .page-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 32px; padding-bottom: 20px;
+    border-bottom: 3px solid var(--purple);
+  }
+  .page-header div h1 { margin: 0; font-size: 24px; color: var(--purple); }
+  .page-header div .sub { font-size: 13px; color: #666; margin-top: 4px; }
+  /* Section */
+  .section { margin-bottom: 42px; }
+  .section h2 {
+    font-size: 18px; color: var(--purple); margin: 0 0 16px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section h2 .icon { font-size: 20px; }
+  .section h3 { font-size: 15px; color: #333; margin: 18px 0 8px; }
+  p { margin: 0 0 12px; font-size: 14px; }
+  ul, ol { font-size: 14px; margin: 0 0 12px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  /* Alert boxes */
+  .alert {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; border-left: 5px solid;
+  }
+  .alert.green  { background: #f0faf0; border-color: var(--green); }
+  .alert.yellow { background: #fffbf0; border-color: var(--yellow); }
+  .alert.red    { background: #fff5f5; border-color: var(--red); }
+  .alert.blue   { background: #f0f7ff; border-color: var(--blue); }
+  .alert.purple { background: #f7f0fc; border-color: var(--purple); }
+  .alert-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+  .alert ul { margin: 5px 0 0; }
+  /* Cards */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  /* Inline button mock */
+  .btn {
+    display: inline-block; padding: 2px 9px; border-radius: 5px;
+    font-size: 12px; font-weight: bold; color: #fff; white-space: nowrap; vertical-align: middle;
+  }
+  .btn.go     { background: var(--blue); }
+  .btn.warn   { background: var(--yellow); color: #000; }
+  .btn.stop   { background: var(--red); }
+  .btn.purple { background: var(--purple); }
+  .btn.green  { background: var(--green); }
+  /* Comparison table */
+  .compare {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .compare th {
+    background: var(--purple); color: #fff;
+    padding: 9px 12px; text-align: left; font-size: 13px;
+  }
+  .compare td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .compare tr:last-child td { border-bottom: none; }
+  .compare tr:nth-child(even) td { background: #fbf9fc; }
+  /* Condition table */
+  .cond-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+  .cond-table th {
+    padding: 8px 10px; text-align: left; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .cond-table td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+  .cond-table tr:last-child td { border-bottom: none; }
+  .cond-table .h-red { background: #fce8e8; }
+  .cond-table .h-yellow { background: #fff8e0; }
+  .cond-table .row-red td { background: #fff5f5; }
+  .cond-table .row-yellow td { background: #fffbf0; }
+  .cond-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: bold; color: #fff; white-space: nowrap;
+  }
+  .cond-pill.red    { background: var(--red); }
+  .cond-pill.yellow { background: var(--yellow); color: #000; }
+  /* Override banner mock */
+  .override-bar {
+    background: var(--red); color: #fff;
+    padding: 7px 14px; font-weight: bold; font-size: 13px;
+    letter-spacing: 0.5px; text-align: center; border-radius: 5px;
+    margin-bottom: 8px;
+  }
+  /* M badge */
+  .m-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--purple); color: #fff;
+    font-size: 12px; font-weight: bold; vertical-align: middle;
+    margin-left: 4px;
+  }
+  /* Options page mock */
+  .opts-mock {
+    background: #fff; border: 2px solid #ccc; border-radius: 10px;
+    padding: 16px 20px; max-width: 400px;
+    font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .opts-mock h3 { margin: 0 0 12px; font-size: 14px; color: var(--purple); }
+  .opts-section { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+  .opts-section:last-child { border-bottom: none; margin-bottom: 0; }
+  .opts-label { font-weight: bold; font-size: 12px; margin-bottom: 6px; display: block; }
+  .opts-radio { display: flex; gap: 14px; margin-bottom: 4px; }
+  .opts-radio label { display: flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+  .opts-check { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px; }
+  .opts-hidden {
+    background: #f5f5f5; border: 1px dashed #ccc; border-radius: 5px;
+    padding: 8px 10px; font-size: 12px; color: #888; margin: 6px 0;
+    text-align: center;
+  }
+  .opts-save {
+    display: inline-block; padding: 7px 18px; background: var(--blue);
+    color: #fff; border-radius: 4px; font-size: 13px; font-weight: bold;
+    margin-top: 8px; cursor: default;
+  }
+  /* Debug walk steps */
+  .walk-steps { counter-reset: walk; list-style: none; margin: 12px 0; padding: 0; }
+  .walk-steps li {
+    counter-increment: walk;
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px;
+  }
+  .walk-steps li:last-child { border-bottom: none; }
+  .walk-steps li::before {
+    content: counter(walk);
+    flex-shrink: 0; width: 26px; height: 26px;
+    background: var(--purple); color: #fff; border-radius: 50%;
+    font-weight: bold; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* Shot placeholder */
+  .shot {
+    border: 2px dashed #bbb; border-radius: 8px; padding: 20px;
+    text-align: center; color: #aaa; font-size: 12px; font-style: italic; margin: 12px 0;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav>
+  <div class="nav-logo">
+    <img src="../assets/reggie-blue-38.png" alt="">
+    <span>Management<br>Manual</span>
+  </div>
+  <div class="nav-section">Sections</div>
+  <a href="#overview">Overview</a>
+  <a href="#options">The Options Page</a>
+  <a href="#modes">Modes</a>
+  <a href="#popup-behavior">Pop-up Behavior</a>
+  <a href="#override">Management Override</a>
+  <a href="#conditions">Blocking Conditions</a>
+  <a href="#notes">Notes Gates</a>
+  <a href="#checkin-actions">What Happens at Check-In</a>
+  <a href="#debug-walk">Pre-Con Field Check</a>
+  <a href="#maintenance">Maintenance Tools</a>
+  <a href="#escalation">Escalation</a>
+</nav>
+
+<main>
+
+  <div class="page-header">
+    <div>
+      <h1>Management &amp; Help Desk Manual</h1>
+      <div class="sub">
+        For Registration management and Help Desk leads.
+        Volunteer quick cards: <a href="reg-checkin.html">reg-checkin.html</a> ·
+        <a href="merch-checkin.html">merch-checkin.html</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overview -->
+  <div class="section" id="overview">
+    <h2><span class="icon">📋</span> Overview</h2>
+    <p>
+      The extension is a Chrome extension that runs inside Neon CRM while staff are logged in.
+      It reads attendee and registration pages, validates eligibility, and writes check-in data
+      back to Neon so volunteers don't type it by hand. There is no server — all settings live
+      in Chrome's local storage <strong>on each workstation independently</strong>.
+    </p>
+    <div class="alert blue">
+      <div class="alert-title">Per-workstation settings</div>
+      Turning on Management Override on one machine does not affect any other machine.
+      Configure each station before the shift starts.
+    </div>
+    <div class="alert purple">
+      <div class="alert-title">Never complete a real check-in during testing</div>
+      Use the Manager Debug Walk (Options → Debugging mode) against a real Neon attendee
+      page to verify field detection. Do not run a check-in to completion on a live attendee
+      during setup or training.
+    </div>
+  </div>
+
+  <!-- Options page -->
+  <div class="section" id="options">
+    <h2><span class="icon">⚙️</span> The Options Page</h2>
+    <p>
+      Right-click the toolbar icon → <strong>Options</strong>. Settings persist on that
+      workstation until changed. Click <strong>Save Options</strong> to apply.
+    </p>
+
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+      <div class="opts-mock">
+        <h3>CONvergence Check-In — Options</h3>
+
+        <div class="opts-section">
+          <span class="opts-label">Extension Mode</span>
+          <div class="opts-radio">
+            <label><input type="radio" checked disabled> Registration (badge check-in)</label>
+          </div>
+          <div class="opts-radio">
+            <label><input type="radio" disabled> Merchandise pickup</label>
+          </div>
+        </div>
+
+        <div class="opts-section">
+          <div class="opts-check">
+            <input type="checkbox" disabled>
+            <label>Enable Management Override</label>
+          </div>
+          <div class="opts-hidden">↑ Check this to reveal manager options ↑</div>
+        </div>
+
+        <div class="opts-section" style="background:#fdf7ff;border-radius:6px;padding:8px 10px;margin:0 -4px;">
+          <span class="opts-label" style="color:var(--purple);">Manager-only (visible when override is on)</span>
+          <div class="opts-radio">
+            <label><input type="radio" checked disabled> Regular</label>
+            <label><input type="radio" disabled> Debugging (pre-con field check walk)</label>
+          </div>
+          <div class="opts-radio" style="margin-top:6px;">
+            <label><input type="radio" checked disabled> Automated (modal opens on its own)</label>
+            <label><input type="radio" disabled> Manual (click icon)</label>
+          </div>
+        </div>
+
+        <span class="opts-save">Save Options</span>
+      </div>
+
+      <div style="flex:1; min-width:220px;">
+        <h3>Controls at a glance</h3>
+        <ul>
+          <li><strong>Extension Mode</strong> — Registration or Merchandise (see §Modes).</li>
+          <li><strong>Management Override</strong> — reveals password field; unlocks manager controls.</li>
+          <li><strong>Behavior</strong> — Regular or Debugging (pre-con walk).</li>
+          <li><strong>Pop-up behavior</strong> — Automated (modal) or Manual (click icon).</li>
+          <li><strong>Config check panel</strong> — always visible. Red = annual-update error; fix before con.</li>
+          <li><strong>Maintenance panel</strong> — tab check, cache reset, storage dump (manager-only).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="shot">[SCREENSHOT: options page with override enabled, all manager rows visible]</div>
+  </div>
+
+  <!-- Modes -->
+  <div class="section" id="modes">
+    <h2><span class="icon">🔀</span> Modes: Registration vs Merchandise</h2>
+    <p>Set <strong>Extension Mode</strong> on the options page before a volunteer sits down.</p>
+
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>Setting</th>
+          <th>Registration mode</th>
+          <th>Merchandise mode</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Purpose</td><td>Check in attendees, issue badges</td><td>Hand out pre-ordered merch</td></tr>
+        <tr><td>Toolbar face</td><td>Reggie</td><td>Connie</td></tr>
+        <tr><td>On-screen marker</td><td>—</td><td>Blue <strong>MERCH MODE</strong> banner on every screen</td></tr>
+        <tr><td>Validates holds / age / ICE?</td><td>Yes — all blocking conditions apply</td><td>No — only shows what was ordered</td></tr>
+        <tr><td>Volunteer guide</td><td><a href="reg-checkin.html">reg-checkin.html</a></td><td><a href="merch-checkin.html">merch-checkin.html</a></td></tr>
+      </tbody>
+    </table>
+
+    <div class="alert yellow">
+      <div class="alert-title">Wrong toolbar face or missing/extra MERCH MODE banner?</div>
+      The mode is set incorrectly. Fix it on the Options page before the volunteer uses the station.
+    </div>
+
+    <h3>Merch catalog</h3>
+    <p>
+      Currently: <strong>T-Shirt</strong> and <strong>Souvenir Guide</strong>. The catalog (which
+      items exist, which Neon fields they read/write) lives in <code>config.js</code> under
+      <code>CONFIG.merch.items</code>. Changes are an annual-update / IT task — see
+      <a href="../ANNUAL_UPDATE_GUIDE.md">ANNUAL_UPDATE_GUIDE.md</a>.
+    </p>
+  </div>
+
+  <!-- Pop-up behavior -->
+  <div class="section" id="popup-behavior">
+    <h2><span class="icon">🪟</span> Pop-up Behavior: Automated vs Manual</h2>
+    <p>Manager-only setting (visible when override is enabled).</p>
+
+    <table class="compare">
+      <thead>
+        <tr><th>Mode</th><th>Behavior</th><th>When to use</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Automated</strong> (default)</td>
+          <td>Check-in window opens in the page as a modal, automatically on page load.
+              Toolbar click re-opens it. Modal is <strong>draggable by its title bar</strong>
+              and remembers its position.</td>
+          <td>Recommended for all check-in stations during con — smoothest for a busy line.</td>
+        </tr>
+        <tr>
+          <td><strong>Manual</strong></td>
+          <td>Nothing opens automatically. Volunteer clicks the toolbar icon to open the
+              classic small pop-up window.</td>
+          <td>Fallback if the in-page modal ever conflicts with a Neon page layout.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert blue">
+      Account pages always use the classic pop-up regardless of this setting. Only the
+      registration (eventRegDetails) and attendee (attendeeEdit) pages switch to modal.
+    </div>
+  </div>
+
+  <!-- Override -->
+  <div class="section" id="override">
+    <h2><span class="icon">🔑</span> Management Override</h2>
+    <p>
+      Override lets a lead push a check-in through a <strong>red (blocked)</strong> status.
+      Use only after personally resolving the underlying issue.
+    </p>
+
+    <h3>Enabling it</h3>
+    <ol>
+      <li>Options page → check <strong>Enable Management Override</strong>.</li>
+      <li>Enter the management password. Save Options.</li>
+      <li>If the password is wrong, the options don't save and an error shows.</li>
+    </ol>
+
+    <h3>What changes while override is active</h3>
+    <div class="override-bar">MANAGER OVERRIDE ACTIVE</div>
+    <ul>
+      <li>Every screen shows the red <strong>MANAGER OVERRIDE ACTIVE</strong> bar above.</li>
+      <li>Toolbar icon carries a purple <span class="m-badge">M</span> badge.</li>
+      <li>Red attendee rows gain an <span class="btn stop">⚠ Override — Check In →</span> button.</li>
+      <li>Full red <strong>⛔ DO NOT ISSUE BADGE</strong> detail still shows — override doesn't hide the reason, it lets you proceed past it.</li>
+    </ul>
+
+    <div class="shot">[SCREENSHOT: attendee screen with override — red banner + DO NOT ISSUE BADGE + override button]</div>
+
+    <h3>Password handling</h3>
+    <div class="alert red">
+      <div class="alert-title">Share the password verbally or via a password manager only</div>
+      Never in email, Slack, GitHub, or any written note. The code stores only a
+      cryptographic hash — the real password is never in the repo.
+    </div>
+    <ul>
+      <li>Rotate annually. Regenerate the hash with <code>tools/generate-password-hash.html</code>
+          (run locally in Chrome only — don't upload to GitHub).</li>
+      <li>Paste the new hash into <code>config.js</code>. See
+          <a href="../ANNUAL_UPDATE_GUIDE.md">ANNUAL_UPDATE_GUIDE.md</a>.</li>
+      <li><strong>Turn override off</strong> (uncheck + Save) when stepping away from a Help
+          Desk workstation so volunteers can't issue blocked badges.</li>
+    </ul>
+  </div>
+
+  <!-- Conditions -->
+  <div class="section" id="conditions">
+    <h2><span class="icon">🚦</span> Blocking Conditions</h2>
+    <p>
+      The badge number is deliberately hidden until every red condition is cleared
+      and every required field is filled — so volunteers can't read out a number
+      while a problem remains. As a manager with override, you see the full detail.
+    </p>
+
+    <h3>Red conditions — block check-in</h3>
+    <table class="cond-table">
+      <thead class="h-red">
+        <tr>
+          <th style="width:28%;">Condition</th>
+          <th style="width:36%;">What it means</th>
+          <th>Where to resolve</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-red"><td><span class="cond-pill red">Registration Hold</span></td><td>A hold was placed on this registration.</td><td>Review account notes; contact Registration Head. Don't release badge.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Art Show Hold</span></td><td>Art Show has a hold on this account.</td><td>Send attendee to Art Show to pay, then back to Registration Help Desk.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Operations Hold</span></td><td>Operations has placed a hold.</td><td>Send attendee to Operations.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Not Paid</span></td><td>Registration status is not SUCCEEDED.</td><td>Send to cashier / Registration Head. Not fixable here.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Already Issued</span></td><td>Badge has already been handed out.</td><td>Send to Help Desk — possible duplicate. Don't issue another.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Wrong Year / Event</span></td><td>Registration isn't for this year's con.</td><td>Verify correct event in Neon.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Incorrect Day</span></td><td>Day Pass used on wrong day.</td><td>Send to Help Desk.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Unknown Ticket</span></td><td>Ticket type not in the config.</td><td>Ticket names may have changed in Neon. IT / annual update.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">Name Mismatch</span></td><td>Non-transferable badge; recorded name doesn't match.</td><td>Send to Help Desk.</td></tr>
+        <tr class="row-red"><td><span class="cond-pill red">No Account / Attendee ID, No Name</span></td><td>Page data couldn't be read.</td><td>Reload the page. If it persists, call IT.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Yellow conditions — fixable at the check-in station</h3>
+    <table class="cond-table">
+      <thead class="h-yellow">
+        <tr>
+          <th style="width:28%;">Condition</th>
+          <th style="width:36%;">What it means</th>
+          <th>How to resolve</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-yellow">
+          <td><span class="cond-pill yellow">Age Verification</span></td>
+          <td>Adult or Dealer ticket — ID hasn't been checked yet.</td>
+          <td>Volunteer checks photo ID against cutoff date, clicks
+              <span class="btn warn">Age Verified, ID Returned ✓</span>.</td>
+        </tr>
+        <tr class="row-yellow">
+          <td><span class="cond-pill yellow">Missing ICE</span></td>
+          <td>Emergency contact field is empty.</td>
+          <td>Volunteer asks attendee, fills the field on the Neon form,
+              clicks <span class="btn warn">Re-check ↺</span>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert blue">
+      <div class="alert-title">Yellow conditions with a Re-check button</div>
+      Only conditions with <em>fixableOnAttendeePage: true</em> in the config show a
+      Re-check button. Everything else (holds, payment, wrong year) requires the
+      attendee to go elsewhere.
+    </div>
+  </div>
+
+  <!-- Notes gates -->
+  <div class="section" id="notes">
+    <h2><span class="icon">📋</span> Notes Gates</h2>
+    <p>
+      Notes on an account or registration must be acknowledged before a volunteer can
+      proceed — intentional friction so important notes aren't skipped.
+    </p>
+    <div class="card">
+      <p style="margin:0;"><strong>Account notes (yellow) —</strong> read, tick
+      <em>"I have read and understood the note(s) above"</em>, click
+      <span class="btn warn">Proceed to Check-In →</span>.</p>
+    </div>
+    <div class="card">
+      <p style="margin:0;"><strong>Registration notes (yellow) —</strong> same pattern,
+      then <span class="btn warn">Show Attendee List →</span>.</p>
+    </div>
+    <div class="card">
+      <p style="margin:0;"><strong>Single registration note (📋 screen) —</strong>
+      read, click <span class="btn warn">Note Read ✓</span>.</p>
+    </div>
+    <div class="alert yellow">
+      If a volunteer is stuck on a note screen, the checkbox isn't ticked —
+      the Proceed button stays disabled until it is.
+    </div>
+  </div>
+
+  <!-- What happens at check-in -->
+  <div class="section" id="checkin-actions">
+    <h2><span class="icon">✅</span> What Happens at Check-In</h2>
+    <p>When <span class="btn go">Badge Issued</span> is clicked, the extension automatically:</p>
+    <ol>
+      <li>Downloads a <strong>badge-printer CSV</strong> to the Downloads folder (the printer queue watches that folder).</li>
+      <li>Increments <strong>Number of Active Badges</strong> in Neon.</li>
+      <li>Writes the attendee's name to the <strong>Non-Transferable Name</strong> field.</li>
+      <li>Records pickup date &amp; time in the next pickup slot.</li>
+      <li>Submits the Neon form and returns the volunteer to the account search.</li>
+    </ol>
+    <div class="alert red">
+      <div class="alert-title">CSV download failure</div>
+      If the download fails, the volunteer is told <em>not</em> to issue the badge and
+      to contact the Registration Head. That's your cue to check the workstation's
+      Downloads folder setup and Chrome download permissions.
+    </div>
+    <h3>Merch check-in</h3>
+    <p>
+      <span class="btn green">Confirm Pickup</span> writes the current date and time into each
+      checked item's pickup field (format <code>MM/DD/YYYY HH:MM</code>, 24-hour) and submits
+      the form. The redirect returns the volunteer to account search.
+    </p>
+  </div>
+
+  <!-- Debug walk -->
+  <div class="section" id="debug-walk">
+    <h2><span class="icon">🔬</span> Pre-Con Field Check (Debug Walk)</h2>
+    <p>
+      The extension finds Neon's custom fields by matching <strong>label text</strong>.
+      If Neon admins rename or reorder fields, matching can silently break. Run this check
+      <strong>before con</strong> and after any Neon form change.
+    </p>
+
+    <div class="alert yellow">
+      <div class="alert-title">When to run this</div>
+      <ul>
+        <li>After Neon admins change any attendee-form field label or order.</li>
+        <li>Before the first shift of each con (annual sanity check).</li>
+        <li>After any annual update to <code>config.js</code> fieldLabels.</li>
+      </ul>
+    </div>
+
+    <h3>How to run the Debug Walk</h3>
+    <ol class="walk-steps">
+      <li>Options page → enable <strong>Management Override</strong> (enter password).</li>
+      <li>Set <strong>Behavior</strong> to <strong>"Debugging (pre-con field check walk)"</strong>. Click Save Options.</li>
+      <li>Open any real attendee's <strong>account page</strong> in Neon and click the toolbar icon.</li>
+      <li>The extension walks account → registration → attendee automatically, auditing each step.</li>
+      <li>A <strong>report tab</strong> opens listing every step and any field-resolution problems.</li>
+    </ol>
+
+    <div class="alert red">
+      <div class="alert-title">⛔ Turn Behavior back to Regular when done</div>
+      Leave it on Debugging and every toolbar click triggers the walk instead of a check-in.
+      This will confuse volunteers if left on during con.
+    </div>
+
+    <p>
+      If the report flags missing or ambiguous fields, that is an IT / annual-update fix.
+      See <a href="../ANNUAL_UPDATE_GUIDE.md">ANNUAL_UPDATE_GUIDE.md</a> and
+      <a href="../DEVELOPER.MD">DEVELOPER.MD</a>.
+    </p>
+    <div class="shot">[SCREENSHOT: debug walk report tab showing green/red step results]</div>
+  </div>
+
+  <!-- Maintenance -->
+  <div class="section" id="maintenance">
+    <h2><span class="icon">🔧</span> Maintenance Tools</h2>
+    <p>Manager-only <strong>Maintenance</strong> panel at the bottom of the Options page.</p>
+
+    <div class="card">
+      <strong>Check Neon tab(s)</strong><br>
+      Confirms the extension's scripts loaded correctly on your open Neon tabs. Use this
+      first when "nothing happens" on a page. If no script responds, reload the Neon tab.
+    </div>
+    <div class="card">
+      <strong>Clear cached scrape data</strong><br>
+      Wipes cached page reads (attendee, registration, account) without touching settings.
+      Use when a page shows stale data; reload the Neon tab afterward to re-scrape.
+    </div>
+    <div class="card">
+      <strong>Storage contents</strong><br>
+      Expandable raw dump of everything in local storage. For diagnosing issues with IT.
+    </div>
+    <div class="card">
+      <strong>Config check panel</strong> (always visible)<br>
+      Validates <code>config.js</code>. <span style="color:var(--red);font-weight:bold;">Red errors</span>
+      must be fixed before con.
+      <span style="color:#7a5c00;font-weight:bold;">Yellow warnings</span> should be reviewed.
+    </div>
+    <p>For broader problems see <a href="../TROUBLESHOOTING.md">TROUBLESHOOTING.md</a>.</p>
+  </div>
+
+  <!-- Escalation -->
+  <div class="section" id="escalation">
+    <h2><span class="icon">📞</span> Escalation &amp; Annual Update</h2>
+
+    <h3>Call IT when:</h3>
+    <ul>
+      <li>Config check or Debug Walk reports errors you can't resolve by re-running.</li>
+      <li>A condition fires that doesn't match reality (e.g. everyone shows "Unknown ticket") —
+          usually means Neon field/ticket names changed.</li>
+      <li>Badge CSV won't download on a correctly-set-up station.</li>
+      <li>Extension doesn't load or scripts don't respond after reloads.</li>
+    </ul>
+    <p>
+      Point IT to <a href="../DEVELOPER.MD">DEVELOPER.MD</a> and
+      <a href="../TROUBLESHOOTING.md">TROUBLESHOOTING.md</a>.
+    </p>
+
+    <h3>The yearly update</h3>
+    <div class="alert purple">
+      <div class="alert-title">Only edit config.js for the annual refresh</div>
+      Event names, ticket names, merch catalog, and override password all live in
+      <code>config.js</code>. The full checklist is in
+      <a href="../ANNUAL_UPDATE_GUIDE.md">ANNUAL_UPDATE_GUIDE.md</a>.
+      Don't edit other files unless IT says to.
+    </div>
+
+    <h3>Never complete a real check-in during testing</h3>
+    <p>
+      Use the Debug Walk to verify field detection. Do not run check-in to
+      completion on a live attendee during setup or training runs.
+    </p>
+  </div>
+
+</main>
+</div>
+</body>
+</html>
