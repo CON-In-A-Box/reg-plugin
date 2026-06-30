@@ -92,8 +92,8 @@ Guide**. Changing it is an annual-update / IT task — see
 
 ## 5. Pop-up behavior: Automated vs Manual
 
-Manager-only choice (only visible when override is on). It controls how the
-check-in screen appears on the registration and attendee pages.
+Available to everyone on the Options page (no Management Override needed). It
+controls how the check-in screen appears on the registration and attendee pages.
 
 - **Automated (default)** — the check-in window opens **in the page itself** as a
   modal, automatically, as soon as the page loads. Clicking the toolbar icon

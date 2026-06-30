@@ -213,19 +213,21 @@ function buildFieldIndex() {
   //   Dealer:   Art(22), Operations(23), Registration(24)
   //
   // holdMessages titles: [0]="Registration Hold", [1]="Art Show Hold", [2]="Operations Hold"
-  const REG_TITLE = CONFIG.holdMessages[0].title; // "Registration Hold"
-  const ART_TITLE = CONFIG.holdMessages[1].title; // "Art Show Hold"
-  const OPS_TITLE = CONFIG.holdMessages[2].title; // "Operations Hold"
+  // Lowercased so label matching is case-insensitive (matches readField).
+  const REG_TITLE = CONFIG.holdMessages[0].title.toLowerCase(); // "registration hold"
+  const ART_TITLE = CONFIG.holdMessages[1].title.toLowerCase(); // "art show hold"
+  const OPS_TITLE = CONFIG.holdMessages[2].title.toLowerCase(); // "operations hold"
 
   for (const [idxStr, lbl] of Object.entries(labelByIndex)) {
     const idx = parseInt(idxStr, 10);
-    if (lbl.includes(REG_TITLE)) {
+    const lblLc = lbl.toLowerCase();
+    if (lblLc.includes(REG_TITLE)) {
       index.registrationHold = idx;
       console.log(`attendeeContact.js: registrationHold matched by label at index ${idx}`);
-    } else if (lbl.includes(ART_TITLE)) {
+    } else if (lblLc.includes(ART_TITLE)) {
       index.artShowHold = idx;
       console.log(`attendeeContact.js: artShowHold matched by label at index ${idx}`);
-    } else if (lbl.includes(OPS_TITLE)) {
+    } else if (lblLc.includes(OPS_TITLE)) {
       index.operationsHold = idx;
       console.log(`attendeeContact.js: operationsHold matched by label at index ${idx}`);
     }
@@ -253,6 +255,7 @@ function buildFieldIndex() {
     "registrationHold", "artShowHold", "operationsHold",
     "iceContact",       // handled above
     "pickupDateLabel", "pickupTimeLabel", // handled below
+    "createdDate", "lastUpdatedDate",     // read-only viewLabel fields, not custom fields
   ]);
 
   for (const [role, searchText] of Object.entries(labels)) {
@@ -474,6 +477,34 @@ function readLabelSiblingText(labelText) {
   return (sibling?.querySelector("label") ?? sibling)?.textContent?.trim() ?? "";
 }
 
+/**
+ * Reads a read-only Neon "viewLabel" field by its label text.
+ *
+ * Handles BOTH layouts seen on the attendee/registration pages:
+ *   • value as a span INSIDE the label cell:
+ *       <td class="viewLabel">Pronouns:<span class="viewField">they/them</span></td>
+ *   • value in the NEXT sibling cell:
+ *       <td class="viewLabel">Created: </td><td class="viewField">6/17/26 ...</td>
+ *
+ * Label match is case-insensitive and ignores a trailing ":". Returns "" if
+ * the label isn't present (e.g. attendee has no pronouns).
+ *
+ * @param {string} labelText
+ * @returns {string}
+ */
+function readViewFieldByLabel(labelText) {
+  const needle = labelText.toLowerCase();
+  for (const td of document.querySelectorAll("td.viewLabel")) {
+    const raw = (td.childNodes[0]?.textContent ?? "").trim().replace(/:$/, "");
+    if (!raw.toLowerCase().startsWith(needle)) continue;
+    const inner = td.querySelector("span.viewField");
+    if (inner) return inner.textContent.trim();
+    const sib = td.nextElementSibling;
+    if (sib && sib.classList.contains("viewField")) return sib.textContent.trim();
+  }
+  return "";
+}
+
 // ── DATE / TIME HELPERS ───────────────────────────────────────────────────
 
 /**
@@ -494,6 +525,71 @@ function formattedDate(date) {
     String(date.getDate()).padStart(2, "0"),
     date.getFullYear(),
   ].join("/");
+}
+
+// ── BADGE PRINT-STATUS HELPERS ─────────────────────────────────────────────
+
+/**
+ * Parses a Neon timestamp string like "6/17/26 3:31 PM by Mark Sauntry".
+ * Strips a trailing " by <name>" author suffix, accepts 2- or 4-digit years
+ * (2-digit → 2000+). Returns a Date, or null if it can't be parsed.
+ *
+ * @param {string} str
+ * @returns {Date|null}
+ */
+function parseNeonDateTime(str) {
+  if (!str) return null;
+  const cleaned = String(str).split(/\s+by\s+/i)[0].trim();
+  const m = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2}):(\d{2})\s*([AaPp][Mm])?$/);
+  if (!m) return null;
+  let [, mo, da, yr, hh, mm, ap] = m;
+  let year = parseInt(yr, 10);
+  if (year < 100) year += 2000;
+  let hour = parseInt(hh, 10);
+  if (ap) {
+    const pm = /p/i.test(ap);
+    if (pm && hour !== 12) hour += 12;
+    if (!pm && hour === 12) hour = 0;
+  }
+  const d = new Date(year, parseInt(mo, 10) - 1, parseInt(da, 10), hour, parseInt(mm, 10));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Parses CONFIG.badgePrint.cutoff ("MM/DD/YYYY HH:MM", 24-hour) to a Date.
+ * @returns {Date|null}
+ */
+function parseConfigCutoff() {
+  const raw = CONFIG.badgePrint?.cutoff ?? "";
+  const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2}):(\d{2})$/);
+  if (!m) {
+    console.warn(`attendeeContact.js: bad CONFIG.badgePrint.cutoff "${raw}"`);
+    return null;
+  }
+  let [, mo, da, yr, hh, mm] = m;
+  let year = parseInt(yr, 10);
+  if (year < 100) year += 2000;
+  const d = new Date(year, parseInt(mo, 10) - 1, parseInt(da, 10), parseInt(hh, 10), parseInt(mm, 10));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Computes the badge print-status from the registration's Created and
+ * Last Updated timestamps. See CONFIG.badgePrint for the rule. Returns
+ * "" (render nothing) when the cutoff or created date can't be determined.
+ *
+ * @param {Date|null} created
+ * @param {Date|null} lastUpdated
+ * @returns {""|"Pre-Printed"|"Printed?"|"Blank"}
+ */
+function computeBadgePrintStatus(created, lastUpdated) {
+  const T = parseConfigCutoff();
+  if (!T || !created) return "";
+  const windowMs = (CONFIG.badgePrint?.recheckWindowMinutes ?? 15) * 60000;
+  const W = T.getTime() - windowMs;            // start of the grace window
+  if (created.getTime() >= W) return "Blank";  // registered at/after window → never pre-printed
+  if (lastUpdated && lastUpdated.getTime() >= W) return "Printed?";
+  return "Pre-Printed";
 }
 
 // ── DEALER-SPECIFIC FIELD HELPERS ─────────────────────────────────────────
@@ -584,6 +680,20 @@ async function getAttendeeInfo() {
     || (ticketConfig.ticketLabel === "Dealer" ? dealerBadge.split(" ")[0] : "")
     || firstName;
 
+  // Pronouns: read-only viewLabel on the reg page, but an editable custom field
+  // on the attendee page (no viewLabel), so the page read is normally empty
+  // here — fall back to the value carried forward in the stored record.
+  const pronouns = readViewFieldByLabel(CONFIG.fieldLabels.pronouns) || (storedAttendee.pronouns ?? "");
+
+  // Badge print-status from the registration Created / Last Updated timestamps.
+  // These viewLabel fields live on the registration detail page, NOT the
+  // attendee edit page, so the page read is normally empty here — fall back to
+  // the raw strings carried forward in the stored registrant record.
+  const created          = parseNeonDateTime(readViewFieldByLabel(CONFIG.fieldLabels.createdDate)     || storedAttendee.createdRaw);
+  const lastUpdated      = parseNeonDateTime(readViewFieldByLabel(CONFIG.fieldLabels.lastUpdatedDate) || storedAttendee.lastUpdatedRaw);
+  const badgePrintStatus = computeBadgePrintStatus(created, lastUpdated);
+  console.log(`getAttendeeInfo: pronouns="${pronouns}" created="${created ?? "?"}" lastUpdated="${lastUpdated ?? "?"}" → printStatus="${badgePrintStatus || "(none)"}"`);
+
   const activeBadgesRaw = customFieldValue("activeBadgeCount");
   const activeBadges    = activeBadgesRaw === "" ? 0 : parseInt(activeBadgesRaw, 10);
   const isDayPass    = ticketTypeName.includes("Day Pass");
@@ -630,27 +740,30 @@ async function getAttendeeInfo() {
 
   if (regHold) {
     freshConditions[CONDITION.REG_HOLD] = {
-      text:  CONFIG.holdMessages[0].title + "\n" + CONFIG.holdMessages[0].body,
+      text:  CONFIG.holdMessages[0].title.toUpperCase() + "\n" + CONFIG.holdMessages[0].body,
       isRed: true,
     };
   }
 
   if (artHold) {
     freshConditions[CONDITION.ART_HOLD] = {
-      text:  CONFIG.holdMessages[1].title + "\n" + CONFIG.holdMessages[1].body,
+      text:  CONFIG.holdMessages[1].title.toUpperCase() + "\n" + CONFIG.holdMessages[1].body,
       isRed: true,
     };
   }
 
   if (opsHold) {
     freshConditions[CONDITION.OPS_HOLD] = {
-      text:  CONFIG.holdMessages[2].title + "\n" + CONFIG.holdMessages[2].body,
+      text:  CONFIG.holdMessages[2].title.toUpperCase() + "\n" + CONFIG.holdMessages[2].body,
       isRed: true,
     };
   }
 
   const nonTransferableName = customFieldValue("nonTransferableName");
-  if (nonTransferableName && nonTransferableName.toLowerCase() !== legalName.toLowerCase()) {
+  // Compare case-insensitively and trimmed: leading/trailing whitespace or
+  // capitalization differences must NOT count as a name mismatch.
+  if (nonTransferableName &&
+      nonTransferableName.trim().toLowerCase() !== legalName.trim().toLowerCase()) {
     freshConditions[CONDITION.NAME_MISMATCH] = {
       text:  CONFIG.attendeeMessages.nameMismatch
         .replace("{issued}",  nonTransferableName)
@@ -740,8 +853,10 @@ async function getAttendeeInfo() {
     attendeeId: accountId,
     legalName,
     preferredName,
+    pronouns,
     badgeImage:            ticketConfig.badgeImage,
     ticket:                `${ticketConfig.ticketLabel}${isDayPass ? " Day Pass" : " Weekend"}`,
+    badgePrintStatus,
     activeBadges,
     regStatus,
     state,

@@ -5,20 +5,28 @@ something here doesn't help, contact IT before the badge line backs up.
 
 ---
 
-## Yellow banner at the top of the Neon page: "No active CONvergence registration found"
+## Pop-up: "No valid event registration found"
 
-This appears when you click the extension icon on an account page and the
-extension navigates to the Attendees tab, but can't auto-open a
-registration. It is a **safe fallback**, not a check-in blocker.
+This modal appears when you click the extension icon on an account and the
+extension checks the **Attendees** tab and then the **Registrations** tab, but
+the account has **no usable registration** for this year's event — no records at
+all, or only ones that are cancelled, failed, refunded, or for a different
+event. It is a **safe guard**, not a bug. (The extension waits a few seconds for
+each tab's list to load before deciding, so a slow page won't trigger it early.)
 
 What to do:
 
-1. Look at the Attendees table on the Neon page.
-2. If the attendee has a CONvergence registration with status `SUCCEEDED`,
-   click that row manually to open it.
-3. From there the rest of the check-in flow works as normal.
+1. Click **Dismiss**.
+2. Look at the Attendees and Registrations tables on the Neon page yourself.
+3. If you do see a CONvergence registration with status `SUCCEEDED`, click
+   that row manually to open it and continue check-in.
+4. Otherwise, send the attendee to the **Help Desk** to sort out their
+   registration.
 
-The banner also shows up in two other cases:
+## Yellow banner: "Could not find / read the Attendees table"
+
+Separate from the modal above, a yellow banner means a **technical** hiccup
+reading the page (not "no registration"):
 
 - **"Could not find the Attendees table — refresh and try again."** —
   the page took too long to load the registrations table. Reload the Neon
@@ -125,6 +133,29 @@ wrong and the extension can't find the element to write to.
 
 ---
 
+## Merch in-page modal didn't auto-open (account / eventReg / attendee page)
+
+In **Merch** mode + **Automated** pop-up mode the extension draws an in-page
+modal on each page (no toolbar click needed), the same way Reg mode does. If it
+doesn't appear:
+
+1. Confirm the mode on the **Options** page: **Merch** mode AND **Automated**
+   pop-up mode. Manual mode keeps the classic toolbar popup instead.
+2. Reload the **extension** (not just the page) at `chrome://extensions` — the
+   merch modal files (`merch-account-modal.js`, `merch-reg-modal.js`,
+   `merch-attendee-modal.js`) only register after an extension reload.
+3. Open DevTools on the Neon page and check the Console for that page's modal
+   log line, e.g. `merch-reg-modal.js: auto-open check → merchMode=… automated=…`.
+   `merchMode=false` means you're still in Reg mode; `automated=false` means
+   you're in Manual mode.
+
+**Expected post-pickup behavior:** after Confirm Pickup the tab returns to the
+**event registration page** (NOT the dashboard) with the merch list modal
+re-opened, so you can hand the next person their merch. Merch does not re-check
+holds, so it never bounces through the dashboard or account page.
+
+---
+
 ## Verify field detection (labels changed in Neon)
 
 The extension finds every custom field by matching its **label text**. When
@@ -145,6 +176,35 @@ at all). To see exactly which fields resolve, run the **Manager Debug Walk**:
 Full walkthrough is Step 3 in `ANNUAL_UPDATE_GUIDE.md`. For a quick single-page
 check without manager mode, `tools/field-diagnostic.html` does the same matching
 from a pasted DevTools dump.
+
+---
+
+## Pronouns or the print-status line are always blank
+
+Pronouns (shown small to the right of the name) and the **Pre-Printed /
+Printed? / Blank** line under the badge number come from Neon's read-only
+`viewLabel` fields, matched by label substring. These fields live on the
+**registration detail** (`eventRegDetails.do`) page, **not** the attendee edit
+page — so they are scraped when you pick the attendee from the registration list
+and **carried forward** to the badge-issued view. (Opening `attendeeEdit.do`
+directly, without going through the registration list first, leaves them blank.)
+
+- **Pronouns blank for everyone** — confirm the attendee actually has pronouns
+  set in Neon, then check `CONFIG.fieldLabels.pronouns` ("Pronouns") still
+  matches the on-page label. The account page reads it from the **About** grid
+  (`.about-field-title`); the registration list page reads it from a
+  `td.viewLabel`. A blank pronoun is expected and correct when none is set.
+- **Print-status line never appears** — it only shows in the single-attendee
+  (badge-number) view, and only when the **Created** date can be read. Because
+  Created / Last Updated are read on the registration page and carried forward,
+  reaching the attendee via the check-in list (not a direct `attendeeEdit.do`
+  URL) is required. Confirm `CONFIG.fieldLabels.createdDate` ("Created") and
+  `lastUpdatedDate` ("Last Updated") match the page, and that
+  `CONFIG.badgePrint.cutoff` is a valid `MM/DD/YYYY HH:MM` string (a bad cutoff
+  logs a warning in the page console and suppresses the line).
+- **Wrong status** — re-check the cutoff datetime and the 15-minute window
+  against when badges were actually printed (see Step 2f in
+  `ANNUAL_UPDATE_GUIDE.md`).
 
 ---
 
@@ -176,17 +236,27 @@ Enable **Manager Override** on the Options page to reveal the **Maintenance** pa
 
 ## The check-in panel auto-opens now (or I want the old click-to-open back)
 
-On the **registration (Attendees)** page the check-in list now appears
-automatically as an in-page panel (top-right) once the page loads — no click
-needed. Close it with the **✕**; click the extension icon to re-open it (it
-re-reads the page first).
+On the **account**, **registration (Attendees)**, and **attendee** pages the
+panel now appears automatically as an in-page panel (top-right) once the page
+loads — no click needed. Close it with the **✕**; click the extension icon to
+re-open it (it re-reads the page first).
 
+- On the **account page** the panel shows account holds / notes, or — for a
+  clean account — the attendee's full name and a **"Proceed to Check-In"**
+  button (this replaces clicking the icon to advance).
 - If it **didn't** open: make sure you're in Registration mode and that the
   page finished loading; click the extension icon to force it. A manager can
   also confirm the mode below.
-- To go back to the **old click-to-open popup**: open the extension Options,
-  enable **Manager Override**, and set **Pop-up behavior → Manual**. (Account
-  pages always behave the old way regardless.)
+- To go back to the **old click-to-open popup**: open the extension Options
+  and set **Pop-up behavior → Manual** (no Manager Override needed).
+
+> **IT note:** if the account/attendee panel never appears even in Automated
+> mode and the page console shows `accountPage.js` logs but **no**
+> `account-modal.js` logs (or, in Merch mode, no `merch-account-modal.js` /
+> `merch-reg-modal.js` / `merch-attendee-modal.js` logs), the extension is
+> running a stale manifest — newly added content-script files only register
+> after you reload the **extension** (`chrome://extensions` → ↻ on the card),
+> not just the Neon page.
 
 ---
 

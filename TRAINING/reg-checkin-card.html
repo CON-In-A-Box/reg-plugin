@@ -43,10 +43,11 @@
   }
   header .mode-note {
     margin-left: auto;
-    font-size: 11px;
+    font-size: 12px;
     text-align: right;
-    color: #555;
-    max-width: 2.4in;
+    color: var(--purple);
+    font-weight: bold;
+    max-width: 2.6in;
   }
   h2 {
     font-size: 14px;
@@ -55,25 +56,6 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  /* Icon legend */
-  .legend { display: flex; gap: 8px; margin: 10px 0; }
-  .legend .chip {
-    flex: 1;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    padding: 8px 6px;
-    text-align: center;
-    font-size: 11px;
-  }
-  .legend .dot {
-    width: 20px; height: 20px; border-radius: 50%;
-    margin: 0 auto 5px;
-  }
-  .legend .blue   .dot { background: var(--blue); }
-  .legend .yellow .dot { background: var(--yellow); }
-  .legend .red    .dot { background: var(--red); }
-  .legend .idle   .dot { background: #555; }
-  .legend b { display: block; font-size: 12px; margin-bottom: 2px; }
   /* Steps */
   ol.steps { margin: 0; padding: 0; counter-reset: step; list-style: none; }
   ol.steps > li {
@@ -93,6 +75,12 @@
     font-weight: bold; font-size: 14px;
   }
   ol.steps b { color: var(--ink); }
+  .screen-tag {
+    display: inline-block; font-size: 10px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--purple); background: #f0e8f7;
+    border-radius: 4px; padding: 1px 6px; margin-right: 5px;
+  }
   .btn {
     display: inline-block;
     padding: 1px 7px; border-radius: 4px;
@@ -102,19 +90,31 @@
   .btn.go   { background: var(--blue); }
   .btn.warn { background: var(--yellow); color: #000; }
   .btn.stop { background: var(--red); }
-  /* Call-out box */
+  /* Two-column escalation */
+  .esc-row { display: flex; gap: 12px; margin-top: 14px; }
   .callbox {
+    flex: 1;
     border: 2px solid var(--red);
     border-radius: 8px;
     padding: 10px 14px;
-    margin-top: 14px;
     background: #fff5f5;
   }
   .callbox h2 { color: var(--red); margin-top: 0; }
   .callbox ul { margin: 4px 0 0; padding-left: 18px; font-size: 12px; }
   .callbox li { margin: 3px 0; }
-  .callbox .punch {
-    margin-top: 8px; font-weight: bold; color: var(--red); font-size: 13px;
+  .captain-box {
+    flex: 1;
+    border: 2px solid var(--blue);
+    border-radius: 8px;
+    padding: 10px 14px;
+    background: #f0f7ff;
+  }
+  .captain-box h2 { color: var(--blue); margin-top: 0; }
+  .captain-box ul { margin: 4px 0 0; padding-left: 18px; font-size: 12px; }
+  .captain-box li { margin: 3px 0; }
+  .punch {
+    margin-top: 12px; font-weight: bold; color: var(--red); font-size: 13px;
+    text-align: center;
   }
   /* ID check box */
   .id-check {
@@ -127,6 +127,14 @@
   }
   .id-check ol { margin: 0; padding-left: 16px; }
   .id-check li { font-size: 11px; margin: 3px 0; }
+  /* Issue-badge box */
+  .issue-box {
+    background: #f7f0fc; border: 2px solid var(--purple);
+    border-radius: 6px; padding: 8px 12px; margin: 6px 0;
+    font-size: 12px;
+  }
+  .issue-box ol { margin: 4px 0 0; padding-left: 18px; }
+  .issue-box li { margin: 3px 0; }
   /* Screenshot placeholder */
   .shot {
     border: 2px dashed #bbb; border-radius: 6px;
@@ -147,66 +155,66 @@
   <header>
     <img src="../assets/reggie-blue-38.png" alt="Reggie">
     <h1>Registration Check-In</h1>
-    <div class="mode-note">
-      Toolbar face = <b>Reggie</b>.<br>
-      No blue "MERCH MODE" banner.<br>
-      If you see MERCH MODE, tell your lead.
-    </div>
+    <div class="mode-note">The pop-up guides you — just follow along.</div>
   </header>
 
-  <h2>What the icon color means</h2>
-  <div class="legend">
-    <div class="chip blue"><div class="dot"></div><b>Blue</b>Good — issue badge</div>
-    <div class="chip yellow"><div class="dot"></div><b>Yellow</b>Read the note first</div>
-    <div class="chip red"><div class="dot"></div><b>Red</b>Send to Help Desk</div>
-    <div class="chip idle"><div class="dot"></div><b>Grey</b>Not on a check-in page</div>
-  </div>
-
-  <h2>Steps</h2>
+  <h2>Steps — when everything goes well</h2>
   <ol class="steps">
-    <li><b>Find the attendee.</b> Search in Neon, click their name to open the
-      account page. The check-in window opens on its own (or click Reggie).</li>
-    <li><b>Read the account screen.</b>
-      Green "Ready" → wait, it moves you forward.
-      Yellow note → read it, tick the box, click
-      <span class="btn warn">Proceed to Check-In →</span>.
-      Red → <span class="btn stop">SEND TO HELP DESK</span>.</li>
-    <li><b>Pick the attendee.</b> Click <span class="btn go">Check In →</span> on
-      their row. A row that says "Send to Help Desk" is blocked.</li>
-    <li><b>Do what the screen asks.</b>
-      Yellow warning → <span class="btn warn">Show me the field ↓</span>, fix it,
-      click <span class="btn warn">Re-check ↺</span>.
+    <li><span class="screen-tag">Neon search</span><b>Find the attendee — ask for their ID.</b>
+      Search Neon, click their name. Ask for a government photo ID now. The pop-up opens and
+      moves you forward when all-clear (green).</li>
+    <li><span class="screen-tag">Reg-list pop-up</span><b>Pick the attendee.</b>
+      Click <span class="btn go">Check In →</span> on their row.</li>
+    <li><span class="screen-tag">Check-in pop-up</span><b>Verify age when it comes up.</b>
+      Adult &amp; Dealer badges show <b>ID Required</b>. If over 18, verify the ID below, then
+      <span class="btn warn">Age Verified, ID Returned ✓</span>.
       <div class="id-check">
         <div class="id-title">Age check (Adult &amp; Dealer badges only)</div>
         <ol>
-          <li>Screen shows: <b>Legal Name</b> + <b>"DOB on or before [date]"</b></li>
-          <li>Ask for a <b>government-issued photo ID</b> (driver's license, passport, or state ID card).</li>
-          <li>Confirm the <b>face on the ID matches</b> the person in front of you.</li>
-          <li>Check the <b>date of birth</b> on the ID — it must be <b>on or before</b> the date shown on screen.</li>
-          <li><b>Return the ID</b> immediately.</li>
-          <li>Click <span class="btn warn">Age Verified, ID Returned ✓</span></li>
-          <li>If DOB is too recent, face doesn't match, or no valid ID → <b>call a manager.</b></li>
+          <li>Screen shows <b>Legal Name</b> + <b>"DOB on or before [date]"</b>.</li>
+          <li>Use the photo ID you took at the start.</li>
+          <li><b>Name on the pop-up must match the name on the ID.</b></li>
+          <li><b>Face on the ID</b> matches the person.</li>
+          <li><b>Date of birth</b> is on or before the date shown.</li>
+          <li><b>Return the ID</b>, then click <span class="btn warn">Age Verified, ID Returned ✓</span>.</li>
+          <li>Name mismatch, no ID, or unsure → <b>get the Room Captain or Help Desk.</b></li>
         </ol>
       </div>
     </li>
-    <li><b>Issue the badge.</b> When the <b>BADGE NUMBER</b> shows, click
-      <span class="btn go">Badge Issued</span>. If it says
-      <span class="btn go">Badge Issued - Send to Merchandise</span>, tell them to
-      visit the Merch table.</li>
+    <li><span class="screen-tag">Check-in pop-up</span><b>Issue the badge.</b>
+      <div class="issue-box">
+        <ol>
+          <li><b>Pre-Printed / Printed? / Blank</b> (read first — runner gets the badge):
+            Pre-Printed = pull from stock · Printed? = check stock · Blank = print one.</li>
+          <li><b>First Time? Badge Ribbon!</b> → give a <b>First Time Attendee</b> ribbon.</li>
+          <li>Get the badge, hand it over, <b>then</b> click <span class="btn go">Badge Issued</span>.
+            If it also says <b>Send to Merchandise</b>, send them to the Merch table.</li>
+        </ol>
+      </div>
+    </li>
   </ol>
 
-  <div class="shot">[SCREENSHOT: ready-to-issue check-in screen with BADGE NUMBER]</div>
+  <div class="shot">[SCREENSHOT: ready-to-issue pop-up with BADGE NUMBER + Pre-Printed line]</div>
 
-  <div class="callbox">
-    <h2>Call a manager / Help Desk if…</h2>
-    <ul>
-      <li>Anything <b>red</b>, or any "Send to Help Desk" / "NOT ALLOWED".</li>
-      <li>A <b>hold</b> (Registration, Art Show, or Operations).</li>
-      <li>ID name doesn't match, or badge was already issued.</li>
-      <li>The box says contact the Registration Head, or the badge file didn't download.</li>
-    </ul>
-    <div class="punch">When in doubt — don't issue the badge. Ask.</div>
+  <div class="esc-row">
+    <div class="callbox">
+      <h2>Send to Help Desk</h2>
+      <ul>
+        <li>The pop-up tells you to (Send to Help Desk / NOT ALLOWED).</li>
+        <li>No photo ID.</li>
+        <li>Under 16 and alone.</li>
+      </ul>
+    </div>
+    <div class="captain-box">
+      <h2>Call the Room Captain</h2>
+      <ul>
+        <li>ID verification issues — name/face mismatch or you're unsure.</li>
+        <li>Any question you're not sure about.</li>
+      </ul>
+    </div>
   </div>
+
+  <div class="punch">When in doubt — don't issue the badge. Ask.</div>
 
 </div>
 </body>

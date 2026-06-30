@@ -1,5 +1,3 @@
-// testing mgr pw: reggie
-
 // config.js
 // ╔══════════════════════════════════════════════════════════════════════╗
 // ║ CONvergence Check-In Extension — ANNUAL CONFIGURATION                ║
@@ -97,6 +95,20 @@ const CONFIG = {
     "Sunday":   0,
   },
 
+  // ── BADGE PRINT-STATUS CUTOFF ────────────────────────────────────────
+  // T = the datetime badges were batch-printed before the con. Used to show
+  // a Pre-Printed / Printed? / Blank line under the badge number so staff
+  // know whether a physical badge already exists for this registration.
+  //   Pre-Printed → registration created AND last-updated before (T - window)
+  //   Printed?    → created before (T - window), but last-updated within the
+  //                 window or after (record touched near/after the print run)
+  //   Blank       → created at/after (T - window): no badge was pre-printed
+  // cutoff format: "MM/DD/YYYY HH:MM" (24-hour, local time).
+  badgePrint: {
+    cutoff: "06/19/2026 03:06",   // ← UPDATE EACH YEAR — real batch-print datetime
+    recheckWindowMinutes: 15,     // ← grace window before cutoff counted as "Printed?"
+  },
+
   // ── NEON ATTENDEE FORM FIELD LABELS ──────────────────────────────────
   // The extension finds custom fields dynamically by matching label text
   // (substring match). If Neon renames a label, update the matching value
@@ -117,6 +129,9 @@ const CONFIG = {
     activeBadgeCount:    "Number of Active Badges",
     pickupDateLabel:     "Pickup Date",
     pickupTimeLabel:     "Pickup Time",
+    pronouns:            "Pronouns",        // read-only viewLabel on account/attendee/reg pages
+    createdDate:         "Created",         // registration "Created:" timestamp (viewLabel)
+    lastUpdatedDate:     "Last Updated",    // registration "Last Updated:" timestamp (viewLabel)
   },
 
   // ── REQUIRED CHECK-IN FIELDS ─────────────────────────────────────────
@@ -131,11 +146,16 @@ const CONFIG = {
   // Staff-facing messages when a hold is active.
   // Each hold entry has a title (shown bold in popup) and body (resolution instructions).
   // Order must match: [regHold, artShowHold, opsHold]
+  // IMPORTANT: title is ALSO the Neon field-label matcher (case-INSENSITIVE substring;
+  // see readField/attendeeContact hold matching). Must remain a substring of the live
+  // Neon hold field label (capitalization no longer matters, but wording does).
+  // Display uppercasing is applied at render sites (popup.js, registrations.js,
+  // attendeeContact.js) via .toUpperCase().
   //
   holdMessages: [
-    { title: "Registration Hold", body: "Review notes on account or contact Registration Head.\nDo not release badge." },
-    { title: "Art Show Hold",     body: "Direct attendee to Art Show to pay, then return to Registration Help Desk.\nDo not release badge." },
-    { title: "Operations Hold",   body: "Direct the attendee to Operations.\nDo not release badge." },
+    { title: "Registration Hold", body: "• Review notes on account or contact Registration Head.\nDo not release badge until hold removed." },
+    { title: "Art Show Hold",     body: "• Direct attendee to Art Show to pay.\n• Remove hold when attendee returns with receipt.\nDo not release badge until hold removed." },
+    { title: "Operations Hold",   body: "• Direct the attendee to The Bridge (call Bridge on radio if they will not go).\n• Remove hold when an Operations Head or Sub-Head notifies Registration that hold can be removed.\nDo not release badge until hold removed." },
   ],
 
   // ── ATTENDEE PAGE MESSAGES ───────────────────────────────────────────
@@ -144,25 +164,32 @@ const CONFIG = {
   attendeeMessages: {
     missingIce:      "MISSING EMERGENCY CONTACT\nPlease ask the attendee for their emergency contact information.\nFill it in on the form, then click Re-check.",
     ageVerification: "AGE VERIFICATION REQUIRED\nVerify ID matches legal name. Attendee must be {age} or older (DOB before {cutoff}).",
-    alreadyIssued:   "ALREADY ISSUED\nThis badge was already issued. Please send attendee to Help Desk.",
-    nameMismatch:    "NAME MISMATCH\nBadge was issued to a different person.\nPlease send attendee to Help Desk.",
+    alreadyIssued:   "ALREADY ISSUED\nBadge already picked up.\nMust purchase replacement badge ($20 for weekend, full price for Day Pass).",
+    nameMismatch:    "NAME MISMATCH\nNon-Transferable name does not match attendee name.\n• If already issued, registrant transferred badge after pickup.\n• If comp, review comp reason and determine if badge swap can be approved.",
     noAccountId:     "NO ACCOUNT ID\nPlease direct attendee to Help Desk.",
   },
 
   // ── MANAGEMENT OVERRIDE PASSWORD ─────────────────────────────────────
   // Allows Help Desk staff to proceed past a red (blocked) status.
   //
-  // IMPORTANT: Only a HASH of the password is stored here — never the
-  // real password. This file is safe to commit to a public GitHub repo.
+  // IMPORTANT: Only a salted PBKDF2-SHA256 HASH of the password is stored
+  // here — never the real password. Format:
+  //   pbkdf2-sha256$<iterations>$<saltHex>$<hashHex>
+  // This file is safe to commit to a public GitHub repo: PBKDF2 makes the
+  // hash expensive to brute-force, so use a STRONG production password.
   //
   // To change the password each year:
-  // 1. Open tools/generate-password-hash.html in Chrome (locally only —
-  //    do NOT upload this file to GitHub)
+  // 1. Open tools/generate-password-hash.html in Chrome (from your local
+  //    copy)
   // 2. Type the new password and click Generate
-  // 3. Copy the hash and paste it below, replacing the old value
+  // 3. Copy the full pbkdf2-sha256$... string and paste it below
   // 4. Share the real password with Help Desk staff verbally or via a
   //    password manager — not GitHub, not email, not Slack
-  managementPasswordHash: "b1cc53f5f6e8209902436bff13802205f4f0fa16363201e8fb81d7131ead9140",  // ← UPDATE EACH YEAR
+  //
+  // The committed default below is the HASH of the dev/test password only
+  // (see CLAUDE.md). Leadership MUST regenerate this with a strong real
+  // password before any production / Chrome Web Store release.
+  managementPasswordHash: "pbkdf2-sha256$210000$70887f84385bb22373719ec1d6a6569a$f0522e07c60d1963d30748974968fa85da7e466188d8a12fcbd3ba0e1c5aac96",  // ← UPDATE EACH YEAR
 
   // ── CONDITION DISPLAY ORDER ──────────────────────────────────────────
   // Controls the order that blocking/warning conditions appear in the popup.
@@ -232,6 +259,7 @@ const CONFIG = {
           notOrderedValue: "Check the box then click to pick your shirt style and size",
         },
         pickupFieldLabel: "T-Shirt Picked Up",
+        image: "assets/2026-tee-shirt-01-1.jpg",
       },
       // Souvenir Guide -- radio field with a yes/no-style choice.
       // matchMode "substring" means: ordered if the selected value
@@ -246,6 +274,7 @@ const CONFIG = {
           matchValue: "Reserve a free printed Guide",
         },
         pickupFieldLabel: "Guide Picked Up",
+        image: "assets/SouvenirGuide.jpg",
       },
     ],
   },

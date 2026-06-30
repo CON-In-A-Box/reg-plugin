@@ -153,7 +153,10 @@ function buildMerchAttendeeListView(attendees, tab) {
     const nameText = att.preferredName
       ? `${att.legalName} (${att.preferredName})`
       : att.legalName;
-    row.appendChild(el("div", { className: "reg-name", textContent: nameText }));
+    const nameDiv = el("div", { className: "reg-name", textContent: nameText });
+    const attPron = pronounSpan(att.pronouns);
+    if (attPron) nameDiv.appendChild(attPron);
+    row.appendChild(nameDiv);
 
     // One line per ordered item, sized to match the attendee-page popup
     // (bold, ~14px, modest vertical spacing).
@@ -200,7 +203,10 @@ function buildMerchAttendeeView(merchState, tab) {
   const nameText = merchState.preferredName
     ? `${merchState.legalName} (${merchState.preferredName})`
     : merchState.legalName;
-  body.appendChild(el("div", { className: "heading", textContent: nameText }));
+  const heading = el("div", { className: "heading", textContent: nameText });
+  const headingPron = pronounSpan(merchState.pronouns);
+  if (headingPron) heading.appendChild(headingPron);
+  body.appendChild(heading);
 
   const orderedItems = (merchState.items ?? []).filter(i => i.ordered);
 
@@ -296,7 +302,10 @@ function showMerchConfirmation(merchState) {
   const screen = el("div", { className: "confirm-screen" });
   screen.appendChild(el("div", { className: "confirm-icon",  textContent: "✓" }));
   screen.appendChild(el("div", { className: "confirm-title", textContent: "Pickup Recorded" }));
-  screen.appendChild(el("div", { className: "confirm-name",  textContent: merchState.preferredName || merchState.legalName }));
+  const merchConfirmName = el("div", { className: "confirm-name",  textContent: merchState.preferredName || merchState.legalName });
+  const merchConfirmPron = pronounSpan(merchState.pronouns);
+  if (merchConfirmPron) merchConfirmName.appendChild(merchConfirmPron);
+  screen.appendChild(merchConfirmName);
   body.appendChild(screen);
   setTimeout(() => window.close(), 1000);
 }

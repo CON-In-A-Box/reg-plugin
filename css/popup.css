@@ -72,10 +72,10 @@ body {
  *    check-in state. Colors match the toolbar icon color.
  * ───────────────────────────────────────────────────────────────────────── */
 .banner {
-  padding: 10px;
+  padding: 12px;
   border-radius: 4px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 16px;
 }
 /* "green" banner = the GO/ready state → brand BLUE (colorblind-friendly) */
 .banner-green  { background: var(--brand-blue-bg);   color: var(--brand-blue-ink);   border: 1px solid color-mix(in srgb, var(--brand-blue) 35%, white); font-weight: bold; }
@@ -84,7 +84,7 @@ body {
 
 /* "STOP" headline inside the red banner */
 .banner-stop {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: bold;
   margin-bottom: 8px;
   letter-spacing: 1px;
@@ -102,12 +102,19 @@ body {
 }
 .reason-title {
   font-weight: bold;
+  font-size: 17px;
 }
 .reason-body {
   font-weight: normal;
   white-space: pre-line;
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 15px;
+}
+/* Per-line wrapping inside .reason-body (built by buildReasonBody). Bullet lines
+   get a hanging indent so wrapped continuation aligns under the text, not the bullet. */
+.reason-line.bullet {
+  padding-left: 1.1em;
+  text-indent: -1.1em;
 }
 
 /* Thin divider between separate conditions in the same banner */
@@ -148,15 +155,39 @@ table {
 table td {
   padding: 6px 8px;
   border-bottom: 1px solid #eee;
+  /* Shared fixed line-height + middle: the 14px label and 18px value sit in an
+   * identical 24px line-box and are vertically centered, so they line up
+   * regardless of font size. */
+  line-height: 24px;
   vertical-align: middle;
 }
 td.label {
   font-weight: bold;
   white-space: nowrap;
-  width: 42%;
+  width: 38%;
   color: #555;
-  font-size: 12px;
+  font-size: 14px;
 }
+
+/* Flex label/value rows (replaces the old <table> info rows). align-items:
+ * baseline puts the 14px label's text baseline on the larger value's baseline,
+ * so they line up cleanly regardless of font-size difference. */
+.kv-table { margin-bottom: 10px; }
+.kv-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+.kv-label {
+  flex: 0 0 38%;
+  font-size: 14px;
+  font-weight: bold;
+  color: #555;
+  white-space: nowrap;
+}
+.kv-val { flex: 1 1 auto; }
 
 /* Large badge number block (shown after age verified) */
 .badge-number-cell {
@@ -180,13 +211,26 @@ td.label {
   letter-spacing: 2px;
 }
 .badge-ticket-value {
-  font-size: 26px;
+  font-size: 34px;
   font-weight: bold;
   color: #333;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 6px;
+  line-height: 1.1;
+  white-space: normal;
+  word-break: break-word;
 }
+/* Badge print-status line: a bit smaller than the badge number (48px),
+ * larger than the ticket (34px). */
+.badge-print-status {
+  font-size: 40px;
+  font-weight: bold;
+  color: #111;
+  line-height: 1.1;
+  margin: 4px 0 2px;
+}
+.badge-print-status.badge-print-blank { color: var(--brand-red); }
 
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -198,6 +242,14 @@ td.label {
   font-weight: bold;
   color: #333;
 }
+/* Pronouns: small, light, inline to the right of a name (any name display). */
+.cvg-pronouns {
+  font-size: 0.62em;
+  font-weight: normal;
+  color: #666;
+  margin-left: 6px;
+  white-space: nowrap;
+}
 .age-cutoff-label {
   font-size: 12px;
   color: var(--brand-yellow-ink);
@@ -205,7 +257,27 @@ td.label {
 .age-cutoff-date {
   font-size: 18px;
   font-weight: bold;
-  color: var(--brand-yellow-ink);
+  color: var(--brand-red);
+}
+
+/* Badge-issued welcome greeting (replaces the labeled name row). Name sits on
+ * its own line and wraps so long names don't crowd the greeting. */
+.cvg-welcome {
+  text-align: center;
+  padding: 4px 4px 12px;
+}
+.cvg-welcome-greeting {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--brand-purple);
+}
+.cvg-welcome-name {
+  font-size: 38px;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.1;
+  margin-top: 2px;
+  word-break: break-word;
 }
 
 
@@ -278,11 +350,11 @@ td.label {
 }
 .btn-recheck-large:hover { background: var(--brand-blue-dark); }
 
-/* Age-verified button — orange */
+/* Age-verified button — brand red (ID is a hard gate) */
 .btn-age-verify {
   width: 100%;
   padding: 10px;
-  background: var(--brand-yellow-dark);
+  background: var(--brand-red);
   color: white;
   border: none;
   border-radius: 4px;
@@ -291,22 +363,74 @@ td.label {
   cursor: pointer;
   margin-bottom: 4px;
 }
-.btn-age-verify:hover { background: var(--brand-yellow-dark2); }
+.btn-age-verify:hover { background: var(--brand-red-dark); }
 
-/* Primary check-in button — brand BLUE (the affirmative "go" action) */
+/* Primary check-in button — brand BLUE (the affirmative "go" action).
+ * Pill shape (border-radius:999px) matches the .cvg-first-time ribbon. */
 .btn-checkin {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: var(--brand-blue);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 15px;
+  border-radius: 999px;
+  font-size: 19px;
+  line-height: 1.25;
   font-weight: bold;
   cursor: pointer;
 }
 .btn-checkin:hover    { background: var(--brand-blue-dark); }
 .btn-checkin:disabled { background: #6c757d; cursor: not-allowed; }
+
+/* "Back to ID Check" link on the badge-issued view (replaces the legal name
+ * + ID-required date rows for age-verified attendees). */
+.cvg-back-idcheck {
+  display: block;
+  text-align: left;
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--brand-green);
+  text-decoration: none;
+}
+.cvg-back-idcheck:hover { text-decoration: underline; }
+
+/* First-time-attendee ribbon prompt. Purple OUTLINE on a transparent
+ * background (not a filled pill) so it reads as a callout/label, not a
+ * clickable button. Purple is the brand accent, not a status color. */
+.cvg-first-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--brand-purple);
+  border: 2px solid var(--brand-purple);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  font-size: 15px;
+  font-weight: bold;
+}
+.cvg-first-time img { height: 22px; width: auto; }
+
+/* Pending-merch callout. Same purple-outline callout style as the first-time
+ * ribbon so ordered items read as a prominent label, with the product image
+ * to the left (T-shirt / Souvenir Guide). */
+.cvg-merch-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--brand-purple);
+  border: 2px solid var(--brand-purple);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  font-size: 15px;
+  font-weight: bold;
+}
+.cvg-merch-line img { height: 44px; width: auto; border-radius: 4px; }
 
 /* "Disabled by hold" button — grey with red border */
 .btn-no-issue {
@@ -355,12 +479,12 @@ td.label {
  * ───────────────────────────────────────────────────────────────────────── */
 .helpdesk-note {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: var(--brand-red-bg);
   color: var(--brand-red-ink);
   border: 1px solid var(--brand-red);
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: bold;
   text-align: center;
   box-sizing: border-box;

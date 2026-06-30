@@ -1,5 +1,6 @@
-testing manager pw is "reggie"
-
+<!-- DEV/TEST ONLY: the committed config.js hash is for the test password "reggie".
+     Leadership MUST regenerate it with a strong real password before any
+     production / Chrome Web Store release (see Step 2b). -->
 
 # CONvergence Check-In Extension — Annual Update Guide
 
@@ -80,25 +81,28 @@ to still pass the year check during testing.
 
 ### 2b. Management Override Password Hash
 
-The real password is never stored in the code. Instead, you store a
-"hash" — a scrambled version that the extension can check against without
-ever knowing the real password.
+The real password is never stored in the code. Instead, you store a salted
+PBKDF2-SHA256 **hash** — a scrambled, deliberately slow-to-crack version that
+the extension can check against without ever knowing the real password. Pick a
+**strong** password (long, not a dictionary word): the hash is visible to anyone
+who downloads the extension, and PBKDF2 only buys time against weak passwords.
 
 **To generate the hash:**
-1. Find the file `tools/generate-password-hash.html` on your computer
-   (it should be in the extension folder — do NOT open it from GitHub,
-   open it from your local copy)
+1. Open `tools/generate-password-hash.html` from your local copy of the repo
+   (open it from your computer, not from GitHub, so it can load the extension's
+   hashing code)
 2. Open it in Chrome by double-clicking it or dragging it into Chrome
 3. Type the new Management Override password into the box
 4. Click **Generate**
-5. Click **Copy Hash**
+5. Click **Copy hash**
 
 Now find this line in `config.js`:
 ```javascript
-managementPasswordHash: "REPLACE_THIS_WITH_GENERATED_HASH",  // ← UPDATE EACH YEAR
+managementPasswordHash: "pbkdf2-sha256$210000$...$...",  // ← UPDATE EACH YEAR
 ```
 
-Replace the text between the quote marks with the hash you just copied.
+Replace the text between the quote marks with the full `pbkdf2-sha256$...`
+string you just copied.
 
 **Important:** Never put the actual password in `config.js`.
 Share the real password with Help Desk staff verbally or through a
@@ -162,6 +166,7 @@ merch: {
         notOrderedValue: "Check the box then click to pick your shirt style and size",
       },
       pickupFieldLabel: "T-Shirt Picked Up",
+      image: "assets/2026-tee-shirt-01-1.jpg",
     },
     {
       name: "Souvenir Guide",
@@ -172,6 +177,7 @@ merch: {
         matchValue: "Reserve a free printed Guide",
       },
       pickupFieldLabel: "Guide Picked Up",
+      image: "assets/SouvenirGuide.jpg",
     },
   ],
 },
@@ -190,9 +196,46 @@ For each item, confirm:
   on the attendee form. These are the fields the extension writes the
   date/time into. They must exist on the form (ask the Neon admin to
   add them if missing).
+- `image` -- (optional) path to a product photo shown to the left of the
+  "{name} Ordered" callout in the REG-flow popup and check-in modal. Drop
+  the file in `assets/`, add it to `web_accessible_resources` in
+  `manifest.json`, and point `image` at it. Omit to show text only.
 
 If a merch item is no longer offered this year, delete its entry. If
 new items are offered, copy an existing entry and adjust the labels.
+
+---
+
+### 2f. Set the Badge Print-Status Cutoff
+
+The attendee view shows a line under the badge number — **Pre-Printed**,
+**Printed?**, or **Blank** — so staff know whether a physical badge was
+already batch-printed before the con. This is driven by `CONFIG.badgePrint`:
+
+```javascript
+badgePrint: {
+  cutoff: "06/17/2026 15:00",   // ← UPDATE EACH YEAR — real batch-print datetime
+  recheckWindowMinutes: 15,     //   grace window before cutoff counted as "Printed?"
+},
+```
+
+- `cutoff` (`T`) — the date/time the badges were batch-printed, in
+  `MM/DD/YYYY HH:MM` (24-hour, local). Set it to when the print run actually
+  happened.
+- The status compares the registration's **Created** and **Last Updated**
+  timestamps (read from the registration detail page and carried forward to the
+  attendee view) against `T` and a 15-minute window:
+  - **Pre-Printed** — created AND last-updated both before `T − 15 min`.
+  - **Printed?** — created before `T − 15 min`, but last-updated within the
+    window or after (the record was touched near/after the print run).
+  - **Blank** — created at/after `T − 15 min` (registered too late to be
+    pre-printed).
+- `recheckWindowMinutes` rarely needs changing; leave at 15 unless the print
+  workflow changes.
+
+Also confirm the three read-only field labels the feature relies on still
+match Neon (`CONFIG.fieldLabels`): `pronouns` ("Pronouns"), `createdDate`
+("Created"), `lastUpdatedDate` ("Last Updated").
 
 ---
 
@@ -272,8 +315,8 @@ Update the year to the current year.
 1. Save both files (`config.js` and `manifest.json`)
 2. Commit the changes to GitHub with a message like:
    `Annual update for CONvergence 2027`
-3. Do **not** commit `tools/generate-password-hash.html` — it is excluded
-   by `.gitignore` for security reasons
+3. `tools/generate-password-hash.html` is safe to commit — it contains no
+   password or secret, only the (already public) hashing code.
 
 ---
 
@@ -312,6 +355,10 @@ Unless IT has specifically told you to:
 
 - Do not change `otherEventIds` — these are permanent training/test events
 - Do not change `holdMessages` order — it must match the field index order
+- Do not reword a `holdMessages` **title** unless the Neon hold field label
+  changed — the title is also used to find the hold field (now matched
+  case-insensitively, but it must stay a substring of the Neon label). Editing
+  a title's wording (not just capitalization) can stop a hold from being detected
 - Do not change anything in `js/` files — these are the code files
 
 If you are unsure whether something needs changing, ask IT before touching it.

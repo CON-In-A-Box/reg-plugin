@@ -7,12 +7,15 @@
 // content-script global. No import/export.
 //
 // The modal is re-rendered from scratch on every Re-check / toolbar re-open,
-// so the DOM node is recreated each time. We remember the last position in a
-// module-level variable and reapply it after each render so the modal doesn't
-// jump back to its CSS default corner.
+// so the DOM node is recreated each time. We remember the last position and
+// reapply it after each render so the modal doesn't jump back to its CSS
+// default corner. The position is held in a module-level variable (fast path
+// for same-page re-renders) AND persisted to chrome.storage.local under
+// STORAGE_KEY.MODAL_POS so it survives page navigations — the modal reappears
+// wherever the user last dragged it, on every page.
 // ============================================================================
 
-// Last position the user dragged a modal to (shared across both modals, which
+// Last position the user dragged a modal to (shared across all modals, which
 // use the same #cvg-checkin-modal id and are never on screen at once).
 let cvgModalDragPos = null;
 
@@ -21,9 +24,20 @@ function makeDraggable(modalEl, handleEl) {
 
   handleEl.style.cursor = "move";
 
-  // Reapply the remembered position after a re-render.
+  // Reapply the remembered position after a re-render. In-memory wins (instant,
+  // no flicker); otherwise load the persisted position from storage and apply
+  // it once it arrives (clamped to the current viewport in case the saved spot
+  // is off-screen on a smaller display).
   if (cvgModalDragPos) {
-    applyModalPos(modalEl, cvgModalDragPos.left, cvgModalDragPos.top);
+    applyModalPosClamped(modalEl, cvgModalDragPos.left, cvgModalDragPos.top);
+  } else {
+    chrome.storage.local.get(STORAGE_KEY.MODAL_POS, (res) => {
+      const pos = res?.[STORAGE_KEY.MODAL_POS];
+      if (pos && cvgModalDragPos === null && modalEl.isConnected) {
+        cvgModalDragPos = { left: pos.left, top: pos.top };
+        applyModalPosClamped(modalEl, pos.left, pos.top);
+      }
+    });
   }
 
   let dragging = false;
@@ -66,6 +80,10 @@ function makeDraggable(modalEl, handleEl) {
     dragging = false;
     document.removeEventListener("mousemove", onMove);
     document.removeEventListener("mouseup", onUp);
+    // Persist so the modal reopens here on the next page / navigation.
+    if (cvgModalDragPos) {
+      chrome.storage.local.set({ [STORAGE_KEY.MODAL_POS]: cvgModalDragPos });
+    }
   }
 }
 
@@ -74,6 +92,15 @@ function applyModalPos(modalEl, left, top) {
   modalEl.style.top    = `${top}px`;
   modalEl.style.right  = "auto";
   modalEl.style.bottom = "auto";
+}
+
+// Like applyModalPos but keeps the modal on screen (the saved spot may be
+// off-screen if the window shrank since it was stored).
+function applyModalPosClamped(modalEl, left, top) {
+  const rect    = modalEl.getBoundingClientRect();
+  const maxLeft = Math.max(0, window.innerWidth  - rect.width);
+  const maxTop  = Math.max(0, window.innerHeight - rect.height);
+  applyModalPos(modalEl, clamp(left, 0, maxLeft), clamp(top, 0, maxTop));
 }
 
 function clamp(v, min, max) {

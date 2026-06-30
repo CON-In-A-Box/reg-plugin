@@ -1,101 +1,112 @@
 # Registration Check-In — Volunteer Guide
 
-You check attendees in and issue badges. The extension reads the Neon page,
-tells you if the person is good to go, and does the typing for you. Your job is
-to **read what the box tells you and follow it.**
+You check attendees in and issue badges. The extension reads the Neon page and
+shows you a **pop-up** that tells you exactly what to do. Your job is simple:
 
-> Make sure the toolbar face is **Reggie** and there is **no** blue "MERCH MODE"
-> banner. If you see MERCH MODE, you're in the wrong mode — tell your lead.
-
----
-
-## The toolbar icon — what the colors mean
-
-The little icon up by the address bar changes color to tell you the status at a
-glance.
-
-| Icon | Means | You do |
-|---|---|---|
-| 🔵 **Blue** | Good — clear to check in | Issue the badge |
-| 🟡 **Yellow** | Caution — there's a note or something to read | Read it before doing anything |
-| 🔴 **Red** | Stop | Send the attendee to the **Help Desk** |
-| ⚫ **Black/grey** | Idle — you're not on a check-in page yet | Search for the attendee |
-
-`[SCREENSHOT: the four toolbar icon states side by side]`
+> **The pop-up is your guide — it walks you through each step.** Just follow
+> along; you don't need to read the Neon page behind it.
 
 ---
 
-## The steps
+## The steps — when everything goes well (happy path)
 
-### 1. Find the attendee
+Each step happens on a specific screen. The pop-up moves you forward on its own
+when everything is clear.
 
-Search for them in Neon and click their name to open their **account page**. The
-check-in window opens on its own. (If it doesn't, click the Reggie icon.)
+### 1. Find the attendee — and ask for their ID
+**Neon search page.** Search for the attendee and click their name. **Ask them
+for a government-issued photo ID now**, so it's ready. The pop-up opens and, when
+everything is clear (green), moves you forward automatically.
 
 `[SCREENSHOT: Neon search results with an attendee name]`
 
-### 2. Read the account screen
+### 2. Pick the attendee
+**Registration-list pop-up.** Click **Check In →** on the attendee's row.
 
-One of these happens:
+`[SCREENSHOT: registration-list pop-up with Check In buttons]`
 
-- **Green — "✓ … Ready for check-in"** → it moves you forward automatically.
-  Do nothing, wait.
-- **Yellow — note(s) on the account** → read every note. Tick **"I have read and
-  understood the note(s) above"**, then click **Proceed to Check-In →**.
-- **Red — "⛔ SEND TO HELP DESK"** → stop. Send the attendee to the Help Desk.
+### 3. Verify age when it comes up
+**Check-in pop-up.** Adult and Dealer badges show an **ID Required** line. If the
+attendee is over 18, verify the ID (next section) and click **Age Verified, ID
+Returned ✓**.
 
-`[SCREENSHOT: account screen — green ready state]`
+### 4. Issue the badge
+**Check-in pop-up.** Get the badge, hand it to the attendee, then click **Badge
+Issued**.
 
-### 3. Pick the attendee
-
-On the registration screen you'll see **"Select the attendee to check in:"** with
-a row per person.
-
-- A row with a **Check In →** button is fine — click it.
-- A row that says **"Send to Help Desk"** is blocked — send that person to the
-  Help Desk.
-
-`[SCREENSHOT: attendee list with Check In buttons]`
-
-> **Registration note?** If a 📋 **Registration Note** screen appears first, read
-> it and click **Note Read ✓** to continue.
-
-### 4. Handle what the check-in screen asks
-
-This is the main screen. Do whatever it shows, top to bottom:
-
-- **Age check (Adult / Dealer badges):** it shows **"ID Required — DOB on or
-  before {date}"**. Check the photo ID. If the birth date is on or before that
-  date, click **Age Verified, ID Returned ✓**. Hand the ID back.
-- **Yellow warning (e.g. missing emergency contact):** click **Show me the field
-  ↓** — it highlights the field on the Neon form. Fill it in, then click
-  **Re-check ↺**.
-- **Red / "NOT ALLOWED — SEND TO HELP DESK":** stop. Send to the Help Desk.
-
-`[SCREENSHOT: check-in screen showing the age-verify step]`
-
-### 5. Issue the badge
-
-When everything is clear, the screen shows the **BADGE NUMBER** and ticket type,
-and a button:
-
-- **Badge Issued** — click it to finish.
-- **Badge Issued - Send to Merchandise** — same thing, but this person also
-  pre-ordered merch. After you finish, **tell them to go to the Merch table.**
-
-You'll see **"Check-In Complete ✓"** and the tool resets for the next person.
-
-`[SCREENSHOT: ready-to-issue screen with BADGE NUMBER visible]`
+`[SCREENSHOT: check-in pop-up ready-to-issue with BADGE NUMBER visible]`
 
 ---
 
-## When to call a manager / Help Desk
+## The check-in pop-up & verifying the ID
 
-- Anything **red**, or any "Send to Help Desk" / "NOT ALLOWED" message.
-- A **hold** (Registration, Art Show, or Operations).
-- The name on the ID doesn't match, or the badge was already issued.
-- The box says to contact the Registration Head, or the badge file didn't
-  download.
-- Anything that looks wrong or that this guide doesn't cover.
+When the pop-up shows the age check, it looks like this:
+
+```
+Check-In
+Legal Name        Sample, Angela
+ID Required       DOB on or before 6/19/2008
+[ Age Verified, ID Returned ✓ ]
+```
+
+To verify an over-18 badge:
+
+1. Use the photo ID you took at the start.
+2. The **name on the pop-up must match the name on the ID.**
+3. The **face on the ID matches the person** in front of you.
+4. The **date of birth is on or before** the date shown.
+5. Hand the ID back, then click **Age Verified, ID Returned ✓**.
+
+> **Name doesn't match, no ID, or you're unsure?** Get the **Room Captain**, or
+> send the attendee to the **Help Desk**. Do **NOT** click Age Verified.
+
+`[SCREENSHOT: check-in pop-up showing the age-verify step]`
+
+---
+
+## Missing emergency contact (ICE)
+
+If the emergency contact field is blank, the pop-up shows a **yellow warning**.
+You can fix it right at the station:
+
+1. Ask the attendee for their emergency contact's name and phone number.
+2. Click **Show me the field ↓** — the field on the Neon form highlights behind
+   the pop-up.
+3. Type the information in.
+4. Click **Re-check ↺**. If it saved, the warning clears.
+
+---
+
+## Issuing the badge
+
+Read the badge screen top to bottom:
+
+- **Pre-Printed / Printed? / Blank — read this first.** The line under the badge
+  number tells the runner how to get the badge:
+  - **Pre-Printed** → pull it from the pre-printed stock.
+  - **Printed?** → check the stock.
+  - **Blank** → no badge yet, print one.
+- **First Time? Badge Ribbon!** — if the pop-up shows this, give them a **First
+  Time Attendee** ribbon.
+- **Badge Issued** — get the badge, hand it to the attendee, **then** click
+  **Badge Issued**. If the button also says **Send to Merchandise**, tell them to
+  visit the Merch table.
+
+After you click, the pop-up records the check-in in Neon and resets for the next
+person.
+
+---
+
+## Send to Help Desk vs. call the Room Captain
+
+**Send to the Help Desk when:**
+- The pop-up tells you to (**Send to Help Desk** / **NOT ALLOWED**).
+- The attendee does not have a photo ID.
+- The attendee is under 16 and alone.
+
+**Call the Room Captain when:**
+- ID verification problems — name doesn't match, face doesn't match, or you're
+  unsure about the ID.
+- Any question you're not sure how to handle.
 
 **When in doubt, don't issue the badge — ask.**

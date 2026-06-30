@@ -1,0 +1,8 @@
+# Normalize all text files to LF in the repo, regardless of each
+# contributor's core.autocrlf setting. Stops "LF will be replaced by CRLF"
+# warnings on Windows clones and keeps diffs clean across macOS/Linux/Windows.
+* text=auto eol=lf
+
+# Binary assets — never touch line endings.
+*.png  binary
+*.pptx binary

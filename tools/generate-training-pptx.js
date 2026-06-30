@@ -171,6 +171,38 @@ function stepRows(s, pres, steps, startY = 1.15) {
   });
 }
 
+/** Horizontal clickable step boxes (one box per prompt, across the screen) */
+function stepBoxes(s, pres, boxes, opts = {}) {
+  const { y = 1.9, h = 4.6 } = opts;
+  const n = boxes.length;
+  const gap = 0.2;
+  const margin = 0.35;
+  const bw = (10 - margin * 2 - gap * (n - 1)) / n;
+  boxes.forEach((b, i) => {
+    const x = margin + i * (bw + gap);
+    s.addShape(pres.ShapeType.roundRect, {
+      x, y, w: bw, h,
+      fill: { color: "F9F8FC" }, line: { color: C.purple, pt: 2 }, rectRadius: 0.08,
+    });
+    s.addShape(pres.ShapeType.ellipse, {
+      x: x + bw / 2 - 0.3, y: y + 0.25, w: 0.6, h: 0.6,
+      fill: { color: C.purple }, line: { color: C.purple },
+    });
+    s.addText(String(i + 1), {
+      x: x + bw / 2 - 0.3, y: y + 0.25, w: 0.6, h: 0.6,
+      fontSize: 20, bold: true, color: C.white, align: "center", valign: "middle",
+    });
+    s.addText(b.title, {
+      x: x + 0.1, y: y + 1.0, w: bw - 0.2, h: 0.85,
+      fontSize: 14, bold: true, color: C.ink, align: "center", wrap: true,
+    });
+    s.addText(b.desc, {
+      x: x + 0.1, y: y + 1.9, w: bw - 0.2, h: h - 2.05,
+      fontSize: 12, color: "444444", align: "center", wrap: true,
+    });
+  });
+}
+
 /** Two-column layout */
 function twoCol(s, pres, leftFn, rightFn, splitX = 4.8) {
   leftFn(s, pres, splitX - 0.1);
@@ -191,174 +223,125 @@ async function buildReg() {
     C.purple
   );
 
-  // 2 — Before You Start
-  contentSlide(pres, "Before You Start Each Shift", (s, p) => {
+  // 2 — Steps overview
+  sectionSlide(pres, "The Check-In Steps", C.purple);
+
+  // 3 — Steps at a glance (happy path)
+  contentSlide(pres, "Steps at a Glance — Everything Goes Well", (s, p) => {
     callout(s, p,
-      'Toolbar face = REGGIE (not Connie)   |   NO blue "MERCH MODE" banner on any screen',
-      "F0E8F7", C.purple, { y: 1.1, h: 0.7, fontSize: 16, bold: true }
+      "The pop-up is your guide — it walks you through each step. Just follow along.",
+      "F0E8F7", C.purple, { y: 1.02, h: 0.55, fontSize: 14, bold: true }
     );
-    callout(s, p,
-      "If the toolbar shows Connie OR you see a MERCH MODE banner: STOP — tell your lead before doing anything.",
-      "FFF5F5", C.red, { y: 1.95, h: 0.7, fontSize: 15 }
-    );
-    bullets(s, [
-      "Extension is in Merchandise mode → manager must fix it on the Options page.",
-      "Never try to fix the mode yourself.",
-    ], { y: 2.8, fontSize: 15, indent: 1 });
+    stepBoxes(s, p, [
+      { title: "Greet & ask for ID",  desc: "Welcome them. Ask for a government photo ID." },
+      { title: "Search & click name", desc: "Type their name, click it in the list." },
+      { title: "Pick attendee",       desc: "Click Check In → on their row." },
+      { title: "Verify age",          desc: "Adult / Dealer: confirm DOB on the ID, then Age Verified ✓." },
+      { title: "Issue badge",         desc: "Hand over the badge, then click Badge Issued." },
+    ], { y: 1.8, h: 4.9 });
   });
 
-  // 3 — Icon legend
-  contentSlide(pres, "What the Toolbar Icon Color Means", (s, p) => {
-    chipRow(s, p, [
-      { label: "Blue",   desc: "Good — clear to issue badge",       color: C.blue   },
-      { label: "Yellow", desc: "Caution — read screen before doing anything", color: C.yellow },
-      { label: "Red",    desc: "Stop — send to Help Desk",          color: C.red    },
-      { label: "Grey",   desc: "Idle — not on a check-in page yet", color: "777777" },
-    ]);
-    s.addText("The icon is always in the top-right corner of Chrome, next to the address bar.", {
-      x: 0.5, y: 3.0, w: 9, h: 0.5,
-      fontSize: 14, color: "666666", align: "center", italic: true,
-    });
-    s.addShape(p.ShapeType.rect, { x: 0.35, y: 3.55, w: 9.3, h: 0.04, fill: { color: C.border }, line: { color: C.border } });
-    s.addText("[SCREENSHOT: four icon states in toolbar]", {
-      x: 0.35, y: 3.7, w: 9.3, h: 2.5,
-      fontSize: 12, color: "AAAAAA", align: "center", italic: true,
-      line: { color: "BBBBBB", pt: 2, dashType: "dash" },
-    });
-  });
-
-  // 4 — Steps overview
-  sectionSlide(pres, "The 5 Steps", C.purple);
-
-  contentSlide(pres, "Steps at a Glance", (s, p) => {
-    stepRows(s, p, [
-      { title: "Find the attendee",           desc: "Search Neon, click their name. Window opens automatically." },
-      { title: "Read the account screen",     desc: "Green = wait. Yellow = read note + tick box. Red = Help Desk." },
-      { title: "Pick the attendee from list", desc: "Click Check In →. Rows saying 'Send to Help Desk' are blocked." },
-      { title: "Do what the screen asks",     desc: "Age check (Adult/Dealer) or fix missing emergency contact." },
-      { title: "Issue the badge",             desc: "Click 'Badge Issued' when BADGE NUMBER appears." },
-    ], 1.1);
-  });
-
-  // 5 — Account screen detail
-  contentSlide(pres, "Step 2 — Reading the Account Screen", (s, p) => {
-    [
-      { color: C.blue,   label: "Green: Ready for check-in", desc: "Moves forward automatically. Wait." },
-      { color: C.yellow, label: "Yellow — Note(s) on account",   desc: "Read every note. Tick the checkbox, then click Proceed to Check-In." },
-      { color: C.red,    label: "Red: SEND TO HELP DESK",    desc: "Stop. Send the attendee to the Help Desk without issuing anything." },
-    ].forEach((row, i) => {
-      const y = 1.15 + i * 1.7;
-      s.addShape(p.ShapeType.ellipse, {
-        x: 0.35, y: y + 0.2, w: 0.42, h: 0.42,
-        fill: { color: row.color }, line: { color: row.color },
-      });
-      s.addText(row.label, { x: 0.9, y, w: 8.7, h: 0.5, fontSize: 16, bold: true, color: C.ink });
-      s.addText(row.desc, { x: 0.9, y: y + 0.5, w: 8.7, h: 0.9, fontSize: 14, color: "333333", wrap: true });
-    });
-  });
-
-  // 6 — Age verification section
-  sectionSlide(pres, "Age Verification\n(Adult & Dealer Badges)", C.blue);
-
-  contentSlide(pres, "Age Verification — Why & When", (s, p) => {
-    callout(s, p,
-      "Adult and Dealer ticket types require age verification. The screen blocks the badge until you confirm the ID.",
-      "F0F7FF", C.blue, { y: 1.05, h: 0.65, fontSize: 15 }
-    );
-    s.addText("The screen shows:", { x: 0.35, y: 1.85, w: 9.3, h: 0.4, fontSize: 15, bold: true, color: C.ink });
-    // Mock screen box
+  // 4 — Combined: the pop-up + how to verify
+  contentSlide(pres, "The Check-In Pop-up & Verifying the ID", (s, p) => {
+    // Left: mock check-in pop-up (age-verify state)
+    const bx = 0.35;
     s.addShape(p.ShapeType.roundRect, {
-      x: 0.35, y: 2.3, w: 4.2, h: 1.9,
+      x: bx, y: 1.1, w: 4.2, h: 3.2,
       fill: { color: "F8F8F8" }, line: { color: "CCCCCC", pt: 2 }, rectRadius: 0.1,
     });
+    s.addShape(p.ShapeType.roundRect, {
+      x: bx, y: 1.1, w: 4.2, h: 0.5,
+      fill: { color: C.purple }, line: { color: C.purple }, rectRadius: 0.1,
+    });
+    s.addText("Check-In", { x: bx + 0.15, y: 1.13, w: 3.9, h: 0.44, fontSize: 13, bold: true, color: C.white, valign: "middle" });
     s.addText([
-      { text: "Legal Name\n", options: { bold: false, fontSize: 12, color: "888888" } },
+      { text: "Legal Name\n", options: { fontSize: 12, color: "888888" } },
       { text: "Sample, Angela\n\n", options: { bold: true, fontSize: 14, color: C.ink } },
-      { text: "ID Required\n", options: { bold: false, fontSize: 12, color: "888888" } },
-      { text: "DOB on or before 7/3/2007", options: { bold: true, fontSize: 14, color: C.red } },
-    ], { x: 0.6, y: 2.45, w: 3.7, h: 1.6, wrap: true });
+      { text: "ID Required\n", options: { fontSize: 12, color: "888888" } },
+      { text: "DOB on or before 6/19/2008", options: { bold: true, fontSize: 14, color: C.red } },
+    ], { x: bx + 0.25, y: 1.8, w: 3.7, h: 1.6, wrap: true });
+    s.addShape(p.ShapeType.roundRect, {
+      x: bx + 0.25, y: 3.5, w: 3.7, h: 0.6,
+      fill: { color: C.yellow }, line: { color: C.yellow }, rectRadius: 0.06,
+    });
+    s.addText("Age Verified, ID Returned ✓", { x: bx + 0.25, y: 3.5, w: 3.7, h: 0.6, fontSize: 13, bold: true, color: C.ink, align: "center", valign: "middle" });
+
+    // Right: verify step-by-step
+    s.addText("To verify (over-18 badges):", { x: 4.8, y: 1.1, w: 4.85, h: 0.4, fontSize: 15, bold: true, color: C.ink });
     bullets(s, [
-      "The cutoff date is calculated automatically.",
-      "You only need to check the ID — no math required.",
-      "The name shown is the legal name from Neon.",
-    ], { x: 4.8, y: 2.3, w: 4.9, fontSize: 14 });
-  });
+      "Use the photo ID you took at the start.",
+      "Name on the pop-up MUST match the name on the ID.",
+      "Face on the ID matches the person.",
+      "Date of birth is on or before the date shown.",
+      "Hand the ID back, then click Age Verified, ID Returned ✓.",
+    ], { x: 4.8, y: 1.5, w: 4.85, fontSize: 14 });
 
-  contentSlide(pres, "Age Verification — Step by Step", (s, p) => {
-    stepRows(s, p, [
-      { title: "Ask for a government-issued photo ID",  desc: "Driver's license, passport, or state/government ID. Student IDs are not valid." },
-      { title: "Confirm the face matches",              desc: "The person in front of you should clearly match the ID photo." },
-      { title: "Read the date of birth",                desc: "It must be ON OR BEFORE the date shown on screen." },
-      { title: "Return the ID immediately",             desc: "Hand it back before clicking anything. Don't set it on the desk." },
-      { title: "Click Age Verified, ID Returned ✓",    desc: "Only after the ID is back in the attendee's hands." },
-    ], 1.1);
-  });
-
-  contentSlide(pres, "Age Verification — Call Your Lead If:", (s, p) => {
     callout(s, p,
-      "⛔  Do NOT click Age Verified in any of these situations — call a manager instead.",
-      "FFF5F5", C.red, { y: 1.05, h: 0.65, fontSize: 15, bold: true }
+      "Name doesn't match, no ID, or you're unsure? Get the Room Captain, or send the attendee to the Help Desk. Do NOT click Age Verified.",
+      "FFF5F5", C.red, { x: 4.8, y: 4.45, w: 4.85, h: 1.3, fontSize: 14, bold: true }
     );
-    bullets(s, [
-      "The date of birth is AFTER the cutoff date (attendee is under 18).",
-      "The face on the ID doesn't clearly match the person in front of you.",
-      "The attendee doesn't have a government-issued photo ID.",
-      "The legal name on screen doesn't match the name on the ID.",
-      "You're unsure about anything on the ID.",
-    ], { y: 1.85, fontSize: 16 });
   });
 
-  // 7 — ICE
+  // 5 — ICE (fixable yellow)
   contentSlide(pres, "Missing Emergency Contact (ICE)", (s, p) => {
     callout(s, p,
-      "⚠  If the emergency contact field is blank, a yellow warning appears. You can fix this at the station.",
+      "⚠  If the emergency contact field is blank, the pop-up shows a yellow warning. You can fix it right at the station.",
       "FFFBF0", C.yellow, { y: 1.05, h: 0.65, fontSize: 15 }
     );
     stepRows(s, p, [
       { title: "Ask the attendee",            desc: "Get their emergency contact's name and phone number." },
-      { title: "Click Show me the field ↓",   desc: "The field on the Neon form highlights in yellow behind the check-in window." },
+      { title: "Click Show me the field ↓",   desc: "The field on the Neon form highlights in yellow behind the pop-up." },
       { title: "Type the information in",     desc: "Fill in the highlighted field on the Neon page." },
-      { title: "Click Re-check ↺",            desc: "In the check-in window. If it saved, the warning clears." },
+      { title: "Click Re-check ↺",            desc: "In the pop-up. If it saved, the warning clears." },
     ], 1.85);
   });
 
-  // 8 — Issuing the badge
-  contentSlide(pres, "Step 5 — Issuing the Badge", (s, p) => {
-    callout(s, p,
-      "BADGE NUMBER and ticket type appear only when ALL issues are resolved. If they're hidden, something still needs fixing.",
-      "F0F7FF", C.blue, { y: 1.05, h: 0.65, fontSize: 14 }
-    );
+  // 6 — Issuing the badge
+  contentSlide(pres, "Issuing the Badge", (s, p) => {
     bullets(s, [
-      { text: 'Badge Issued', bold: true, color: C.blue },
-      { text: "→ Standard check-in. Click to complete.", sub: true },
-      { text: "Badge Issued - Send to Merchandise", bold: true, color: C.blue },
-      { text: "→ Same as above, but attendee also pre-ordered merch.", sub: true },
-      { text: "   After clicking: tell them to visit the Merchandise table.", sub: true },
-    ], { y: 1.85, fontSize: 16 });
+      { text: "Pre-Printed / Printed? / Blank  — read this FIRST", bold: true, color: C.purple },
+      { text: "Line under the badge number. The runner uses it to fetch the badge.", sub: true },
+      { text: "Pre-Printed = pull it from the pre-printed stock.", sub: true },
+      { text: "Printed? = check the stock.   Blank = no badge yet, print one.", sub: true },
+      { text: "First Time? Badge Ribbon!", bold: true, color: C.purple },
+      { text: "If the pop-up shows this, give them a First Time Attendee ribbon.", sub: true },
+      { text: "Badge Issued", bold: true, color: C.blue },
+      { text: "Get the badge, hand it to the attendee, THEN click Badge Issued.", sub: true },
+      { text: "If the button also says Send to Merchandise, tell them to visit the Merch table.", sub: true },
+    ], { y: 1.15, fontSize: 16 });
     callout(s, p,
-      "After you click: extension downloads a badge CSV, records pickup in Neon, and resets for the next person.",
-      "F0FAF0", C.green, { y: 5.3, h: 0.7, fontSize: 14 }
+      "After you click, the pop-up records the check-in in Neon and resets for the next person.",
+      "F0FAF0", C.green, { y: 5.6, h: 0.7, fontSize: 14 }
     );
   });
 
-  // 9 — When to escalate
-  contentSlide(pres, "When to Call a Manager / Help Desk", (s, p) => {
+  // 7 — Escalation: two blocks
+  contentSlide(pres, "Send to Help Desk  vs.  Call the Room Captain", (s, p) => {
+    // Block A — Help Desk
     s.addShape(p.ShapeType.roundRect, {
-      x: 0.35, y: 1.05, w: 9.3, h: 5.6,
+      x: 0.35, y: 1.05, w: 9.3, h: 2.6,
       fill: { color: "FFF5F5" }, line: { color: C.red, pt: 2 }, rectRadius: 0.1,
     });
+    s.addText("When to Send to Help Desk", { x: 0.6, y: 1.18, w: 9.0, h: 0.5, fontSize: 18, bold: true, color: C.red });
     bullets(s, [
-      "Anything RED, or any Send to Help Desk / NOT ALLOWED message.",
-      "A hold — Registration Hold, Art Show Hold, or Operations Hold.",
-      "ID date of birth is after the cutoff (attendee under 18).",
-      "Face on ID doesn't clearly match the person.",
-      "No valid government-issued photo ID.",
-      "Badge already issued — ALREADY ISSUED message on screen.",
-      "Name mismatch — non-transferable badge, name doesn't match.",
-      "Screen says badge file didn't download or contact Registration Head.",
-    ], { y: 1.15, x: 0.55, w: 9.0, fontSize: 15 });
+      "When the pop-up tells you to (Send to Help Desk / NOT ALLOWED).",
+      "The attendee does not have a photo ID.",
+      "The attendee is under 16 and alone.",
+    ], { x: 0.6, y: 1.75, w: 8.9, fontSize: 15 });
+
+    // Block B — Room Captain
+    s.addShape(p.ShapeType.roundRect, {
+      x: 0.35, y: 3.85, w: 9.3, h: 2.45,
+      fill: { color: "F0F7FF" }, line: { color: C.blue, pt: 2 }, rectRadius: 0.1,
+    });
+    s.addText("When to Call the Room Captain", { x: 0.6, y: 3.98, w: 9.0, h: 0.5, fontSize: 18, bold: true, color: C.blue });
+    bullets(s, [
+      "ID verification problems — name doesn't match, face doesn't match, or you're unsure about the ID.",
+      "Any question you're not sure how to handle.",
+    ], { x: 0.6, y: 4.55, w: 8.9, fontSize: 15 });
+
     s.addText("When in doubt — don't issue the badge. Ask first.", {
-      x: 0.35, y: 6.35, w: 9.3, h: 0.45,
+      x: 0.35, y: 6.45, w: 9.3, h: 0.4,
       fontSize: 16, bold: true, color: C.red, align: "center",
     });
   });

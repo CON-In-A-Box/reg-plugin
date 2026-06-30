@@ -9,7 +9,10 @@
 #cvg-checkin-modal {
   position: fixed;
   top: 12px;
-  right: 12px;
+  /* Default anchor sits ~1/8 of the viewport width (12.5vw) in from the right
+   * edge. A dragged position (explicit left/top set by modal-drag.js) overrides
+   * this. */
+  right: calc(12px + 12.5vw);
   z-index: 2147483647;
   width: 380px;
   max-width: calc(100vw - 24px);
@@ -52,6 +55,26 @@
 }
 #cvg-checkin-modal .cvg-modal-close:hover { background: rgba(255, 255, 255, 0.2); }
 
+/* Right-side header controls (Re-check + close) */
+#cvg-checkin-modal .cvg-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Re-check button shown in the header on the Badge Issued screen */
+#cvg-checkin-modal .cvg-modal-recheck {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+#cvg-checkin-modal .cvg-modal-recheck:hover { background: rgba(255, 255, 255, 0.3); }
+
 #cvg-checkin-modal .cvg-modal-body { padding: 12px; }
 
 /* Manager override banner */
@@ -79,18 +102,23 @@
 #cvg-checkin-modal .cvg-reg-row.green  { background: var(--brand-blue-bg); }   /* ready/go → blue */
 #cvg-checkin-modal .cvg-reg-row.yellow { background: var(--brand-yellow-bg); }
 #cvg-checkin-modal .cvg-reg-row.red    { background: var(--brand-red-bg); border-color: color-mix(in srgb, var(--brand-red) 30%, white); }
-#cvg-checkin-modal .cvg-reg-name   { font-weight: bold; margin-bottom: 2px; }
+#cvg-checkin-modal .cvg-reg-name   { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
 #cvg-checkin-modal .cvg-reg-ticket { font-size: 12px; color: #555; margin-bottom: 6px; }
-#cvg-checkin-modal .cvg-helpdesk   { color: var(--brand-red-ink); font-weight: bold; font-size: 13px; }
+/* On a blocked (red) row: name in the darker red ink, "Send to Help Desk" in
+ * the brighter stop-red and larger so it reads as the directive. */
+#cvg-checkin-modal .cvg-reg-row.red .cvg-reg-name { color: var(--brand-red-ink); }
+#cvg-checkin-modal .cvg-helpdesk   { color: var(--brand-red); font-weight: bold; font-size: 16px; }
 
 /* Buttons */
+/* Larger, pill-shaped (border-radius:999px) to match the attendee view's
+ * .btn-checkin so the list buttons read as the same primary action. */
 #cvg-checkin-modal button.cvg-btn {
   width: 100%;
-  padding: 8px 10px;
+  padding: 11px 14px;
   border: none;
-  border-radius: 4px;
+  border-radius: 999px;
   color: #fff;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: bold;
   cursor: pointer;
 }
@@ -130,10 +158,10 @@
 
 /* Status banners + reason blocks */
 #cvg-checkin-modal .banner {
-  padding: 10px;
+  padding: 12px;
   border-radius: 4px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 16px;
 }
 #cvg-checkin-modal .banner-yellow {
   background: var(--brand-yellow-bg);
@@ -146,19 +174,48 @@
   color: var(--brand-red-ink);
   border: 2px solid var(--brand-red);
 }
+#cvg-checkin-modal .banner-green {
+  background: var(--brand-blue-bg);
+  color: var(--brand-blue-ink);
+  border: 1px solid var(--brand-blue);
+  font-weight: bold;
+}
 #cvg-checkin-modal .banner-stop {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: bold;
   margin-bottom: 8px;
   letter-spacing: 1px;
 }
+/* Account modal: clean-account full name + confirm checkbox row */
+#cvg-checkin-modal .cvg-account-name {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  margin: 8px 0 12px;
+  color: #333;
+  word-break: break-word;
+}
+#cvg-checkin-modal .cvg-notes-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+#cvg-checkin-modal .cvg-notes-confirm input { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+#cvg-checkin-modal .cvg-notes-confirm label { cursor: pointer; }
 #cvg-checkin-modal .reason-block { margin: 0; padding: 4px 0; }
-#cvg-checkin-modal .reason-title { font-weight: bold; }
+#cvg-checkin-modal .reason-title { font-weight: bold; font-size: 17px; }
 #cvg-checkin-modal .reason-body {
   font-weight: normal;
   white-space: pre-line;
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 15px;
+}
+/* Hanging indent for bullet lines inside .reason-body (buildReasonBody). */
+#cvg-checkin-modal .reason-line.bullet {
+  padding-left: 1.1em;
+  text-indent: -1.1em;
 }
 #cvg-checkin-modal .reason-divider {
   border: none;
@@ -190,12 +247,33 @@
   letter-spacing: 2px;
 }
 #cvg-checkin-modal .badge-ticket-value {
-  font-size: 26px;
+  font-size: 34px;
   font-weight: bold;
   color: #333;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 6px;
+  line-height: 1.1;
+  white-space: normal;
+  word-break: break-word;
+}
+/* Badge print-status line: a bit smaller than the badge number (48px),
+ * larger than the ticket (34px). */
+#cvg-checkin-modal .badge-print-status {
+  font-size: 40px;
+  font-weight: bold;
+  color: #111;
+  line-height: 1.1;
+  margin: 4px 0 2px;
+}
+#cvg-checkin-modal .badge-print-status.badge-print-blank { color: var(--brand-red); }
+/* Pronouns: small, light, inline to the right of a name. */
+#cvg-checkin-modal .cvg-pronouns {
+  font-size: 0.62em;
+  font-weight: normal;
+  color: #666;
+  margin-left: 6px;
+  white-space: nowrap;
 }
 #cvg-checkin-modal .cvg-badge-placeholder {
   text-align: center;
@@ -218,21 +296,90 @@
 #cvg-checkin-modal table td {
   padding: 6px 8px;
   border-bottom: 1px solid #eee;
+  /* Shared fixed line-height + middle: 14px label and 18px value sit in an
+   * identical 24px line-box, vertically centered, so they line up regardless
+   * of font size. */
+  line-height: 24px;
   vertical-align: middle;
   font-size: 15px;
 }
 #cvg-checkin-modal td.label {
   font-weight: bold;
   white-space: nowrap;
-  width: 42%;
+  width: 38%;
   color: #555;
-  font-size: 12px;
+  font-size: 14px;
 }
-#cvg-checkin-modal .legal-name-value { font-size: 18px; font-weight: bold; color: #333; }
-#cvg-checkin-modal .age-cutoff-date  { font-size: 18px; font-weight: bold; color: var(--brand-yellow-ink); }
 
-/* Pending-merch line above the action button */
-#cvg-checkin-modal .cvg-merch-line { font-size: 14px; font-weight: bold; margin: 4px 0 4px 6px; }
+/* Flex label/value rows (replaces the old <table> info rows). align-items:
+ * baseline puts the label's text baseline on the larger value's baseline so
+ * they line up regardless of font-size difference. */
+#cvg-checkin-modal .kv-table { margin-bottom: 10px; }
+#cvg-checkin-modal .kv-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+#cvg-checkin-modal .kv-label {
+  flex: 0 0 38%;
+  font-size: 14px;
+  font-weight: bold;
+  color: #555;
+  white-space: nowrap;
+}
+#cvg-checkin-modal .kv-val { flex: 1 1 auto; }
+
+#cvg-checkin-modal .legal-name-value { font-size: 18px; font-weight: bold; color: #333; }
+#cvg-checkin-modal .age-cutoff-date  { font-size: 18px; font-weight: bold; color: var(--brand-red); }
+
+/* Badge-issued welcome greeting (replaces the labeled name row). */
+#cvg-checkin-modal .cvg-welcome { text-align: center; padding: 4px 4px 12px; }
+#cvg-checkin-modal .cvg-welcome-greeting { font-size: 15px; font-weight: bold; color: var(--brand-purple); }
+#cvg-checkin-modal .cvg-welcome-name {
+  font-size: 38px;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.1;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+/* Pending-merch callout above the action button. Purple-outline callout
+ * (matches the first-time ribbon) with the product image to the left. */
+#cvg-checkin-modal .cvg-merch-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--brand-purple);
+  border: 2px solid var(--brand-purple);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  font-size: 15px;
+  font-weight: bold;
+}
+#cvg-checkin-modal .cvg-merch-line img { height: 44px; width: auto; border-radius: 4px; }
+
+/* First-time-attendee ribbon prompt. Purple OUTLINE on transparent (not a
+ * filled pill) so it reads as a callout/label, not a clickable button. */
+#cvg-checkin-modal .cvg-first-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--brand-purple);
+  border: 2px solid var(--brand-purple);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  font-size: 15px;
+  font-weight: bold;
+}
+#cvg-checkin-modal .cvg-first-time img { height: 22px; width: auto; }
 
 /* Re-check section */
 #cvg-checkin-modal .recheck-section { margin-bottom: 8px; }
@@ -261,32 +408,47 @@
   font-size: 12px;
 }
 #cvg-checkin-modal .btn-recheck:hover { background: var(--brand-blue-dark); }
+/* Pill shape (border-radius:999px) matches .btn-checkin / .cvg-first-time. */
 #cvg-checkin-modal .btn-age-verify {
   width: 100%;
-  padding: 10px;
-  background: var(--brand-yellow-dark);
+  padding: 12px;
+  background: var(--brand-red);
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 999px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
   margin-bottom: 4px;
 }
-#cvg-checkin-modal .btn-age-verify:hover { background: var(--brand-yellow-dark2); }
+#cvg-checkin-modal .btn-age-verify:hover { background: var(--brand-red-dark); }
+/* Pill shape (border-radius:999px) matches the .cvg-first-time ribbon. */
 #cvg-checkin-modal .btn-checkin {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: var(--brand-blue);
   color: #fff;
   border: none;
-  border-radius: 4px;
-  font-size: 15px;
+  border-radius: 999px;
+  font-size: 19px;
+  line-height: 1.25;
   font-weight: bold;
   cursor: pointer;
 }
 #cvg-checkin-modal .btn-checkin:hover    { background: var(--brand-blue-dark); }
 #cvg-checkin-modal .btn-checkin:disabled { background: #6c757d; cursor: not-allowed; }
+
+/* "Back to ID Check" link on the badge-issued view. */
+#cvg-checkin-modal .cvg-back-idcheck {
+  display: block;
+  text-align: left;
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--brand-green);
+  text-decoration: none;
+}
+#cvg-checkin-modal .cvg-back-idcheck:hover { text-decoration: underline; }
 #cvg-checkin-modal .btn-no-issue {
   width: 100%;
   padding: 10px;
@@ -303,12 +465,12 @@
 /* Help-desk note */
 #cvg-checkin-modal .helpdesk-note {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: var(--brand-red-bg);
   color: var(--brand-red-ink);
   border: 1px solid var(--brand-red);
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: bold;
   text-align: center;
   box-sizing: border-box;

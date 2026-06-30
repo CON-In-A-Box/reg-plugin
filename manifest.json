@@ -13,14 +13,15 @@
       "matches": [
         "https://ce.app.neoncrm.com/admin/accounts/*"
       ],
-      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/accountPage.js"],
+      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/accountPage.js", "js/modal-drag.js", "js/account-modal.js", "js/merch-account-modal.js"],
+      "css": ["css/brand.css", "css/checkin-modal.css"],
       "run_at": "document_end"
     },
     {
       "matches": [
         "https://ce.app.neoncrm.com/np/admin/event/attendeeEdit.do*"
       ],
-      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/attendeeContact.js", "js/merch-attendee.js", "js/modal-drag.js", "js/attendee-modal.js"],
+      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/attendeeContact.js", "js/merch-attendee.js", "js/modal-drag.js", "js/attendee-modal.js", "js/merch-attendee-modal.js"],
       "css": ["css/brand.css", "css/checkin-modal.css"],
       "run_at": "document_end"
     },
@@ -35,9 +36,15 @@
       "matches": [
         "https://ce.app.neoncrm.com/np/admin/event/eventRegDetails.do*"
       ],
-      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/registrations.js", "js/modal-drag.js", "js/checkin-modal.js"],
+      "js": ["shared/js/constants-base.js", "config.js", "js/constants.js", "js/registrations.js", "js/modal-drag.js", "js/checkin-modal.js", "js/merch-reg-modal.js"],
       "css": ["css/brand.css", "css/checkin-modal.css"],
       "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/FirstTimeRibbon.png", "assets/2026-tee-shirt-01-1.jpg", "assets/SouvenirGuide.jpg"],
+      "matches": ["https://ce.app.neoncrm.com/*"]
     }
   ],
   "permissions": ["storage", "tabs", "webNavigation", "scripting"],

@@ -101,8 +101,13 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
   if (changes[STORAGE_KEY.POPUP_MODE]) {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     const tab  = tabs?.[0];
-    if (tab && (tab.url ?? "").includes("eventRegDetails")) {
+    const url  = tab?.url ?? "";
+    if (tab && url.includes("eventRegDetails")) {
       await applyPopupForTab(tab.id, "registrations");
+    } else if (tab && url.includes("attendeeEdit")) {
+      await applyPopupForTab(tab.id, "attendee");
+    } else if (tab && url.includes("/admin/accounts/")) {
+      await applyPopupForTab(tab.id, "account");
     }
   }
 });
@@ -118,17 +123,20 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
  */
 async function applyPopupForTab(tabId, page) {
   let popup = "popup.html";
-  // The eventReg and attendee pages both use the in-page modal in Automated
-  // REG mode, so clear their per-tab popup (an empty string makes a toolbar
-  // click fire chrome.action.onClicked → SHOW_CHECKIN_MODAL → the modal).
-  if (page === "registrations" || page === "attendee") {
+  // The eventReg, attendee and account pages all use the in-page modal in
+  // Automated mode — REG and MERCH each ship their own modal scripts for these
+  // pages — so clear their per-tab popup (an empty string makes a toolbar click
+  // fire chrome.action.onClicked → SHOW_CHECKIN_MODAL → modal). The modal scripts
+  // mode-guard their SHOW_CHECKIN_MODAL handlers so only the active mode renders.
+  if (page === "registrations" || page === "attendee" || page === "account") {
     const r = await chrome.storage.local.get({
       [STORAGE_KEY.POPUP_MODE]:     "automated",
       [STORAGE_KEY.EXTENSION_MODE]: EXTENSION_MODE.REG,
     });
     const automated = (r[STORAGE_KEY.POPUP_MODE] ?? "automated") === "automated";
-    const regMode   = (r[STORAGE_KEY.EXTENSION_MODE] ?? EXTENSION_MODE.REG) === EXTENSION_MODE.REG;
-    if (automated && regMode) popup = ""; // clear → toolbar click fires onClicked → modal
+    const mode      = r[STORAGE_KEY.EXTENSION_MODE] ?? EXTENSION_MODE.REG;
+    const modalMode = mode === EXTENSION_MODE.REG || mode === EXTENSION_MODE.MERCH;
+    if (automated && modalMode) popup = ""; // clear → toolbar click fires onClicked → modal
   }
   try {
     await chrome.action.setPopup({ tabId, popup });

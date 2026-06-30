@@ -85,6 +85,15 @@ const ERROR_MESSAGES = {
     detail: "This attendee doesn't have any confirmed registrations for the current event.",
     action: "Verify the attendee is registered for this event in Neon",
   },
+  // Shown as an in-page modal on the account Attendees tab when the account
+  // has NO usable registration to check in: either no attendee records at all,
+  // only cancelled/failed/refunded ones, or none matching the current/test
+  // event list. See accountPage.js showNoRegistrationModal().
+  NO_VALID_REGISTRATION: {
+    title:  "No valid event registration found",
+    detail: "This account has no active registration for the current event. Any records present are cancelled, failed, refunded, or for a different event.",
+    action: "Send the attendee to the Help Desk to sort out their registration.",
+  },
   NAVIGATION_FAILED: {
     title:  "Navigation error",
     detail: "We couldn't navigate to the registration page automatically.",

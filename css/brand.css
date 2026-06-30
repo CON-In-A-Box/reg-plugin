@@ -39,5 +39,7 @@
   --brand-blue-ink:   color-mix(in srgb, var(--brand-blue)   72%, black);
   --brand-green-ink:  color-mix(in srgb, var(--brand-green)  70%, black);
   --brand-red-ink:    color-mix(in srgb, var(--brand-red)    72%, black);
-  --brand-yellow-ink: #6b4e00; /* dark amber — readable on the yellow tint */
+  --brand-yellow-ink: #836b00; /* dark gold — as yellow as stays legible (AA 4.5:1
+                                  on white AND on --brand-yellow-bg). Pure #FFB400
+                                  is only ~1.65:1 on white, unusable as text. */
 }

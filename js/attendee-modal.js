@@ -50,9 +50,13 @@ function aEl(tag, props = {}) {
 })();
 
 // ── Toolbar re-open ─────────────────────────────────────────────────────────
+// Mode-guarded: the MERCH merch-attendee-modal.js also listens on this page, so
+// only act when REG mode is active (the merch modal handles MERCH).
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === ACTION.SHOW_CHECKIN_MODAL) {
-    showAttendeeModal();
+    chrome.storage.local.get({ [STORAGE_KEY.EXTENSION_MODE]: EXTENSION_MODE.REG }).then(r => {
+      if ((r[STORAGE_KEY.EXTENSION_MODE] ?? EXTENSION_MODE.REG) === EXTENSION_MODE.REG) showAttendeeModal();
+    });
     sendResponse({ ok: true });
     return false;
   }
@@ -84,9 +88,13 @@ function buildModalShell() {
 
   const header = aEl("div", { className: "cvg-modal-header" });
   header.appendChild(aEl("span", { textContent: "CONvergence Check-In" }));
+  // Right-side header controls (optional Re-check + close). Re-check is added
+  // by renderAttendeeModal only on the Badge Issued screen.
+  const actions = aEl("div", { className: "cvg-modal-header-actions" });
   const close = aEl("button", { className: "cvg-modal-close", textContent: "✕", title: "Close" });
   close.addEventListener("click", closeAttendeeModal);
-  header.appendChild(close);
+  actions.appendChild(close);
+  header.appendChild(actions);
   root.appendChild(header);
 
   const body = aEl("div", { className: "cvg-modal-body" });
@@ -94,12 +102,12 @@ function buildModalShell() {
 
   document.body.appendChild(root);
   if (typeof makeDraggable === "function") makeDraggable(root, header);
-  return { root, body };
+  return { root, body, actions };
 }
 
 // renderAttendeeModal — mirrors buildAttendeeView() in js/popup.js.
 async function renderAttendeeModal(attendee) {
-  const { body } = buildModalShell();
+  const { body, actions } = buildModalShell();
 
   if (!attendee) {
     body.appendChild(aEl("div", { className: "cvg-empty", textContent: "No attendee data found on this page." }));
@@ -127,9 +135,24 @@ async function renderAttendeeModal(attendee) {
   const hasRed            = redReasons.length > 0;
   const canIssueBadge     = !isBlocked && !hasRed && !hasBlockingYellow;
 
+  // ── "Back to ID Check" link (top-left) ──
+  // Shown on ANY screen that can appear after the ID check (badge-issued,
+  // missing-ICE, red/override) for attendees who went through age verification.
+  // Placed before the needsAgeStep block, so it never shows on the ID step.
+  const wasAgeChecked = ageVerified && reasons.some(r => r.key === "ageVerification");
+  if (wasAgeChecked) {
+    const backLink = aEl("a", { className: "cvg-back-idcheck", href: "#", textContent: "← Back to ID Check" });
+    backLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      await chrome.storage.local.set({ [STORAGE_KEY.AGE_VERIFIED]: false });
+      renderAttendeeModal(attendee);
+    });
+    body.appendChild(backLink);
+  }
+
   // ── AGE VERIFICATION STEP (replaces the whole view) ──
   if (needsAgeStep) {
-    const table = aEl("table");
+    const table = aEl("div", { className: "kv-table" });
     addInfoRow(table, "Legal Name", makeNameSpan(attendee.legalName));
     addInfoRow(table, "ID Required", makeCutoffSpan());
     body.appendChild(table);
@@ -160,9 +183,26 @@ async function renderAttendeeModal(attendee) {
 
   // ── BADGE NUMBER + TICKET CELL vs placeholder ──
   if (canIssueBadge) {
+    // Badge Issued screen: a Re-check ↺ button in the top-right of the header
+    // (next to ✕) so staff can re-scrape without leaving the issued view.
+    const headerRecheck = aEl("button", { className: "cvg-modal-recheck", textContent: "Re-check ↺", title: "Re-check" });
+    headerRecheck.addEventListener("click", async () => {
+      const fresh = await getAttendeeInfo();
+      if (fresh) {
+        await chrome.storage.local.set({ [STORAGE_KEY.ATTENDEE]: fresh });
+        renderAttendeeModal(fresh);
+      }
+    });
+    actions.insertBefore(headerRecheck, actions.firstChild);
+
     const cell = aEl("div", { className: "badge-number-cell" });
     cell.appendChild(aEl("div", { className: "badge-number-label", textContent: "BADGE NUMBER" }));
     cell.appendChild(aEl("div", { className: "badge-number-value", textContent: attendee.accountId ?? "—" }));
+    if (attendee.badgePrintStatus) {
+      const statusEl = aEl("div", { className: "badge-print-status", textContent: attendee.badgePrintStatus });
+      statusEl.classList.add(`badge-print-${attendee.badgePrintStatus.replace(/[^\w]/g, "").toLowerCase()}`);
+      cell.appendChild(statusEl);
+    }
     cell.appendChild(aEl("div", { className: "badge-ticket-value", textContent: attendee.ticket ?? "—" }));
     body.appendChild(cell);
   } else {
@@ -173,15 +213,39 @@ async function renderAttendeeModal(attendee) {
   }
 
   // ── INFO TABLE ──
-  const table = aEl("table");
+  const table = aEl("div", { className: "kv-table" });
   const preferred  = (attendee.preferredName ?? "").trim();
   const legalFirst = (attendee.legalName ?? "").split(" ")[0] ?? "";
-  if (preferred && preferred.toLowerCase() !== legalFirst.toLowerCase()) {
-    addInfoRow(table, "Preferred", makeNameSpan(preferred));
-  }
-  addInfoRow(table, "Legal Name", makeNameSpan(attendee.legalName));
-  if (reasons.some(r => r.key === "ageVerification")) {
-    addInfoRow(table, "ID Required", makeCutoffSpan());
+  if (canIssueBadge) {
+    // Badge-issued view: a large "Welcome to CONvergence <name>" greeting in
+    // place of the labeled name row (name on its own line for long names).
+    const welcome = aEl("div", { className: "cvg-welcome" });
+    welcome.appendChild(aEl("div", { className: "cvg-welcome-greeting", textContent: "Welcome to CONvergence" }));
+    const welcomeName = aEl("div", { className: "cvg-welcome-name", textContent: preferred || legalFirst || "—" });
+    const welcomePron = aPronounSpan(attendee.pronouns);
+    if (welcomePron) welcomeName.appendChild(welcomePron);
+    welcome.appendChild(welcomeName);
+    body.appendChild(welcome);
+  } else if (!hasBlockingYellow) {
+    // Missing-required-field screen (hasBlockingYellow, e.g. missing ICE) shows
+    // NO name/ID rows — just the alert + the field to fix. Other non-issue
+    // views keep the legal name.
+    let pronounsAttached = false;
+    if (preferred && preferred.toLowerCase() !== legalFirst.toLowerCase()) {
+      const prefSpan = makeNameSpan(preferred);
+      const prefPron = aPronounSpan(attendee.pronouns);
+      if (prefPron) { prefSpan.appendChild(prefPron); pronounsAttached = true; }
+      addInfoRow(table, "Preferred", prefSpan);
+    }
+    const legalSpan = makeNameSpan(attendee.legalName);
+    if (!pronounsAttached) {
+      const legalPron = aPronounSpan(attendee.pronouns);
+      if (legalPron) legalSpan.appendChild(legalPron);
+    }
+    addInfoRow(table, "Legal Name", legalSpan);
+    if (reasons.some(r => r.key === "ageVerification")) {
+      addInfoRow(table, "ID Required", makeCutoffSpan());
+    }
   }
   if (reasons.some(r => r.key === "alreadyIssued")) {
     addInfoRow(table, "Badges", String(attendee.activeBadges ?? 0));
@@ -235,15 +299,40 @@ async function renderAttendeeModal(attendee) {
   } else if (hasActiveHold) {
     const btn = aEl("button", { className: "btn-no-issue", textContent: "⛔ DO NOT ISSUE BADGE", disabled: true });
     body.appendChild(btn);
-  } else if (fixableReasons.length === 0 || managementOverride) {
+  } else if ((fixableReasons.length === 0 || managementOverride) && !hasBlockingYellow) {
+    // hasBlockingYellow guard: a missing REQUIRED field (today: emergency
+    // contact / ICE) suppresses BOTH the first-time ribbon and the Badge
+    // Issued button even under Manager Override. Fill ICE + Re-check first.
     const pendingMerch    = Array.isArray(attendee.merch) ? attendee.merch : [];
     const hasPendingMerch = pendingMerch.length > 0;
+
+    // First-time-attendee guide (purely visual). Set on the account Attendees
+    // tab by accountPage.js, keyed by accountId so a stale flag can't leak.
+    const ftResult = await chrome.storage.local.get(STORAGE_KEY.FIRST_TIME);
+    const ft = ftResult[STORAGE_KEY.FIRST_TIME];
+    if (ft && ft.isFirstTime && String(ft.accountId) === String(attendee.accountId)) {
+      const ribbon = aEl("div", { className: "cvg-first-time" });
+      ribbon.appendChild(aEl("img", { src: chrome.runtime.getURL("assets/FirstTimeRibbon.png"), alt: "" }));
+      ribbon.appendChild(document.createTextNode("First Time? Badge Ribbon!"));
+      body.appendChild(ribbon);
+    }
+
     pendingMerch.forEach(m => {
-      body.appendChild(aEl("div", { className: "cvg-merch-line", textContent: `${m.name} Ordered` }));
+      const line = aEl("div", { className: "cvg-merch-line" });
+      const cfgItem = (CONFIG.merch?.items || []).find(i => i.name === m.name);
+      if (cfgItem && cfgItem.image) {
+        line.appendChild(aEl("img", { src: chrome.runtime.getURL(cfgItem.image), alt: "" }));
+      }
+      line.appendChild(document.createTextNode(`${m.name} Ordered`));
+      body.appendChild(line);
     });
 
     const btn = aEl("button", { className: "btn-checkin" });
-    btn.textContent = hasPendingMerch ? "Badge Issued - Send to Merchandise" : "Badge Issued";
+    btn.appendChild(document.createTextNode("Badge Issued"));
+    if (hasPendingMerch) {
+      btn.appendChild(aEl("br"));
+      btn.appendChild(document.createTextNode("Send to Merchandise"));
+    }
     btn.addEventListener("click", () => completeCheckInModal(attendee, btn, body));
     body.appendChild(btn);
   }
@@ -299,7 +388,10 @@ function showModalConfirmation(body, attendee) {
   const screen = aEl("div", { className: "confirm-screen" });
   screen.appendChild(aEl("div", { className: "confirm-icon",  textContent: "✓" }));
   screen.appendChild(aEl("div", { className: "confirm-title", textContent: "Check-In Complete" }));
-  screen.appendChild(aEl("div", { className: "confirm-name",  textContent: attendee.preferredName || attendee.legalName }));
+  const confirmName = aEl("div", { className: "confirm-name",  textContent: attendee.preferredName || attendee.legalName });
+  const confirmPron = aPronounSpan(attendee.pronouns);
+  if (confirmPron) confirmName.appendChild(confirmPron);
+  screen.appendChild(confirmName);
   body.appendChild(screen);
 }
 
@@ -312,19 +404,26 @@ function showModalError(body, message) {
 }
 
 // ── small shared builders ──
-function addInfoRow(table, label, valueEl) {
-  const tr  = aEl("tr");
-  const tdL = aEl("td", { className: "label", textContent: label });
-  const tdR = aEl("td");
-  if (typeof valueEl === "string") tdR.textContent = valueEl;
-  else tdR.appendChild(valueEl);
-  tr.appendChild(tdL);
-  tr.appendChild(tdR);
-  table.appendChild(tr);
+// `container` is a .kv-table div; each row is a flex .kv-row (label baseline-
+// aligned to value, regardless of their differing font sizes).
+function addInfoRow(container, label, valueEl) {
+  const row = aEl("div", { className: "kv-row" });
+  row.appendChild(aEl("span", { className: "kv-label", textContent: label }));
+  const val = aEl("span", { className: "kv-val" });
+  if (typeof valueEl === "string") val.textContent = valueEl;
+  else val.appendChild(valueEl);
+  row.appendChild(val);
+  container.appendChild(row);
 }
 
 function makeNameSpan(text) {
   return aEl("span", { className: "legal-name-value", textContent: text ?? "—" });
+}
+
+// Small inline pronoun span (.cvg-pronouns), or null when empty.
+function aPronounSpan(pronouns) {
+  const p = (pronouns ?? "").trim();
+  return p ? aEl("span", { className: "cvg-pronouns", textContent: p }) : null;
 }
 
 function makeCutoffSpan() {
@@ -339,7 +438,22 @@ function appendReasons(banner, reasons) {
     const block = aEl("div", { className: "reason-block" });
     const lines = r.text.split("\n");
     block.appendChild(aEl("div", { className: "reason-title", textContent: lines[0] }));
-    if (lines.length > 1) block.appendChild(aEl("div", { className: "reason-body", textContent: lines.slice(1).join("\n") }));
+    if (lines.length > 1) block.appendChild(buildReasonBody(lines.slice(1).join("\n")));
     banner.appendChild(block);
   });
+}
+
+// Build a .reason-body whose text is split into per-line divs so bullet lines
+// ("• ...") get a hanging indent (wrapped text aligns under the text, not the
+// bullet). Mirrors buildReasonBody() in popup.js.
+function buildReasonBody(text) {
+  const wrap = aEl("div", { className: "reason-body" });
+  String(text).split("\n").forEach(line => {
+    const isBullet = line.startsWith("• ");
+    wrap.appendChild(aEl("div", {
+      className: isBullet ? "reason-line bullet" : "reason-line",
+      textContent: line,
+    }));
+  });
+  return wrap;
 }

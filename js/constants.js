@@ -32,6 +32,13 @@ const REG_STATUS = {
   SUCCEEDED: "SUCCEEDED",
 };
 
+// Status substrings (case-insensitive) that EXCLUDE a registration record
+// from "has this person attended before?" history counting. A record whose
+// status contains any of these is treated as if it never happened. Used by
+// accountPage.js analyzeAttendeeRecords() for the first-time-attendee guide.
+// Substrings (not exact) so "CANCELED"/"CANCELLED" both match "cancel".
+REG_STATUS.EXCLUDED_FROM_HISTORY = ["cancel", "fail", "refund"];
+
 // ── MESSAGE ACTION NAMES ─────────────────────────────────────────────────
 // Used as the `action` field in chrome.runtime.sendMessage / tabs.sendMessage
 // calls between popup, background, and content scripts. Every cross-script
@@ -96,11 +103,22 @@ STORAGE_KEY.ACCOUNT           = "account";
 STORAGE_KEY.AGE_VERIFIED      = "ageVerified";
 STORAGE_KEY.ACCOUNT_AUTO_NAV  = "cvgAccountAutoNav";
 STORAGE_KEY.NOTE_ACKNOWLEDGED = "noteAcknowledged";
+// FIRST_TIME -- { accountId, isFirstTime, recordCount, ts }. Written by
+// accountPage.js on the Attendees tab (the only page that lists every
+// registration record + status). Read by popup.js / attendee-modal.js to
+// show the "First Time? Badge Ribbon!" line on the Badge Issued screen.
+// Gated on accountId match so a stale flag can't leak to another attendee.
+// Purely a visual guide -- the answer is never recorded or validated.
+STORAGE_KEY.FIRST_TIME        = "firstTime";
 // POPUP_MODE -- "automated" | "manual". Automated (default) auto-opens the
 // in-page check-in modal on the eventReg page and re-opens it on toolbar click;
-// Manual keeps the classic click-to-open popup.html. Only managers can pick
-// manual (set on the options page); everyone else is automated.
+// Manual keeps the classic click-to-open popup.html. Anyone can pick manual
+// (set on the options page); not gated behind Management Override.
 STORAGE_KEY.POPUP_MODE        = "popupMode";
+// MODAL_POS -- { left, top } in px. Last spot the user dragged an in-page modal
+// to. Persisted by modal-drag.js so the modal reappears where they left it,
+// even across page navigations. Absent = use the CSS default corner.
+STORAGE_KEY.MODAL_POS         = "cvgModalPos";
 
 // ── BLOCKING / WARNING CONDITION KEYS ────────────────────────────────────
 // Keys for every blocking/warning condition. Used as keys in the reasons

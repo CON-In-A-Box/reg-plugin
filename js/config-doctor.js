@@ -67,8 +67,8 @@ function validateConfig(cfg, extras = {}) {
   cur.filter(n => test.includes(n)).forEach(n => warn(`"${n}" appears in BOTH currentEventNames and testEventNames (a real event left in the test list?).`));
 
   // Management password hash
-  if (!/^[0-9a-f]{64}$/.test(cfg.managementPasswordHash ?? "")) {
-    err("managementPasswordHash is not a 64-character SHA-256 hex string.");
+  if (!/^pbkdf2-sha256\$\d+\$[0-9a-f]{32}\$[0-9a-f]{64}$/.test(cfg.managementPasswordHash ?? "")) {
+    err("managementPasswordHash is not a valid pbkdf2-sha256$iterations$salt$hash string.");
   }
 
   // Ticket-type catch-all (empty nameIncludes handles Dealer / no-admission rows).

@@ -125,6 +125,12 @@
   .step-body { flex: 1; }
   .step-title { font-weight: bold; font-size: 15px; margin: 0 0 6px; }
   .step-desc { font-size: 14px; color: #333; margin: 0; }
+  .step .screen-tag {
+    display: inline-block; font-size: 11px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--purple); background: #f0e8f7;
+    border-radius: 4px; padding: 2px 7px; margin-bottom: 6px;
+  }
   .step.highlight { border-color: var(--blue); background: #f0f7ff; }
   /* ── Decision tree inside step ── */
   .branch-list { list-style: none; margin: 10px 0 0; padding: 0; }
@@ -191,6 +197,9 @@
   .id-check-text { flex: 1; }
   .id-check-text strong { display: block; margin-bottom: 2px; }
   .id-check-text .detail { color: #555; font-size: 13px; }
+  /* ── Combined two-column (pop-up + verify) ── */
+  .combo { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .combo > div { flex: 1; min-width: 280px; }
   /* ── Screen mock-up ── */
   .screen-mock {
     background: #f8f8f8; border: 2px solid #ccc;
@@ -220,6 +229,7 @@
     font-size: 13px; font-weight: bold; text-align: center;
     margin-top: 6px; cursor: default;
   }
+  .screen-mock .sm-btn.sm-warn { background: var(--yellow); color: #000; }
   .screen-mock .sm-btn.sm-merch { font-size: 12px; }
   /* ── ICE mock ── */
   .ice-box {
@@ -236,17 +246,24 @@
     padding: 24px; text-align: center;
     color: #aaa; font-size: 12px; font-style: italic; margin: 12px 0;
   }
-  /* ── Manager callbox ── */
+  /* ── Escalation callboxes ── */
   .manager-box {
     border: 2px solid var(--red); border-radius: 10px;
-    background: #fff5f5; padding: 16px 20px;
+    background: #fff5f5; padding: 16px 20px; margin-bottom: 14px;
   }
   .manager-box h3 { color: var(--red); margin: 0 0 10px; font-size: 16px; }
   .manager-box ul { margin: 0; padding-left: 22px; }
   .manager-box li { margin: 5px 0; font-size: 14px; }
-  .manager-box .punch {
-    margin-top: 12px; font-weight: bold; color: var(--red); font-size: 15px;
-    border-top: 1px solid #f0c0c0; padding-top: 10px;
+  .captain-box {
+    border: 2px solid var(--blue); border-radius: 10px;
+    background: #f0f7ff; padding: 16px 20px;
+  }
+  .captain-box h3 { color: var(--blue); margin: 0 0 10px; font-size: 16px; }
+  .captain-box ul { margin: 0; padding-left: 22px; }
+  .captain-box li { margin: 5px 0; font-size: 14px; }
+  .punch {
+    margin-top: 14px; font-weight: bold; color: var(--red); font-size: 15px;
+    text-align: center;
   }
 </style>
 </head>
@@ -261,12 +278,11 @@
   </div>
   <div class="nav-section">Sections</div>
   <a href="#overview">Overview</a>
-  <a href="#icon-legend">Icon Colors</a>
-  <a href="#steps">Steps</a>
-  <a href="#age-verify">Age Verification</a>
+  <a href="#steps">The Steps</a>
+  <a href="#verify">The Pop-up &amp; the ID</a>
   <a href="#ice">Emergency Contact</a>
   <a href="#badge-issued">Issuing the Badge</a>
-  <a href="#escalate">When to Escalate</a>
+  <a href="#escalate">Help Desk / Room Captain</a>
 </nav>
 
 <main>
@@ -278,170 +294,77 @@
       <h1>Registration Check-In</h1>
       <div class="subtitle">Volunteer training guide — badge issuance</div>
     </div>
-    <div class="mode-badge">
-      <strong>Toolbar face:</strong> Reggie<br>
-      No blue "MERCH MODE" banner.<br>
-      Wrong mode? Tell your lead.
-    </div>
   </div>
 
   <!-- Overview -->
   <div class="section" id="overview">
     <h2><span class="icon">📋</span> Overview</h2>
     <p>
-      The extension reads the Neon page, checks whether the attendee can receive their badge,
-      and handles all the typing when you confirm. <strong>Your job is to read what the screen
-      shows and follow it.</strong> You never need to type badge numbers, dates, or times.
+      The extension reads the Neon page and shows you a <strong>pop-up</strong> that tells you
+      exactly what to do. It handles all the typing — you never enter badge numbers, dates, or times.
     </p>
     <div class="alert blue">
-      <div class="alert-title">Before you start each shift</div>
-      <ul>
-        <li>Confirm the toolbar face is <strong>Reggie</strong> (not Connie).</li>
-        <li>No blue <strong>MERCH MODE</strong> banner on any screen.</li>
-        <li>If either is wrong, the extension is in the wrong mode — ask your lead to fix it on the Options page.</li>
-      </ul>
+      <div class="alert-title">You've got a guide</div>
+      <strong>The pop-up is your guide — it walks you through each step.</strong> Just follow
+      along; you don't need to read the Neon page behind it.
     </div>
-  </div>
-
-  <!-- Icon legend -->
-  <div class="section" id="icon-legend">
-    <h2><span class="icon">🎨</span> What the icon color means</h2>
-    <p>The Reggie icon in the toolbar changes color to signal status at a glance.</p>
-    <div class="legend">
-      <div class="chip blue">
-        <div class="dot"></div>
-        <div class="chip-label">Blue</div>
-        <div class="chip-desc">Good — clear to issue the badge</div>
-      </div>
-      <div class="chip yellow">
-        <div class="dot"></div>
-        <div class="chip-label">Yellow</div>
-        <div class="chip-desc">Caution — read the screen before doing anything</div>
-      </div>
-      <div class="chip red">
-        <div class="dot"></div>
-        <div class="chip-label">Red</div>
-        <div class="chip-desc">Stop — send the attendee to the Help Desk</div>
-      </div>
-      <div class="chip idle">
-        <div class="dot"></div>
-        <div class="chip-label">Grey</div>
-        <div class="chip-desc">Idle — not on a check-in page yet</div>
-      </div>
-    </div>
-    <div class="shot">[SCREENSHOT: four icon states side by side in the toolbar]</div>
   </div>
 
   <!-- Steps -->
   <div class="section" id="steps">
-    <h2><span class="icon">🪜</span> Steps</h2>
+    <h2><span class="icon">🪜</span> The steps — when everything goes well</h2>
+    <p>Each step happens on a specific screen. The pop-up moves you forward on its own when
+    everything is clear.</p>
 
     <div class="steps">
 
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <div class="step-title">Find the attendee in Neon</div>
+          <span class="screen-tag">Neon search page</span>
+          <div class="step-title">Find the attendee — and ask for their ID</div>
           <div class="step-desc">
-            Search for the attendee by name or account number. Click their name to open
-            their <strong>account page</strong>. The check-in window appears on its own.
-            If it doesn't appear, click the Reggie icon in the toolbar.
+            Search for the attendee and click their name. <strong>Ask them for a government-issued
+            photo ID now</strong>, so it's ready. The pop-up opens and, when everything is clear
+            (green), moves you forward automatically.
           </div>
-          <div class="shot">[SCREENSHOT: Neon search results → clicking an account name]</div>
+          <div class="shot">[SCREENSHOT: Neon search results with an attendee name]</div>
         </div>
       </div>
 
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <div class="step-title">Read the account screen</div>
-          <div class="step-desc">One of these will appear:</div>
-          <ul class="branch-list">
-            <li>
-              <span class="branch-dot blue"></span>
-              <span><strong>Green "✓ … Ready for check-in"</strong> — the tool moves you forward
-              automatically. Wait a moment.</span>
-            </li>
-            <li>
-              <span class="branch-dot yellow"></span>
-              <span><strong>Yellow note(s)</strong> — read every note carefully. Tick
-              <em>"I have read and understood the note(s) above"</em>, then click
-              <span class="btn warn">Proceed to Check-In →</span>.</span>
-            </li>
-            <li>
-              <span class="branch-dot red"></span>
-              <span><strong>Red "⛔ SEND TO HELP DESK"</strong> — stop. Send the attendee
-              to the Help Desk without issuing anything.</span>
-            </li>
-          </ul>
-          <div class="shot">[SCREENSHOT: account screen — yellow note with checkbox]</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <div class="step-title">Pick the attendee from the list</div>
+          <span class="screen-tag">Registration-list pop-up</span>
+          <div class="step-title">Pick the attendee</div>
           <div class="step-desc">
-            The screen shows <strong>"Select the attendee to check in:"</strong> with a row
-            per person on the registration.
+            Click <span class="btn go">Check In →</span> on the attendee's row.
           </div>
-          <ul class="branch-list">
-            <li>
-              <span class="branch-dot blue"></span>
-              <span>Row has a <span class="btn go">Check In →</span> button → click it.</span>
-            </li>
-            <li>
-              <span class="branch-dot red"></span>
-              <span>Row says <strong>"Send to Help Desk"</strong> → that person is blocked.
-              Send them to the Help Desk.</span>
-            </li>
-          </ul>
-          <div class="alert yellow">
-            <div class="alert-title">📋 Registration Note</div>
-            If a note screen appears before the list, read it and click
-            <span class="btn warn">Note Read ✓</span> to continue.
-          </div>
-          <div class="shot">[SCREENSHOT: attendee list — one green row, one red blocked row]</div>
+          <div class="shot">[SCREENSHOT: registration-list pop-up with Check In buttons]</div>
         </div>
       </div>
 
       <div class="step highlight">
-        <div class="step-num">4</div>
+        <div class="step-num">3</div>
         <div class="step-body">
-          <div class="step-title">Handle what the check-in screen asks</div>
+          <span class="screen-tag">Check-in pop-up</span>
+          <div class="step-title">Verify age when it comes up</div>
           <div class="step-desc">
-            The screen may show tasks to complete before the badge number appears.
-            Work through them top to bottom.
+            Adult and Dealer badges show an <strong>ID Required</strong> line. If the attendee is
+            over 18, verify the ID (<a href="#verify">see below ↓</a>) and click
+            <span class="btn warn">Age Verified, ID Returned ✓</span>.
           </div>
-          <ul class="branch-list">
-            <li>
-              <span class="branch-dot yellow"></span>
-              <span><strong>Age verification required</strong> (Adult &amp; Dealer badges) —
-              <a href="#age-verify">see the detailed walkthrough below ↓</a></span>
-            </li>
-            <li>
-              <span class="branch-dot yellow"></span>
-              <span><strong>Missing emergency contact (ICE)</strong> — click
-              <span class="btn warn">Show me the field ↓</span>, fill it in on the form,
-              click <span class="btn warn">Re-check ↺</span>. <a href="#ice">Details below ↓</a></span>
-            </li>
-            <li>
-              <span class="branch-dot red"></span>
-              <span><strong>"NOT ALLOWED — SEND TO HELP DESK"</strong> → stop.
-              Send to the Help Desk.</span>
-            </li>
-          </ul>
         </div>
       </div>
 
       <div class="step">
-        <div class="step-num">5</div>
+        <div class="step-num">4</div>
         <div class="step-body">
+          <span class="screen-tag">Check-in pop-up</span>
           <div class="step-title">Issue the badge</div>
           <div class="step-desc">
-            When all issues are clear, the <strong>BADGE NUMBER</strong> and ticket type
-            appear, and a button activates. See <a href="#badge-issued">Issuing the Badge ↓</a>.
+            Get the badge, hand it to the attendee, then click <span class="btn go">Badge Issued</span>.
+            See <a href="#badge-issued">Issuing the Badge ↓</a>.
           </div>
         </div>
       </div>
@@ -449,105 +372,68 @@
     </div><!-- /steps -->
   </div>
 
-  <!-- Age verification detail -->
-  <div class="section" id="age-verify">
-    <h2><span class="icon">🪪</span> Age Verification (Adult &amp; Dealer badges)</h2>
+  <!-- Pop-up + verify (combined) -->
+  <div class="section" id="verify">
+    <h2><span class="icon">🪪</span> The check-in pop-up &amp; verifying the ID</h2>
     <p>
-      <strong>Adult</strong> and <strong>Dealer</strong> ticket types require age verification.
-      When this step is active, the screen shows the attendee's legal name and a cutoff date —
-      and blocks the badge until you confirm the ID.
+      When the pop-up shows the age check, it looks like this. Use the photo ID you already took
+      at the start.
     </p>
 
-    <div class="screen-mock">
-      <table>
-        <tr>
-          <td>Legal Name</td>
-          <td><strong>Sample, Angela</strong></td>
-        </tr>
-        <tr>
-          <td>ID Required</td>
-          <td style="color:#CC0202; font-weight:bold;">DOB on or before 7/3/2007</td>
-        </tr>
-      </table>
-      <div style="display:block;width:100%;padding:8px;background:#FFB400;color:#000;border:none;border-radius:5px;font-size:13px;font-weight:bold;text-align:center;cursor:default;">
-        Age Verified, ID Returned ✓
+    <div class="combo">
+      <div>
+        <div class="screen-mock">
+          <div class="sm-badge" style="text-align:left;">Check-In</div>
+          <table>
+            <tr><td>Legal Name</td><td><strong>Sample, Angela</strong></td></tr>
+            <tr><td>ID Required</td><td style="color:#CC0202; font-weight:bold;">DOB on or before 6/19/2008</td></tr>
+          </table>
+          <div class="sm-btn sm-warn">Age Verified, ID Returned ✓</div>
+        </div>
       </div>
-    </div>
-    <p style="font-size:13px;color:#666;margin-top:2px;">
-      The cutoff date is calculated automatically each time. You don't need to do the math.
-    </p>
-
-    <div class="id-check">
-      <div class="id-check-header">How to verify — step by step</div>
-      <div class="id-check-body">
-        <div class="id-check-row">
-          <div class="id-check-num">1</div>
-          <div class="id-check-text">
-            <strong>Ask for a government-issued photo ID.</strong>
-            <span class="detail">Driver's license, passport, or state/government ID card. Student IDs and
-            library cards are not sufficient.</span>
-          </div>
-        </div>
-        <div class="id-check-row">
-          <div class="id-check-num">2</div>
-          <div class="id-check-text">
-            <strong>Confirm the face on the ID matches the person in front of you.</strong>
-            <span class="detail">If they look significantly different or you have any doubt, tell your lead.</span>
-          </div>
-        </div>
-        <div class="id-check-row">
-          <div class="id-check-num">3</div>
-          <div class="id-check-text">
-            <strong>Read the <em>date of birth</em> on the ID.</strong>
-            <span class="detail">Compare it to the <strong>"DOB on or before"</strong> date shown on screen.
-            If the ID's DOB is on or before that date, they meet the age requirement.</span>
-          </div>
-        </div>
-        <div class="id-check-row">
-          <div class="id-check-num">4</div>
-          <div class="id-check-text">
-            <strong>Return the ID immediately.</strong>
-            <span class="detail">Hand it back before you click anything. Do not set it on the desk where it could be forgotten.</span>
-          </div>
-        </div>
-        <div class="id-check-row">
-          <div class="id-check-num">5</div>
-          <div class="id-check-text">
-            <strong>Click <span class="btn go">Age Verified, ID Returned ✓</span></strong>
-            <span class="detail">Only click after returning the ID. The screen re-renders and continues.</span>
+      <div>
+        <div class="id-check">
+          <div class="id-check-header">To verify — over-18 badges</div>
+          <div class="id-check-body">
+            <div class="id-check-row"><div class="id-check-num">1</div>
+              <div class="id-check-text"><strong>Use the photo ID you took at the start.</strong></div></div>
+            <div class="id-check-row"><div class="id-check-num">2</div>
+              <div class="id-check-text"><strong>The name on the pop-up must match the name on the ID.</strong></div></div>
+            <div class="id-check-row"><div class="id-check-num">3</div>
+              <div class="id-check-text"><strong>The face on the ID matches the person.</strong></div></div>
+            <div class="id-check-row"><div class="id-check-num">4</div>
+              <div class="id-check-text"><strong>The date of birth is on or before the date shown.</strong></div></div>
+            <div class="id-check-row"><div class="id-check-num">5</div>
+              <div class="id-check-text"><strong>Hand the ID back, then click Age Verified, ID Returned ✓.</strong></div></div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="alert red">
-      <div class="alert-title">⛔ Don't click — call your lead if:</div>
-      <ul>
-        <li>The ID date of birth is <strong>after</strong> the cutoff date (too young).</li>
-        <li>The face on the ID doesn't clearly match.</li>
-        <li>The attendee doesn't have a government-issued photo ID.</li>
-        <li>You're unsure about anything on the ID.</li>
-      </ul>
+      <div class="alert-title">⛔ Name doesn't match, no ID, or you're unsure?</div>
+      Get the <strong>Room Captain</strong>, or send the attendee to the <strong>Help Desk</strong>.
+      Do <strong>NOT</strong> click Age Verified.
     </div>
 
-    <div class="shot">[SCREENSHOT: age verification screen showing legal name + DOB cutoff]</div>
+    <div class="shot">[SCREENSHOT: check-in pop-up showing the age-verify step]</div>
   </div>
 
   <!-- Emergency contact -->
   <div class="section" id="ice">
     <h2><span class="icon">🆘</span> Missing Emergency Contact (ICE)</h2>
     <p>
-      If the attendee's emergency contact field is blank, a yellow warning appears. You can
-      fix this right at the station without sending them elsewhere.
+      If the attendee's emergency contact field is blank, the pop-up shows a yellow warning. You can
+      fix it right at the station without sending them elsewhere.
     </p>
     <div class="ice-box">
       <div class="ice-box-header">⚠ How to fix a missing emergency contact</div>
       <div class="ice-box-body">
         <ol>
           <li>Ask the attendee for their emergency contact's <strong>name and phone number</strong>.</li>
-          <li>Click <span class="btn warn">Show me the field ↓</span> — the field on the Neon form highlights in yellow.</li>
-          <li>Type the emergency contact info into the highlighted field on the page behind the check-in window.</li>
-          <li>Click <span class="btn warn">Re-check ↺</span> in the check-in window. If it saved correctly, the warning clears.</li>
+          <li>Click <span class="btn warn">Show me the field ↓</span> — the field on the Neon form highlights behind the pop-up.</li>
+          <li>Type the emergency contact info into the highlighted field.</li>
+          <li>Click <span class="btn warn">Re-check ↺</span> in the pop-up. If it saved correctly, the warning clears.</li>
         </ol>
       </div>
     </div>
@@ -557,68 +443,68 @@
   <!-- Badge issued -->
   <div class="section" id="badge-issued">
     <h2><span class="icon">✅</span> Issuing the Badge</h2>
-    <p>
-      When all issues are resolved, the <strong>BADGE NUMBER</strong> (the attendee's Neon
-      account number) and ticket type appear. The button activates.
-    </p>
+    <p>Read the badge screen top to bottom.</p>
 
-    <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+    <div class="combo">
       <div>
-        <p style="font-size:13px;color:#666;margin:0 0 6px;">No pending merch:</p>
         <div class="screen-mock">
           <div class="sm-badge">BADGE NUMBER</div>
           <div class="sm-num">100042</div>
+          <div style="text-align:center;font-size:11px;color:#620272;font-weight:bold;">Pre-Printed</div>
           <div class="sm-ticket">Adult</div>
           <table><tr><td>Legal Name</td><td>Sample, Angela</td></tr></table>
           <div class="sm-btn">Badge Issued</div>
         </div>
       </div>
       <div>
-        <p style="font-size:13px;color:#666;margin:0 0 6px;">Pending merch (T-Shirt ordered):</p>
-        <div class="screen-mock">
-          <div class="sm-badge">BADGE NUMBER</div>
-          <div class="sm-num">100042</div>
-          <div class="sm-ticket">Adult</div>
-          <table><tr><td>Legal Name</td><td>Sample, Angela</td></tr></table>
-          <div style="font-size:13px;font-weight:bold;margin:4px 0;">T-Shirt Ordered</div>
-          <div class="sm-btn sm-merch">Badge Issued - Send to Merchandise</div>
+        <div class="alert" style="border-left:4px solid #620272;margin-top:12px;">
+          <div class="alert-title">1. Pre-Printed / Printed? / Blank — read this first</div>
+          The line under the badge number tells the runner how to get the badge:
+          <strong>Pre-Printed</strong> = pull it from the pre-printed stock.
+          <strong>Printed?</strong> = check the stock.
+          <strong>Blank</strong> = no badge yet, print one.
+        </div>
+        <div class="alert" style="border-left:4px solid #620272;">
+          <div class="alert-title">2. 🎀 First Time? Badge Ribbon!</div>
+          If the pop-up shows this line, give the attendee a <strong>First Time Attendee</strong> ribbon.
+        </div>
+        <div class="alert blue">
+          <div class="alert-title">3. Badge Issued</div>
+          Get the badge, hand it to the attendee, <strong>then</strong> click
+          <span class="btn go">Badge Issued</span>. If the button also says
+          <strong>Send to Merchandise</strong> (a second line), tell them to visit the Merch table.
         </div>
       </div>
     </div>
 
-    <div class="alert blue" style="margin-top:16px;">
-      <div class="alert-title">Badge Issued vs. Badge Issued - Send to Merchandise</div>
-      Both buttons complete the check-in the same way. The second means the attendee
-      also pre-ordered merchandise. After clicking, <strong>tell them to visit the
-      Merchandise table</strong> before they head in.
+    <div class="alert green" style="margin-top:14px;">
+      After you click, the pop-up records the check-in in Neon and resets for the next person.
     </div>
-
-    <p>After you click, the extension:</p>
-    <ul style="font-size:14px;">
-      <li>Downloads a badge-printer CSV file to the workstation's Downloads folder.</li>
-      <li>Records the pickup date, time, and name in Neon automatically.</li>
-      <li>Shows <strong>"Check-In Complete ✓"</strong> and resets for the next person.</li>
-    </ul>
-    <div class="shot">[SCREENSHOT: "Check-In Complete ✓" confirmation screen]</div>
+    <div class="shot">[SCREENSHOT: badge-issued pop-up with BADGE NUMBER and Pre-Printed line]</div>
   </div>
 
   <!-- Escalate -->
   <div class="section" id="escalate">
-    <h2><span class="icon">🚨</span> When to Call a Manager / Help Desk</h2>
+    <h2><span class="icon">🚨</span> Send to Help Desk vs. call the Room Captain</h2>
+
     <div class="manager-box">
-      <h3>Stop and get help if you see any of these:</h3>
+      <h3>When to Send to Help Desk</h3>
       <ul>
-        <li>Anything <strong>red</strong>, or any "Send to Help Desk" / "NOT ALLOWED" message.</li>
-        <li>A <strong>hold</strong> — Registration Hold, Art Show Hold, or Operations Hold.</li>
-        <li>The ID date of birth is after the cutoff date (attendee is under 18).</li>
-        <li>The face on the ID doesn't clearly match the person.</li>
-        <li>The attendee doesn't have a valid government-issued photo ID.</li>
-        <li><strong>Badge already issued</strong> — "ALREADY ISSUED" message on screen.</li>
-        <li><strong>Name mismatch</strong> — badge is non-transferable and name doesn't match.</li>
-        <li>Screen says <em>"The badge file didn't download"</em> or <em>"Contact Registration Head."</em></li>
+        <li>When the pop-up tells you to (<strong>Send to Help Desk</strong> / <strong>NOT ALLOWED</strong>).</li>
+        <li>The attendee does not have a photo ID.</li>
+        <li>The attendee is under 16 and alone.</li>
       </ul>
-      <div class="punch">When in doubt — don't issue the badge. Ask first.</div>
     </div>
+
+    <div class="captain-box">
+      <h3>When to Call the Room Captain</h3>
+      <ul>
+        <li>ID verification problems — name doesn't match, face doesn't match, or you're unsure about the ID.</li>
+        <li>Any question you're not sure how to handle.</li>
+      </ul>
+    </div>
+
+    <div class="punch">When in doubt — don't issue the badge. Ask first.</div>
   </div>
 
 </main>

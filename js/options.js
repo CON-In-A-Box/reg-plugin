@@ -12,12 +12,17 @@
 //                                                          triggers the
 //                                                          debug-walk audit.
 //
-// Password verification uses SHA-256 hash comparison -- the real password
-// is never stored in code or in chrome.storage.
+// Password verification uses salted PBKDF2-SHA256 -- the real password is
+// never stored in code or in chrome.storage, only its hash.
 //
 // CONFIG, STORAGE_KEY, EXTENSION_MODE are globals injected via
 // extension_options_page.html script tags before this file loads.
-// hashPassword() comes from shared/js/crypto.js, also loaded before this file.
+// verifyPassword() comes from shared/js/crypto.js, also loaded before this file.
+
+// Last *saved* override state, captured by restoreOptions(). Lets saveOptions()
+// distinguish "newly enabling override" (password required) from "override was
+// already on, just tweaking sub-options" (no re-prompt).
+let savedOverride = false;
 
 /**
  * Reads form values, validates the management password if override is
@@ -34,10 +39,13 @@ async function saveOptions() {
                        ?? "automated";
   const statusEl     = document.getElementById("status");
 
-  if (mngtOverride) {
-    const entered     = document.getElementById("mngt-password").value;
-    const enteredHash = await hashPassword(entered);
-    if (enteredHash !== CONFIG.managementPasswordHash) {
+  // Password is only required to *newly* enable override. If it was already
+  // saved-on, the manager can adjust Behavior / Pop-up / Mode and re-save
+  // without re-typing the password (the field is always empty on reopen).
+  if (mngtOverride && !savedOverride) {
+    const entered = document.getElementById("mngt-password").value;
+    const ok      = await verifyPassword(entered, CONFIG.managementPasswordHash);
+    if (!ok) {
       statusEl.className   = "error";
       statusEl.textContent = "Incorrect password -- options not saved.";
       setTimeout(() => { statusEl.textContent = ""; statusEl.className = ""; }, 2000);
@@ -49,8 +57,8 @@ async function saveOptions() {
   // (and clear any in-progress walk state) when override is being disabled.
   const debugMode = mngtOverride && behavior === "debugging";
 
-  // Manual pop-up is a manager-only choice; everyone else is automated.
-  const popupMode = (mngtOverride && popupChoice === "manual") ? "manual" : "automated";
+  // Pop-up behavior is available to everyone (not gated behind override).
+  const popupMode = popupChoice === "manual" ? "manual" : "automated";
 
   await chrome.storage.local.set({
     [STORAGE_KEY.MANAGEMENT_OVERRIDE]: mngtOverride,
@@ -61,6 +69,10 @@ async function saveOptions() {
   if (!debugMode) {
     await chrome.storage.local.remove([STORAGE_KEY.DEBUG_WALK_ACTIVE]);
   }
+
+  // Track the now-saved state so a second save in the same session (without
+  // reload) also skips the password re-prompt.
+  savedOverride = mngtOverride;
 
   statusEl.className   = "";
   statusEl.textContent = "Options saved.";
@@ -84,7 +96,8 @@ function restoreOptions() {
       [STORAGE_KEY.POPUP_MODE]:          "automated",
     },
     (items) => {
-      document.getElementById("mngtoverride").checked = items[STORAGE_KEY.MANAGEMENT_OVERRIDE];
+      savedOverride = items[STORAGE_KEY.MANAGEMENT_OVERRIDE];
+      document.getElementById("mngtoverride").checked = savedOverride;
 
       const mode  = items[STORAGE_KEY.EXTENSION_MODE];
       const radio = document.querySelector(`input[name="ext-mode"][value="${mode}"]`)
@@ -115,7 +128,6 @@ function togglePasswordField() {
   const on = document.getElementById("mngtoverride").checked;
   document.getElementById("password-row").style.display    = on ? "block" : "none";
   document.getElementById("behavior-row").style.display    = on ? "block" : "none";
-  document.getElementById("popup-mode-row").style.display  = on ? "block" : "none";
   document.getElementById("maintenance-row").style.display = on ? "block" : "none";
   if (on) renderStorageDump();
 }
