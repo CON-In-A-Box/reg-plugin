@@ -668,9 +668,13 @@ function resolveTicketConfig(ticketTypeName) {
 /**
  * Validates that a day pass is being used on the correct day of the week.
  * E.g., a "Friday" pass can only be used on Fridays.
+ * NON-TRANSFERABLE Day Passes are valid any day and skip the day check.
  * Returns { valid: boolean }
  */
 function validateDayPass(ticketTypeName) {
+  if (ticketTypeName.toUpperCase().includes("NON-TRANSFERABLE")) {
+    return { valid: true };
+  }
   const dayName = Object.keys(CONFIG.conDays).find(d => ticketTypeName.includes(d));
   if (!dayName || new Date().getDay() !== CONFIG.conDays[dayName]) {
     return { valid: false };
