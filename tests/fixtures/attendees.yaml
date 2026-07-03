@@ -126,6 +126,18 @@
     state: red
     conditions: [incorrectDay]
 
+# ── GREEN: non-transferable day pass, any day ────────────────────────────────
+- name: green-nontransferable-day-pass
+  # Setup: a Day Pass ticket whose name includes "NON-TRANSFERABLE" (e.g.
+  # "Adult Thursday Day Pass NON-TRANSFERABLE") tested on a day other than
+  # the day named in the ticket. Should NOT trigger incorrectDay.
+  page: attendeeEdit
+  accountId: ""
+  attendeeId: ""
+  expect:
+    state: green
+    conditions: []
+
 # ── RED: unknown ticket type ─────────────────────────────────────────────────
 - name: red-unknown-ticket
   # Setup: a ticket whose name does NOT include any of: Adult, Teen, Youth,

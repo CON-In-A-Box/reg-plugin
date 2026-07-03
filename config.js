@@ -88,6 +88,9 @@ const CONFIG = {
   // Used to validate Day Pass tickets — must be used on the correct day.
   // Keys must match exactly how the day appears in the Neon ticket name.
   // Values: JS getDay() numbers — 0=Sun, 1=Mon, 4=Thu, 5=Fri, 6=Sat
+  // EXCEPTION: a Day Pass ticket name containing "NON-TRANSFERABLE" (any
+  // case) is valid any day and skips this check — see validateDayPass()
+  // in js/registrations.js.
   conDays: {
     "Thursday": 4,
     "Friday":   5,

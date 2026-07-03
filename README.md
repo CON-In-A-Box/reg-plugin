@@ -26,7 +26,7 @@ Before allowing check-in, the extension verifies:
 - For non-transferable badges, the **name on the badge matches** the person presenting
 - The attendee's **emergency contact information** is filled in
 - For Adult and Teen tickets, the volunteer is reminded to **verify age**
-- For Day Pass tickets, the pass is being used on the **correct day**
+- For Day Pass tickets, the pass is being used on the **correct day** (tickets with "NON-TRANSFERABLE" in the name are valid any day)
 
 It also gives the volunteer two visual cues:
 
